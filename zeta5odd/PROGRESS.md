@@ -41,7 +41,7 @@ Full build GREEN. Glue lemmas `tendsto_seven_root` (Main) and `exists_common_den
   - `repr_combined` (e07/e08 Lemma-3 assembly; consumes the two above) — NOT yet assigned
 **DnBound.lean** — Hanson divisibility half FULLY PROVED sorry-free (`lcmUpto_dvd_hansonC` via Sylvester seq + `core_sum_le` + Legendre). Remaining:
   - `hansonC_le_three_pow` (size bound `C n ≤ 3^n`, `Σ(log aᵢ)/aᵢ=1.083<log3`) — **worker running (round 2)**
-**Numeric.lean** — `g_small` (`3^33·g(x₀)<1`) — **worker running**
+**Numeric.lean** — `g_small` (`3^33·g(x₀)<1`) — **DONE (sorry-free)**, bracket b=1/40, quadratic-Bernoulli + log-g monotonicity + exact rational `64·121⁶·41³⁴·40²⁸ < 3²³⁹`.
 
 Workers auto-merge to master on completion (harness handles worktree→master).
 

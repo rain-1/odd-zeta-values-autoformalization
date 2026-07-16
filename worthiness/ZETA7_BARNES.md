@@ -21,13 +21,16 @@ extend. The numeric route (§5f) was then executed: an exact all-positive 4-fold
 series was derived and verified (reproduces I₀,I₁,I₂), but it converges only
 **algebraically** (needs 10^{72–100} terms for PSLQ-grade precision; ε-acceleration
 gains ~1.5 digits) — a hard **precision wall** that is the analytic shadow of the
-same rigidity. **I′₃ is not reached**: the exact route needs HyperInt or creative
-telescoping on the (now machine-verified) J-form. A full creative-telescoping
-campaign in SageMath/ore_algebra (§5g) **validated the guess-pipeline on BZ's M₀,₈
-Q_n** (recovering their exact recurrence and characteristic polynomial) but
-**cannot close M₀,₁₀**: ore_algebra offers no multivariate CT, the summand is
-non-hypergeometric, and the order-4 recurrence is undetermined by the three known
-values — exactly BZ's stated limitation at this weight, now fully mapped. Every
+same rigidity. **BREAKTHROUGH (§8):** the McCarthy–Osburn–Straub cellular-integral leading-
+coefficient construction (arXiv:1705.05586), applied to our cell, gives q_n as an
+exact combinatorial **diagonal coefficient** — validated against all three BZ
+anchors (1, 61, 52921) — yielding the **first new exact datum of the campaign,
+q₃ = 94357501**, plus q_n for all n. This bypasses the Barnes/numeric/CT walls of
+§5–§7 entirely for the ζ(7) leading coefficient. The remaining prize (P₃, the
+recurrence, the denominator ledger) reduces to one standard creative-telescoping
+run on this clean diagonal (HolonomicFunctions, pending River's RISC password;
+Mathematica 15 is live). Full details in §8. The §5–§7 walls stand as an honest
+map of why the *direct* routes fail; §8 is the way through. Every
 identity/table below is machine-verified.
 
 Scripts: `zeta7_barnes_stage1.py`, `zeta7_barnes_stage2.py`,
@@ -660,3 +663,91 @@ password** — every piece upstream of it (the exact J-form, the exact summand, 
 validated guess-pipeline) is in hand and machine-verified. Absent that, I′₃
 remains open — BZ's stated limitation at this weight, now demonstrated across
 symbolic (§5b), numeric (§5f), and CT (§5g, §7) routes rather than asserted.
+
+---
+
+## 8. THE SIDE DOOR: McCarthy–Osburn–Straub leading-coefficient construction [BREAKTHROUGH]
+
+River's pointer to **arXiv:1705.05586** (McCarthy–Osburn–Straub, *Sequences,
+modular forms and cellular integrals*) supplies a completely different — and
+**working** — route to the ζ(7) leading coefficient q_n, bypassing the Barnes /
+CT / integration walls entirely.
+
+**The construction (paper §3.2, residue method).** For a convergent permutation
+σ, the leading coefficient A_σ(n) of the cellular integral equals the diagonal
+(constant-term) coefficient
+
+    A_σ(n) = J_σ(n) = [ (x_1 x_2 ⋯ x_m)^n ] ( ∏_i W_i )^n,
+
+where the W_i are the numerator differences z_j−z_{j+1} written as *window-sums*
+of the σ-gap coordinates x_i (the paper proves A_σ = J_σ via a common recurrence).
+For their self-dual M₀,₈ example this gives the clean triple sum
+A_{σ₈}(n)=Σ_{k₁+k₂=k₃+k₄}∏C(n,kᵢ)C(n+kᵢ,n) = 1,33,8929,….
+
+**Applied to our cell σ = (10,2,4,1,6,3,8,5,9,7), N=10 [DERIVED].** Fixing
+z_{σ(8)}=1, z_{σ(9)}=0, z_{σ(10)}=∞ and setting x_i = σ-gaps (x_8=1 homogeniser),
+the eight numerator differences become the window-sums (variable index sets)
+
+    W₁={2,3}, W₂={2,3,4,5}, W₃={3,4,5}, W₄={3,4,5,6,7},
+    W₅={5,6,7}, W₆={7,8}, W₇={1,…,8}, W₈={1,2,3},
+
+and q_n = A_σ(n) = [ (x_1⋯x_8)^n ] (∏_{i=1}^8 W_i)^n.
+
+**HARD GATE — PASSED [VERIFIED, `zeta7_mos_leadcoeff.py`].**
+
+    A_σ(0)=1,  A_σ(1)=61,  A_σ(2)=52921   ✓  (exactly BZ's q_0,q_1,q_2)
+
+reproducing all three anchors, including the stringent 52921. This validates the
+window derivation.
+
+**q₃ (first new value) [VERIFIED]:**
+
+    q_3 = A_σ(3) = 94357501.
+
+This is a *pure combinatorial* diagonal coefficient — exact, no integral, no
+precision wall. Computed by two independent methods (capped-DP `zeta7_mos_leadcoeff.py`
+and bucket-elimination `zeta7_mos_qn.py`, agreeing). Further terms:
+
+    q_4 = 235634763001,  q_5 = 715362962769061,  q_6 = 2467090298135229481,
+    q_7 = 9307547697979861686781, q_8 = 37534429062230228638731001,
+    q_9 = 159353643933835371998356995061, …
+
+The exact values q_0..q_23 are tabulated in `zeta7_mos_qn_values.txt` (computed by
+the fast integer bucket-elimination `zeta7_mos_qn2.py`, parallelised across four
+machines). **This closes route (b/c) for the ζ(7) leading coefficient: q_n is now
+computable exactly for any n, at last giving data beyond BZ's n≤2.**
+
+**Asymptotic growth rate [DERIVED].** The ratios q_{n+1}/q_n climb
+(…, 5302 at n=19, 5347 at n=20, 5389 at n=21), Aitken-extrapolating to a dominant
+characteristic root **λ_max ≈ 5.8·10³** (log λ_max ≈ 8.67) — the family's
+gamma-analogue growth input. (Ratios have not fully converged at n=23; this is an
+estimate pending the exact recurrence.)
+
+**Recurrence — status [OPEN, but the tool is now identified].** `guess` on 24
+terms finds no operator of order ≤6, consistent with the ζ(7) recurrence being
+*high degree*: BZ's totally-symmetric ζ(5) recurrence (their §2) is order 3 but
+**degree 9**, so the ζ(7) analogue is expected order ~4–5, degree ~11–13 —
+requiring ~40–70 exact terms to *guess*, more than the bucket delivers in
+practical time (n=30 alone is hours). The definitive route is **creative
+telescoping of the clean diagonal** q_n = [∏xⱼⁿ](∏Wᵢ)ⁿ (a proper constant-term /
+holonomic object) — *exactly* the computation MOS ran with Koutschan's
+HolonomicFunctions to get their M₀,₈ order-4 recurrence. The ready script is
+`zeta7_mos_holonomic_diag.wl` (Mathematica 15 is live; only HolonomicFunctions.m
+is missing — River has emailed RISC). This is now a *clean, well-posed* CT problem
+(a rational-function diagonal), far more tractable than the §5–§7 non-hypergeometric
+summand — the side door has converted the whole obstruction into the single,
+standard computation the literature already does routinely.
+
+**The prize path [CLEAR, one step from the recurrence].** Once the recurrence for
+q_n is in hand: our σ is BZ's *totally symmetric* ζ(7) cell, the ζ(7) analogue of
+BZ's symmetric ζ(5) case where Q_n, P_n, P̂_n **all satisfy the same minimal
+recurrence**. If that persists, the recurrence + the known P₀=0, P₁=220,
+P₂=6021219/32 yields **P₃** (hence I′₃ = (75/4)·94357501·ζ7 − 3s₃·ζ5 − P₃) provided
+the order permits (order ≤3, or order 4 with the standard vanishing trailing
+coefficient at n=−1). q₃ is secured; P₃ and s₃ are gated only on the recurrence.
+
+**Net:** the McCarthy–Osburn–Straub side door **delivers the first new exact datum
+of the campaign — q₃ = 94357501** — validated against all three BZ anchors, and
+reduces the remaining prize (P₃, the recurrence, the denominator ledger) to a
+single standard creative-telescoping run on a clean diagonal, for which the tool
+(HolonomicFunctions) is identified and pending.

@@ -351,6 +351,187 @@ theorem hansonC_log_bound_finite (n : ℕ) (hn : n < 1337) :
           + ∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)) := by
         rw [Real.log_mul (by positivity) hDpos.ne', Real.log_pow, hlogD]
 
+/-! ### Certified rate bound `∑ᵢ (log aᵢ)/aᵢ < log 3`
+
+The size half hinges on the transcendental estimate `∑ᵢ (log aᵢ)/aᵢ = 1.0824… < log 3`.
+We certify it with a comfortable `0.016` margin by:
+* bounding each `log aᵢ` (`a₂=7, a₃=43, a₄=1807`) by a *rational* multiple of `log 2` via a
+  pure `ℕ` power inequality `aᵢ^b < 2^c` (`7²⁶ < 2⁷³`, `43⁷ < 2³⁸`, `1807 < 2¹¹`) and log
+  monotonicity — no Taylor expansion needed;
+* keeping the `a₁ = 3` term `(log 3)/3` symbolic (it cancels against the `log 3` on the right,
+  leaving the clean numeric goal `coef·log 2 + tail < (2/3)·log 3`);
+* dominating the doubly-exponential tail `∑_{i≥5}` by a geometric series (ratio `≤ 1/2`).
+-/
+
+section Rate
+open Real
+
+/-- Sylvester recurrence over `ℝ`: `a_{i+1} = aᵢ² − aᵢ + 1`. -/
+theorem sylv_succ_real (i : ℕ) : (sylv (i + 1) : ℝ) = (sylv i : ℝ) ^ 2 - (sylv i : ℝ) + 1 := by
+  have h1 : sylv (i + 1) = sylvProd i * (sylvProd i + 1) + 1 := rfl
+  have h2 : (sylv i : ℝ) = (sylvProd i : ℝ) + 1 := by simp only [sylv]; push_cast; ring
+  rw [h1]; push_cast
+  rw [show ((sylvProd i : ℝ)) = (sylv i : ℝ) - 1 by rw [h2]; ring]
+  ring
+
+/-- `log 7 < (73/26)·log 2`, certified by `7²⁶ < 2⁷³`. -/
+theorem log_seven_lt : Real.log 7 < (73 / 26 : ℝ) * Real.log 2 := by
+  have hN : (7 : ℕ) ^ 26 < 2 ^ 73 := by norm_num
+  have hlt : (7 : ℝ) ^ (26 : ℕ) < (2 : ℝ) ^ (73 : ℕ) := by exact_mod_cast hN
+  have h := Real.log_lt_log (by positivity) hlt
+  rw [Real.log_pow, Real.log_pow] at h
+  push_cast at h; linarith
+
+/-- `log 43 < (38/7)·log 2`, certified by `43⁷ < 2³⁸`. -/
+theorem log_fortythree_lt : Real.log 43 < (38 / 7 : ℝ) * Real.log 2 := by
+  have hN : (43 : ℕ) ^ 7 < 2 ^ 38 := by norm_num
+  have hlt : (43 : ℝ) ^ (7 : ℕ) < (2 : ℝ) ^ (38 : ℕ) := by exact_mod_cast hN
+  have h := Real.log_lt_log (by positivity) hlt
+  rw [Real.log_pow, Real.log_pow] at h
+  push_cast at h; linarith
+
+/-- `log 1807 < 11·log 2`, certified by `1807 < 2¹¹`. -/
+theorem log_1807_lt : Real.log 1807 < 11 * Real.log 2 := by
+  have hlt : (1807 : ℝ) < (2 : ℝ) ^ (11 : ℕ) := by norm_num
+  have h := Real.log_lt_log (by positivity) hlt
+  rw [Real.log_pow] at h
+  push_cast at h; linarith
+
+theorem sylv_vals : sylv 0 = 2 ∧ sylv 1 = 3 ∧ sylv 2 = 7 ∧ sylv 3 = 43 ∧ sylv 4 = 1807
+    ∧ sylv 5 = 3263443 := by decide
+
+/-- Each rate term `(log aᵢ)/aᵢ` is nonnegative. -/
+theorem sylvTerm_nonneg (i : ℕ) : 0 ≤ Real.log (sylv i) / (sylv i) := by
+  apply div_nonneg
+  · exact Real.log_nonneg (by exact_mod_cast (two_le_sylv i).trans' (by norm_num))
+  · positivity
+
+/-- Geometric decay of the tail: `(log a_{i+1})/a_{i+1} ≤ ½·(log aᵢ)/aᵢ` for `i ≥ 5`. -/
+theorem sylvTerm_succ_le (i : ℕ) (hi : 5 ≤ i) :
+    Real.log (sylv (i + 1)) / (sylv (i + 1)) ≤ Real.log (sylv i) / (sylv i) / 2 := by
+  have h5 : (sylv 5 : ℝ) = 3263443 := by rw [sylv_vals.2.2.2.2.2]; norm_num
+  have hmono : (sylv 5 : ℝ) ≤ (sylv i : ℝ) := by exact_mod_cast sylv_mono hi
+  have ha : (3263443 : ℝ) ≤ (sylv i : ℝ) := by rw [← h5]; exact hmono
+  set a : ℝ := (sylv i : ℝ) with hadef
+  have ha0 : 0 < a := by linarith
+  have hb : (sylv (i + 1) : ℝ) = a ^ 2 - a + 1 := by rw [hadef]; exact sylv_succ_real i
+  have hbpos : 0 < a ^ 2 - a + 1 := by nlinarith
+  have hb4a : 4 * a ≤ a ^ 2 - a + 1 := by nlinarith
+  have hloga : 0 ≤ Real.log a := Real.log_nonneg (by linarith)
+  have hle : a ^ 2 - a + 1 ≤ a ^ 2 := by nlinarith
+  have hlogb : Real.log (a ^ 2 - a + 1) ≤ 2 * Real.log a := by
+    calc Real.log (a ^ 2 - a + 1) ≤ Real.log (a ^ 2) := Real.log_le_log hbpos hle
+      _ = 2 * Real.log a := by rw [show a ^ 2 = a ^ (2 : ℕ) from rfl, Real.log_pow]; push_cast; ring
+  rw [hb]
+  calc Real.log (a ^ 2 - a + 1) / (a ^ 2 - a + 1)
+      ≤ (2 * Real.log a) / (a ^ 2 - a + 1) := by gcongr
+    _ ≤ (2 * Real.log a) / (4 * a) := by gcongr
+    _ = Real.log a / a / 2 := by field_simp; ring
+
+/-- Doubly-exponential decay solved: `(log a_{5+k})/a_{5+k} ≤ ((log a₅)/a₅)/2ᵏ`. -/
+theorem sylvTerm_tail_geom (k : ℕ) :
+    Real.log (sylv (5 + k)) / (sylv (5 + k))
+      ≤ (Real.log (sylv 5) / (sylv 5)) / 2 ^ k := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    have hstep := sylvTerm_succ_le (5 + k) (by omega)
+    calc Real.log (sylv (5 + (k + 1))) / (sylv (5 + (k + 1)))
+        = Real.log (sylv ((5 + k) + 1)) / (sylv ((5 + k) + 1)) := by rw [Nat.add_succ]
+      _ ≤ Real.log (sylv (5 + k)) / (sylv (5 + k)) / 2 := hstep
+      _ ≤ ((Real.log (sylv 5) / (sylv 5)) / 2 ^ k) / 2 := by gcongr
+      _ = (Real.log (sylv 5) / (sylv 5)) / 2 ^ (k + 1) := by rw [pow_succ]; ring
+
+/-- The whole tail `∑_{5≤i} (log aᵢ)/aᵢ` is bounded by `2·(log a₅)/a₅` (uniformly in the cutoff). -/
+theorem sylvTerm_tail_sum (K : ℕ) :
+    ∑ k ∈ range K, Real.log (sylv (5 + k)) / (sylv (5 + k))
+      ≤ 2 * (Real.log (sylv 5) / (sylv 5)) := by
+  have hnn : 0 ≤ Real.log (sylv 5) / (sylv 5) := sylvTerm_nonneg 5
+  have hb : ∀ k ∈ range K, Real.log (sylv (5 + k)) / (sylv (5 + k))
+      ≤ (Real.log (sylv 5) / (sylv 5)) * (2⁻¹ : ℝ) ^ k := by
+    intro k _
+    have h := sylvTerm_tail_geom k
+    have heq : (Real.log (sylv 5) / (sylv 5)) / 2 ^ k
+        = (Real.log (sylv 5) / (sylv 5)) * (2⁻¹ : ℝ) ^ k := by rw [inv_pow]; ring
+    rwa [heq] at h
+  calc ∑ k ∈ range K, Real.log (sylv (5 + k)) / (sylv (5 + k))
+      ≤ ∑ k ∈ range K, (Real.log (sylv 5) / (sylv 5)) * (2⁻¹ : ℝ) ^ k :=
+        Finset.sum_le_sum hb
+    _ = (Real.log (sylv 5) / (sylv 5)) * ∑ k ∈ range K, (2⁻¹ : ℝ) ^ k := by
+        rw [← Finset.mul_sum]
+    _ ≤ (Real.log (sylv 5) / (sylv 5)) * 2 := by
+        apply mul_le_mul_of_nonneg_left _ hnn
+        rw [geom_sum_eq (by norm_num : (2⁻¹ : ℝ) ≠ 1)]
+        have hp : (0:ℝ) ≤ (2⁻¹ : ℝ) ^ K := by positivity
+        rw [div_le_iff_of_neg (by norm_num : (2⁻¹ : ℝ) - 1 < 0)]
+        nlinarith [hp]
+    _ = 2 * (Real.log (sylv 5) / (sylv 5)) := by ring
+
+/-- **Certified rate bound (sorry-free).** For every truncation `N`,
+`∑_{i<N} (log aᵢ)/aᵢ < log 3`.  This is Hanson's transcendental estimate `1.0824… < 1.0986…`. -/
+theorem sum_sylvTerm_lt_log_three (N : ℕ) :
+    ∑ i ∈ range N, Real.log (sylv i) / (sylv i) < Real.log 3 := by
+  -- Uniform bound: partial sum ≤ (first five terms) + 2·(sixth term)
+  have hsplit : ∑ i ∈ range N, Real.log (sylv i) / (sylv i)
+      ≤ (∑ i ∈ range 5, Real.log (sylv i) / (sylv i))
+        + 2 * (Real.log (sylv 5) / (sylv 5)) := by
+    rcases lt_or_ge N 6 with hN | hN
+    · have hsub : ∑ i ∈ range N, Real.log (sylv i) / (sylv i)
+          ≤ ∑ i ∈ range 5, Real.log (sylv i) / (sylv i) := by
+        apply Finset.sum_le_sum_of_subset_of_nonneg
+          (Finset.range_subset_range.mpr (show N ≤ 5 by omega))
+        intro i _ _
+        exact sylvTerm_nonneg i
+      have h2 : 0 ≤ 2 * (Real.log (sylv 5) / (sylv 5)) := by
+        have := sylvTerm_nonneg 5; linarith
+      linarith
+    · rw [← Finset.sum_range_add_sum_Ico _ (by omega : 5 ≤ N),
+        Finset.sum_Ico_eq_sum_range]
+      have htail := sylvTerm_tail_sum (N - 5)
+      gcongr
+  -- Evaluate the first five terms and the sixth using the certified log bounds.
+  obtain ⟨s0, s1, s2, s3, s4, s5⟩ := sylv_vals
+  have hfive : (∑ i ∈ range 5, Real.log (sylv i) / (sylv i))
+      = Real.log 2 / 2 + Real.log 3 / 3 + Real.log 7 / 7 + Real.log 43 / 43
+        + Real.log 1807 / 1807 := by
+    simp only [Finset.sum_range_succ, Finset.sum_range_zero, s0, s1, s2, s3, s4]
+    push_cast; ring
+  -- sixth term
+  have hs5 : (sylv 5 : ℝ) = 3263443 := by rw [s5]; norm_num
+  have h6 : 2 * (Real.log (sylv 5) / (sylv 5)) ≤ 2 * (22 * Real.log 2 / 3263443) := by
+    rw [hs5]
+    have hlog : Real.log 3263443 ≤ 22 * Real.log 2 := by
+      have hlt : (3263443 : ℝ) < (2 : ℝ) ^ (22 : ℕ) := by norm_num
+      have h := (Real.log_le_log (by norm_num) hlt.le)
+      rw [Real.log_pow] at h; push_cast at h; linarith
+    have : Real.log 3263443 / 3263443 ≤ 22 * Real.log 2 / 3263443 := by gcongr
+    linarith
+  rw [hfive] at hsplit
+  -- Numeric close: use log2 < .6931471808, log3 > 1.0986122885, and the log-ratio bounds.
+  have hl2 := Real.log_two_lt_d9
+  have hl3 := Real.log_three_gt_d9
+  have h7 := log_seven_lt
+  have h43 := log_fortythree_lt
+  have h1807 := log_1807_lt
+  have hl2pos : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  nlinarith [hsplit, h6, hl2, hl3, h7, h43, h1807, hl2pos]
+
+/-- **Tangent-line (Gibbs) inequality** for the convex map `t ↦ t·log t`:
+`t·log t + (log t + 1)(q − t) ≤ q·log q` for `q, t > 0`.  This is the lower bound "convex ≥
+tangent" that turns `∑ qᵢ log qᵢ` into the closed form with rate `∑ (log aᵢ)/aᵢ`. -/
+theorem mul_log_tangent (q t : ℝ) (hq : 0 < q) (ht : 0 < t) :
+    t * Real.log t + (Real.log t + 1) * (q - t) ≤ q * Real.log q := by
+  have hlog : Real.log (t / q) ≤ t / q - 1 := Real.log_le_sub_one_of_pos (div_pos ht hq)
+  rw [Real.log_div ht.ne' hq.ne'] at hlog
+  have h2 : q * (Real.log t - Real.log q) ≤ q * (t / q - 1) :=
+    mul_le_mul_of_nonneg_left hlog hq.le
+  rw [mul_sub, mul_sub, mul_div_cancel₀ _ hq.ne', mul_one] at h2
+  have expand : t * Real.log t + (Real.log t + 1) * (q - t)
+      = q * Real.log t + q - t := by ring
+  rw [expand]; linarith [h2]
+
+end Rate
+
 /-- **Large regime (residual `sorry`).**  For `n ≥ 1337` the log size bound follows from the
 sharp two-sided Stirling estimate combined with the closed-form rate bound
 `∑ᵢ (log aᵢ)/aᵢ < log 3`.  This is the sole remaining analytic obstruction; see the

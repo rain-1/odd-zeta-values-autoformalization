@@ -84,6 +84,41 @@ theorem chat_pos (q n k : ℕ) : 0 < chat q n k := by
   unfold chat
   positivity
 
+
+/-- Exact term ratio (paper eq. (e11)): a rational function of `k, n` times a `2q`-th power. -/
+theorem c_ratio (q n k : ℕ) :
+    c q n (k + 1) / c q n k
+      = (6 * n + 2 * k + 4) * (6 * n + 2 * k + 3) / ((2 * k + 3) * (2 * k + 2))
+        * (((n + k + 1 : ℕ) : ℝ) / ((2 * n + k + 2 : ℕ) : ℝ)) ^ (2 * q) := by
+  -- factorial successor identities (cast to ℝ)
+  have f1 : ((6 * n + 2 * (k + 1) + 2)! : ℝ)
+      = (6 * n + 2 * k + 4) * (6 * n + 2 * k + 3) * ((6 * n + 2 * k + 2)! : ℝ) := by
+    rw [show 6 * n + 2 * (k + 1) + 2 = (6 * n + 2 * k + 3) + 1 by ring, Nat.factorial_succ,
+      show 6 * n + 2 * k + 3 = (6 * n + 2 * k + 2) + 1 by ring, Nat.factorial_succ]
+    push_cast; ring
+  have f2 : ((n + (k + 1))! : ℝ) = ((n + k + 1 : ℕ) : ℝ) * ((n + k)! : ℝ) := by
+    rw [show n + (k + 1) = (n + k) + 1 by ring, Nat.factorial_succ]; push_cast; ring
+  have f3 : ((2 * (k + 1) + 1)! : ℝ)
+      = ((2 * k + 3 : ℕ) : ℝ) * ((2 * k + 2 : ℕ) : ℝ) * ((2 * k + 1)! : ℝ) := by
+    rw [show 2 * (k + 1) + 1 = (2 * k + 2) + 1 by ring, Nat.factorial_succ,
+      show 2 * k + 2 = (2 * k + 1) + 1 by ring, Nat.factorial_succ]
+    push_cast; ring
+  have f4 : ((2 * n + (k + 1) + 1)! : ℝ) = ((2 * n + k + 2 : ℕ) : ℝ) * ((2 * n + k + 1)! : ℝ) := by
+    rw [show 2 * n + (k + 1) + 1 = (2 * n + k + 1) + 1 by ring, Nat.factorial_succ]
+    push_cast; ring
+  have p1 : (0 : ℝ) < (n ! : ℝ) := by exact_mod_cast n.factorial_pos
+  have p2 : (0 : ℝ) < ((6 * n + 2 * k + 2)! : ℝ) := by exact_mod_cast (6 * n + 2 * k + 2).factorial_pos
+  have p3 : (0 : ℝ) < ((n + k)! : ℝ) := by exact_mod_cast (n + k).factorial_pos
+  have p4 : (0 : ℝ) < ((2 * k + 1)! : ℝ) := by exact_mod_cast (2 * k + 1).factorial_pos
+  have p5 : (0 : ℝ) < ((2 * n + k + 1)! : ℝ) := by exact_mod_cast (2 * n + k + 1).factorial_pos
+  have hck : c q n k ≠ 0 := (c_pos q n k).ne'
+  rw [div_eq_iff hck, div_pow]
+  unfold c
+  rw [f1, f2, f3, f4]
+  simp only [mul_pow]
+  push_cast
+  field_simp
+
 /-- The summands decay like `k^(6n + 1 - 2q(n+1))`; for `q ≥ 4` this is
 summable (comparison with `k⁻²`). -/
 theorem summable_c (q n : ℕ) (hq : 4 ≤ q) : Summable (c q n) := by
@@ -539,6 +574,156 @@ theorem centralBinom_two_sided (m : ℕ) (hm : 1 ≤ m) :
     nlinarith [mul_le_mul_of_nonneg_right hA_hi' (by positivity : (0:ℝ) ≤ π),
       mul_le_mul_of_nonneg_left hBsq_lo (le_of_lt (exp_pos 1))]
 
+
+/-- Quantitative Stirling: `log (stirlingSeq m)` overshoots `log √π` by at most `1/(12m)`. -/
+theorem log_stirlingSeq_sub_le (m : ℕ) (hm : 1 ≤ m) :
+    Real.log (stirlingSeq m) - Real.log (√π) ≤ 1 / (12 * m) := by
+  have hpi : (0:ℝ) < √π := Real.sqrt_pos.mpr pi_pos
+  -- limit of log (stirlingSeq N) is log √π
+  have htend : Tendsto (fun N : ℕ => Real.log (stirlingSeq N)) atTop (𝓝 (Real.log (√π))) :=
+    (Real.continuousAt_log (ne_of_gt hpi)).tendsto.comp tendsto_stirlingSeq_sqrt_pi
+  -- termwise Robbins bound in telescoping form
+  have hterm : ∀ i : ℕ,
+      Real.log (stirlingSeq (m + i)) - Real.log (stirlingSeq (m + (i + 1)))
+        ≤ 1 / (12 * ((m + i : ℕ) : ℝ)) - 1 / (12 * ((m + (i + 1) : ℕ) : ℝ)) := by
+    intro i
+    refine (log_stirlingSeq_sdiff_le (m + i)).trans (le_of_eq ?_)
+    have h0 : (0:ℝ) < ((m + i : ℕ) : ℝ) := by positivity
+    have h1 : (0:ℝ) < ((m + (i + 1) : ℕ) : ℝ) := by positivity
+    push_cast
+    push_cast at h0 h1
+    field_simp
+    ring
+  -- partial telescoping bound
+  have hstep : ∀ j : ℕ,
+      Real.log (stirlingSeq m) - Real.log (stirlingSeq (m + j)) ≤ 1 / (12 * m) := by
+    intro j
+    have h := Finset.sum_le_sum (fun (i : ℕ) (_ : i ∈ range j) => hterm i)
+    rw [Finset.sum_range_sub' (fun i => Real.log (stirlingSeq (m + i))) j,
+        Finset.sum_range_sub' (fun i => 1 / (12 * ((m + i : ℕ) : ℝ))) j] at h
+    simp only [Nat.add_zero, Nat.cast_add] at h
+    have hpos : (0:ℝ) ≤ 1 / (12 * ((m + j : ℕ) : ℝ)) := by positivity
+    push_cast at h hpos ⊢
+    linarith
+  -- take j → ∞
+  have hshift : Tendsto (fun j : ℕ => m + j) atTop atTop :=
+    tendsto_atTop_mono (fun j => Nat.le_add_left j m) tendsto_id
+  have hg : Tendsto (fun j : ℕ => Real.log (stirlingSeq m) - Real.log (stirlingSeq (m + j)))
+      atTop (𝓝 (Real.log (stirlingSeq m) - Real.log (√π))) :=
+    tendsto_const_nhds.sub (htend.comp hshift)
+  exact le_of_tendsto hg (Filter.Eventually.of_forall hstep)
+
+/-- Multiplicative two-sided rate: `√π ≤ stirlingSeq m ≤ √π · exp (1/(12m))` for `m ≥ 1`. -/
+theorem stirlingSeq_two_sided_rate (m : ℕ) (hm : 1 ≤ m) :
+    √π ≤ stirlingSeq m ∧ stirlingSeq m ≤ √π * Real.exp (1 / (12 * m)) := by
+  have hpi : (0:ℝ) < √π := Real.sqrt_pos.mpr pi_pos
+  have hlo : √π ≤ stirlingSeq m := sqrt_pi_le_stirlingSeq (by omega)
+  refine ⟨hlo, ?_⟩
+  have hsm : 0 < stirlingSeq m := lt_of_lt_of_le hpi hlo
+  have hlog : Real.log (stirlingSeq m) ≤ Real.log (√π) + 1 / (12 * m) := by
+    have := log_stirlingSeq_sub_le m hm; linarith
+  calc stirlingSeq m = Real.exp (Real.log (stirlingSeq m)) := (Real.exp_log hsm).symm
+    _ ≤ Real.exp (Real.log (√π) + 1 / (12 * m)) := Real.exp_le_exp.mpr hlog
+    _ = √π * Real.exp (1 / (12 * m)) := by rw [Real.exp_add, Real.exp_log hpi]
+
+/-- Exact profile identity: `C(2m,m) = stirlingSeq(2m)/stirlingSeq(m)² · 4^m/√m`. -/
+theorem centralBinom_stirling_identity (m : ℕ) (hm : 1 ≤ m) :
+    (Nat.centralBinom m : ℝ)
+      = stirlingSeq (2 * m) / stirlingSeq m ^ 2 * (4 ^ m / √m) := by
+  have hmR : (0:ℝ) < (m:ℝ) := by exact_mod_cast hm
+  have he : (0:ℝ) < exp 1 := exp_pos 1
+  have hsm : (0:ℝ) < √m := Real.sqrt_pos.mpr hmR
+  have hpi : (0:ℝ) < √π := Real.sqrt_pos.mpr pi_pos
+  have hBpos : 0 < stirlingSeq m := lt_of_lt_of_le hpi (sqrt_pi_le_stirlingSeq (by omega))
+  set Dm : ℝ := √(2 * (m:ℝ)) * ((m:ℝ) / exp 1) ^ m with hDmdef
+  set D2m : ℝ := √(2 * ((2 * m : ℕ) : ℝ)) * (((2 * m : ℕ) : ℝ) / exp 1) ^ (2 * m) with hD2mdef
+  have hDm_pos : 0 < Dm := by rw [hDmdef]; positivity
+  have hmfac : (m ! : ℝ) = stirlingSeq m * Dm := by rw [stirlingSeq, hDmdef]; field_simp
+  have h2mfac : ((2 * m)! : ℝ) = stirlingSeq (2 * m) * D2m := by
+    rw [stirlingSeq, hD2mdef]; push_cast; field_simp
+  have hs2 : (√(2 * (m:ℝ))) ^ 2 = 2 * (m:ℝ) := Real.sq_sqrt (by positivity)
+  have hs4 : √(2 * ((2 * m : ℕ) : ℝ)) = 2 * √m := by
+    have : (2 * ((2 * m : ℕ) : ℝ)) = 4 * (m:ℝ) := by push_cast; ring
+    rw [this, Real.sqrt_mul (by norm_num) (m:ℝ),
+      show √(4:ℝ) = 2 from by rw [show (4:ℝ) = 2 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]]
+  have hpow : (((2 * m : ℕ) : ℝ) / exp 1) ^ (2 * m)
+      = 4 ^ m * ((m:ℝ) / exp 1) ^ (2 * m) := by
+    have hb : ((2 * m : ℕ) : ℝ) / exp 1 = 2 * ((m:ℝ) / exp 1) := by push_cast; ring
+    rw [hb, mul_pow, pow_mul, show (2:ℝ) ^ 2 = 4 by norm_num]
+  have hDDaux : D2m * √m = Dm ^ 2 * 4 ^ m := by
+    rw [hD2mdef, hDmdef, hs4, hpow, mul_pow, hs2]
+    linear_combination (2 * 4 ^ m * ((m:ℝ) / exp 1) ^ (2 * m)) * Real.sq_sqrt hmR.le
+  have hDD : D2m = Dm ^ 2 * (4 ^ m / √m) := by
+    rw [← mul_div_assoc, eq_div_iff (ne_of_gt hsm)]; exact hDDaux
+  have hcb : (Nat.centralBinom m : ℝ) * ((m ! : ℝ) * (m ! : ℝ)) = ((2 * m)! : ℝ) := by
+    have h := Nat.choose_mul_factorial_mul_factorial (Nat.le_mul_of_pos_left m (by norm_num : 0 < 2))
+    rw [show 2 * m - m = m by omega] at h
+    rw [Nat.centralBinom_eq_two_mul_choose]
+    have h2 : ((2 * m).choose m * m ! * m ! : ℕ) = ((2 * m)! : ℕ) := h
+    push_cast [← h2]; ring
+  rw [h2mfac, hDD, hmfac] at hcb
+  rw [div_mul_eq_mul_div, eq_div_iff (pow_pos hBpos 2).ne']
+  apply mul_right_cancel₀ (pow_pos hDm_pos 2).ne'
+  linear_combination hcb
+
+/-- Rate corollary: `C(2M,M) = 4^M/√(πM) · (1 + O(1/M))`, two-sided with explicit `exp` factors. -/
+theorem centralBinom_rate (M : ℕ) (hM : 1 ≤ M) :
+    4 ^ M / √(π * M) * Real.exp (-(1 / (6 * M))) ≤ (Nat.centralBinom M : ℝ) ∧
+    (Nat.centralBinom M : ℝ) ≤ 4 ^ M / √(π * M) * Real.exp (1 / (24 * M)) := by
+  have hMR : (0:ℝ) < (M:ℝ) := by exact_mod_cast hM
+  have hpi : (0:ℝ) < √π := Real.sqrt_pos.mpr pi_pos
+  have hsM : (0:ℝ) < √M := Real.sqrt_pos.mpr hMR
+  obtain ⟨hA_lo, hA_hi⟩ := stirlingSeq_two_sided_rate (2 * M) (by omega)
+  obtain ⟨hB_lo, hB_hi⟩ := stirlingSeq_two_sided_rate M hM
+  have hBpos : 0 < stirlingSeq M := lt_of_lt_of_le hpi hB_lo
+  have hApos : 0 < stirlingSeq (2 * M) := lt_of_lt_of_le hpi hA_lo
+  have hid := centralBinom_stirling_identity M hM
+  -- rewrite the 4^M/√(πM) factor via √(πM) = √π √M
+  have hsplit : √(π * M) = √π * √M := Real.sqrt_mul pi_pos.le _
+  -- B^2 bounds
+  have hB2_lo : π ≤ stirlingSeq M ^ 2 := by
+    have := mul_le_mul hB_lo hB_lo hpi.le hBpos.le
+    rwa [Real.mul_self_sqrt pi_pos.le, ← pow_two] at this
+  have hMne : (M:ℝ) ≠ 0 := hMR.ne'
+  have hB2_hi : stirlingSeq M ^ 2 ≤ π * Real.exp (1 / (6 * M)) := by
+    have h := mul_le_mul hB_hi hB_hi hBpos.le (by positivity)
+    rw [← pow_two, ← pow_two, mul_pow, Real.sq_sqrt pi_pos.le] at h
+    rw [show (Real.exp (1 / (12 * (M:ℝ)))) ^ 2 = Real.exp (1 / (6 * M)) from by
+      rw [pow_two, ← Real.exp_add,
+        show 1 / (12 * (M:ℝ)) + 1 / (12 * M) = 1 / (6 * M) by field_simp; ring]] at h
+    exact h
+  have hApos' : (0:ℝ) < 4 ^ M / √M := by positivity
+  refine ⟨?_, ?_⟩
+  · -- lower bound
+    rw [hid, hsplit]
+    have hR : Real.exp (-(1 / (6 * M))) / √π ≤ stirlingSeq (2 * M) / stirlingSeq M ^ 2 := by
+      rw [div_le_div_iff₀ (by positivity) (by positivity)]
+      have hexp : Real.exp (-(1 / (6 * (M:ℝ)))) * (π * Real.exp (1 / (6 * M))) = π := by
+        rw [show π * Real.exp (1/(6*M)) = Real.exp (1/(6*M)) * π by ring, ← mul_assoc,
+          ← Real.exp_add]
+        rw [show -(1 / (6 * (M:ℝ))) + 1 / (6 * M) = 0 by ring, Real.exp_zero, one_mul]
+      nlinarith [mul_le_mul_of_nonneg_left hB2_hi (Real.exp_pos (-(1/(6*(M:ℝ)))) ).le,
+        mul_le_mul_of_nonneg_right hA_lo (Real.sqrt_nonneg π), hexp,
+        Real.mul_self_sqrt pi_pos.le]
+    calc 4 ^ M / (√π * √M) * Real.exp (-(1 / (6 * M)))
+        = Real.exp (-(1 / (6 * M))) / √π * (4 ^ M / √M) := by ring
+      _ ≤ stirlingSeq (2 * M) / stirlingSeq M ^ 2 * (4 ^ M / √M) :=
+          mul_le_mul_of_nonneg_right hR hApos'.le
+  · -- upper bound
+    rw [hid, hsplit]
+    have hR : stirlingSeq (2 * M) / stirlingSeq M ^ 2 ≤ Real.exp (1 / (24 * M)) / √π := by
+      rw [div_le_div_iff₀ (by positivity) (by positivity)]
+      have hexp : stirlingSeq (2*M) * √π ≤ Real.exp (1/(24*M)) * π := by
+        have h2M : Real.exp (1 / (12 * ((2 * M : ℕ):ℝ))) = Real.exp (1 / (24 * M)) := by
+          push_cast; ring_nf
+        rw [h2M] at hA_hi
+        nlinarith [mul_le_mul_of_nonneg_right hA_hi (Real.sqrt_nonneg π),
+          Real.mul_self_sqrt pi_pos.le, hpi, Real.exp_pos (1/(24*(M:ℝ)))]
+      nlinarith [mul_le_mul_of_nonneg_left hB2_lo (Real.exp_pos (1/(24*(M:ℝ)))).le, hexp]
+    calc stirlingSeq (2 * M) / stirlingSeq M ^ 2 * (4 ^ M / √M)
+        ≤ Real.exp (1 / (24 * M)) / √π * (4 ^ M / √M) :=
+          mul_le_mul_of_nonneg_right hR hApos'.le
+      _ = 4 ^ M / (√π * √M) * Real.exp (1 / (24 * M)) := by ring
 
 end CentralBinom
 

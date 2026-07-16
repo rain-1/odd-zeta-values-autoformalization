@@ -19,8 +19,14 @@ STATUS (this pass):
       `q = 0` case of each is `sorry`: it is genuinely FALSE there (the `ℕ`-truncated
       exponents `2*q-1 = 0` in `Rn` vs `2*q = 0` in `c`/`chat` break `(2q-1)+1 = 2q`;
       e.g. `Rn 0 0 2 = 1 ≠ 2 = c 0 0 1`).  These theorems are only ever applied at `q = 17`.
-  * `Rn`, `partialFraction_exists`, `repr_combined`
-      — STATED, proofs `sorry` (the analytic heart: partial fractions + Lemma 3 assembly).
+  * `Rn_wellPoised` — PROVED: the well-poised functional equation `R_n(-t-n) = -R_n(t)`
+      (paper Lemma 2 proof, tex 166), directly from the product definition by reindexing.
+  * `partialFraction_exists` — PROVED modulo two clearly-named helper `sorry`s:
+      - `pf_decomp` (e04 decomposition + Lemma 1 integrality — the analytic heart), and
+      - `pf_unique` (uniqueness of the partial-fraction coefficients).
+      The Lemma 2 SYMMETRY conjunct is fully DERIVED here from `Rn_wellPoised` + `pf_unique`
+      (paper tex 165–176); only decomposition/integrality remain as `pf_decomp`.
+  * `Rn`, `repr_combined` — STATED, `repr_combined` proof still `sorry` (Lemma 3 assembly).
 -/
 import Mathlib
 import Zeta5Odd.Basic
@@ -159,6 +165,12 @@ private lemma prod_Icc_one_reflect (n : ℕ) (f : ℕ → ℝ) :
   rw [Finset.mem_range] at hj
   congr 1
   omega
+
+/-- Pull a per-factor negation out of a finite product: `∏ (-f j) = (-1)^|s| ∏ f j`. -/
+private lemma prod_neg_pow (s : Finset ℕ) (f : ℕ → ℝ) :
+    ∏ j ∈ s, (-(f j)) = (-1) ^ s.card * ∏ j ∈ s, f j := by
+  rw [Finset.prod_congr rfl (fun j _ => neg_eq_neg_one_mul (f j)),
+    Finset.prod_mul_distrib, Finset.prod_const]
 
 /-- Convert an `Icc 1 n` product to a `range n` product (`j ↦ 1 + i`). -/
 private lemma prod_Icc_one_range (n : ℕ) (f : ℕ → ℝ) :
@@ -363,13 +375,123 @@ theorem Rn_eq_chat (q n k : ℕ) (hq1 : 1 ≤ q) : Rn q n ((n : ℝ) + 1 / 2 + (
     have hEpow : E ^ (2 * q - 1) ≠ 0 := pow_ne_zero _ hEne
     field_simp
 
+/-! ### Well-poised functional equation (paper tex 166, used for Lemma 2) -/
+
+/-- **Well-poised symmetry of `R_n`** (paper Lemma 2 proof, tex 166): since `s = 33` is odd,
+`R_n(-t-n) = -R_n(t)`.  Proved directly from the product definition by reindexing:
+the two `Icc 1 n` products swap (each contributing `(-1)^n`, net invariant), the middle
+`3n`-product reflects to `(-1)^{3n}` times itself, and the denominator base reflects to
+`(-1)^{n+1}` times itself; the net sign is `-1` because `33` is odd. -/
+theorem Rn_wellPoised (n : ℕ) (t : ℝ) :
+    Rn 17 n (-t - (n : ℝ)) = - Rn 17 n t := by
+  -- Reindexing identities for the four products at the reflected argument `-t-n`.
+  have hA : ∏ j ∈ Finset.Icc 1 n, (-t - (n : ℝ) - (j : ℝ))
+      = (-1) ^ n * ∏ j ∈ Finset.Icc 1 n, (t + (n : ℝ) + (j : ℝ)) := by
+    have hpt : ∀ j ∈ Finset.Icc 1 n,
+        -t - (n : ℝ) - (j : ℝ) = -(t + (n : ℝ) + (j : ℝ)) := fun j _ => by ring
+    rw [Finset.prod_congr rfl hpt, prod_neg_pow, Nat.card_Icc, Nat.add_sub_cancel]
+  have hB : ∏ j ∈ Finset.Icc 1 n, (-t - (n : ℝ) + (n : ℝ) + (j : ℝ))
+      = (-1) ^ n * ∏ j ∈ Finset.Icc 1 n, (t - (j : ℝ)) := by
+    have hpt : ∀ j ∈ Finset.Icc 1 n,
+        -t - (n : ℝ) + (n : ℝ) + (j : ℝ) = -(t - (j : ℝ)) := fun j _ => by ring
+    rw [Finset.prod_congr rfl hpt, prod_neg_pow, Nat.card_Icc, Nat.add_sub_cancel]
+  have hC : ∏ j ∈ Finset.Icc 1 (3 * n), (-t - (n : ℝ) - (n : ℝ) - 1 / 2 + (j : ℝ))
+      = (-1) ^ (3 * n) * ∏ j ∈ Finset.Icc 1 (3 * n), (t - (n : ℝ) - 1 / 2 + (j : ℝ)) := by
+    -- Factor out a sign, reflecting the index `j ↦ 3n+1-j`.
+    have hpt : ∀ j ∈ Finset.Icc 1 (3 * n),
+        -t - (n : ℝ) - (n : ℝ) - 1 / 2 + (j : ℝ)
+          = -(t - (n : ℝ) - 1 / 2 + ((3 * n + 1 - j : ℕ) : ℝ)) := by
+      intro j hj
+      rw [Finset.mem_Icc] at hj
+      rw [Nat.cast_sub (by omega : j ≤ 3 * n + 1)]
+      push_cast; ring
+    rw [Finset.prod_congr rfl hpt, prod_neg_pow, Nat.card_Icc, Nat.add_sub_cancel]
+    congr 1
+    -- reflect `∏ (t-n-1/2+↑(3n+1-j)) = ∏ (t-n-1/2+↑j)` over `Icc 1 (3n)`
+    rw [prod_Icc_one_range (3 * n) (fun j => t - (n : ℝ) - 1 / 2 + ((3 * n + 1 - j : ℕ) : ℝ)),
+        prod_Icc_one_range (3 * n) (fun j => t - (n : ℝ) - 1 / 2 + (j : ℝ)),
+        ← Finset.prod_range_reflect
+          (fun i => t - (n : ℝ) - 1 / 2 + ((1 + i : ℕ) : ℝ)) (3 * n)]
+    apply Finset.prod_congr rfl
+    intro i hi
+    rw [Finset.mem_range] at hi
+    show t - (n : ℝ) - 1 / 2 + ((3 * n + 1 - (1 + i) : ℕ) : ℝ)
+        = t - (n : ℝ) - 1 / 2 + ((1 + (3 * n - 1 - i) : ℕ) : ℝ)
+    congr 2
+    omega
+  have hD : ∏ j ∈ Finset.range (n + 1), (-t - (n : ℝ) + (j : ℝ))
+      = (-1) ^ (n + 1) * ∏ j ∈ Finset.range (n + 1), (t + (j : ℝ)) := by
+    have hpt : ∀ j ∈ Finset.range (n + 1),
+        -t - (n : ℝ) + (j : ℝ) = -(t + ((n - j : ℕ) : ℝ)) := by
+      intro j hj
+      rw [Finset.mem_range] at hj
+      rw [Nat.cast_sub (by omega : j ≤ n)]
+      ring
+    rw [Finset.prod_congr rfl hpt, prod_neg_pow, Finset.card_range]
+    congr 1
+    -- reflect `∏ (t+↑(n-j)) = ∏ (t+↑j)` over `range (n+1)`
+    rw [← Finset.prod_range_reflect (fun j => t + (j : ℝ)) (n + 1)]
+    apply Finset.prod_congr rfl
+    intro j hj
+    rw [Finset.mem_range] at hj
+    show t + ((n - j : ℕ) : ℝ) = t + ((n + 1 - 1 - j : ℕ) : ℝ)
+    rw [show n + 1 - 1 - j = n - j from by omega]
+  -- Assemble: expand `Rn`, normalise the concrete exponents, and rewrite the four products.
+  simp only [Rn]
+  rw [show (2 * 17 - 1 : ℕ) = 33 from by norm_num,
+      show (2 * 17 - 6 : ℕ) = 28 from by norm_num]
+  simp only [Finset.prod_pow]
+  rw [hA, hB, hC, hD]
+  rcases Nat.even_or_odd n with hpar | hpar
+  · -- `n` even: signs are `1, 1, -1`.
+    simp only [hpar.neg_one_pow, (hpar.mul_left 3).neg_one_pow, hpar.add_one.neg_one_pow]
+    ring
+  · -- `n` odd: signs are `-1, -1, 1`.
+    simp only [hpar.neg_one_pow, ((by norm_num : Odd 3).mul hpar).neg_one_pow,
+      hpar.add_one.neg_one_pow]
+    ring
+
 /-! ### Partial fractions with the coefficients `a_{i,k}` (paper e04 + Lemmas 1, 2) -/
+
+/-- **Decomposition (e04) + integrality (Lemma 1)** for `R_n` at `s = 33`.
+[ANALYTIC HEART — proof is `sorry`.]  `a i k` is the coefficient of `(t+k)^{-i}` in the
+Laurent expansion of `R_n` at its order-`33` pole `t = -k`.  Existence of the decomposition
+is the partial-fraction theorem; `d_n^{33-i}·a_{i,k} ∈ ℤ` (Lemma 1) follows from the paper's
+differentiation formula (tex 138–153) applied to `R_n` as a product of the six
+`simpler` integer-coefficient functions of tex 96–114 together with `d_n/(k_j-k_1) ∈ ℤ`
+(available as `dvd_lcmUpto`).  These two conjuncts are exactly what `repr_combined` still needs. -/
+private theorem pf_decomp (n : ℕ) :
+    ∃ a : ℕ → ℕ → ℝ,
+      (∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
+          Rn 17 n t = ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1),
+              a i k / (t + (k : ℝ)) ^ i)
+      ∧ (∀ i ∈ Finset.Icc 1 33, ∀ k ∈ Finset.range (n + 1),
+          ∃ z : ℤ, (Nat.lcmUpto n : ℝ) ^ (33 - i) * a i k = z) := by
+  sorry
+
+/-- **Uniqueness of the (e04) partial-fraction coefficients.**  [Proof is `sorry`.]
+Two coefficient arrays inducing the same value off the `n+1` poles agree on the grid
+`1 ≤ i ≤ 33`, `0 ≤ k ≤ n`.  (Clear denominators: the difference is a polynomial of degree
+`< 33(n+1)` vanishing at infinitely many `t`, hence identically zero, forcing all
+coefficients equal.)  Used only to transport the well-poised symmetry through the
+decomposition; the symmetry reduction itself (below) is fully proved. -/
+private theorem pf_unique (n : ℕ) (a b : ℕ → ℕ → ℝ)
+    (h : ∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
+        ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), a i k / (t + (k : ℝ)) ^ i
+          = ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), b i k / (t + (k : ℝ)) ^ i) :
+    ∀ i ∈ Finset.Icc 1 33, ∀ k ∈ Finset.range (n + 1), a i k = b i k := by
+  sorry
 
 /-- **Partial-fraction data (paper e04 + Lemmas 1–2).**
 There is a coefficient array `a : (i,k) ↦ a_{i,k}` (`1 ≤ i ≤ s = 33`, `0 ≤ k ≤ n`) with:
   * (e04) the decomposition `R_n(t) = Σ_i Σ_k a_{i,k}/(t+k)^i` off the poles;
   * (Lemma 1) integrality `d_n^{s−i} · a_{i,k} ∈ ℤ`;
-  * (Lemma 2) well-poised symmetry `a_{i,k} = (−1)^{i−1} a_{i,n−k}`. -/
+  * (Lemma 2) well-poised symmetry `a_{i,k} = (−1)^{i−1} a_{i,n−k}`.
+
+The decomposition and integrality come from `pf_decomp` (the analytic heart, `sorry`); the
+symmetry (Lemma 2) is DERIVED here from the well-poised functional equation `Rn_wellPoised`
+(fully proved above) and the uniqueness of the decomposition (`pf_unique`, `sorry`), exactly
+following the paper's Lemma 2 proof (tex 165–176). -/
 theorem partialFraction_exists (n : ℕ) :
     ∃ a : ℕ → ℕ → ℝ,
       (∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
@@ -380,7 +502,56 @@ theorem partialFraction_exists (n : ℕ) :
           ∃ z : ℤ, (Nat.lcmUpto n : ℝ) ^ (33 - i) * a i k = z)
       ∧ (∀ i ∈ Finset.Icc 1 33, ∀ k ∈ Finset.range (n + 1),
           a i k = (-1) ^ (i - 1) * a i (n - k)) := by
-  sorry
+  obtain ⟨a, hdec, hint⟩ := pf_decomp n
+  refine ⟨a, hdec, hint, ?_⟩
+  -- Lemma 2 (well-poised symmetry) from `Rn_wellPoised` + uniqueness of the decomposition.
+  -- Substituting `Rn(-t-n) = -Rn(t)` into (e04) gives a second decomposition whose
+  -- coefficients are `(-1)^{i-1} a_{i,n-k}`; uniqueness then forces the symmetry.
+  have hsum : ∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
+      ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), a i k / (t + (k : ℝ)) ^ i
+        = ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1),
+            ((-1) ^ (i - 1) * a i (n - k)) / (t + (k : ℝ)) ^ i := by
+    intro t ht
+    -- The pole condition transports to the reflected argument `-t-n`.
+    have ht' : ∀ k ∈ Finset.range (n + 1), (-t - (n : ℝ)) + (k : ℝ) ≠ 0 := by
+      intro k hk
+      rw [Finset.mem_range] at hk
+      have hne := ht (n - k) (Finset.mem_range.mpr (by omega))
+      rw [Nat.cast_sub (by omega : k ≤ n)] at hne
+      intro hcontra
+      exact hne (by linarith)
+    calc ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), a i k / (t + (k : ℝ)) ^ i
+        = Rn 17 n t := (hdec t ht).symm
+      _ = - Rn 17 n (-t - (n : ℝ)) := by rw [Rn_wellPoised n t, neg_neg]
+      _ = - ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1),
+              a i k / ((-t - (n : ℝ)) + (k : ℝ)) ^ i := by rw [hdec (-t - (n : ℝ)) ht']
+      _ = ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1),
+              ((-1) ^ (i - 1) * a i (n - k)) / (t + (k : ℝ)) ^ i := by
+          rw [← Finset.sum_neg_distrib]
+          apply Finset.sum_congr rfl
+          intro i hi
+          rw [Finset.mem_Icc] at hi
+          rw [← Finset.sum_neg_distrib,
+            ← Finset.sum_range_reflect
+              (fun k => ((-1) ^ (i - 1) * a i (n - k)) / (t + (k : ℝ)) ^ i) (n + 1)]
+          apply Finset.sum_congr rfl
+          intro k hk
+          rw [Finset.mem_range] at hk
+          have hne := ht (n - k) (Finset.mem_range.mpr (by omega))
+          have hY : (-t - (n : ℝ)) + (k : ℝ) = -(t + ((n - k : ℕ) : ℝ)) := by
+            rw [Nat.cast_sub (by omega : k ≤ n)]; ring
+          have hsgn : (-1 : ℝ) ^ i = -((-1) ^ (i - 1)) := by
+            conv_lhs => rw [show i = (i - 1) + 1 from by omega]
+            rw [pow_succ]; ring
+          have hinvI : ((-1 : ℝ) ^ i)⁻¹ = (-1) ^ i := by rw [← inv_pow]; norm_num
+          simp only [show n + 1 - 1 - k = n - k from by omega,
+            show n - (n - k) = k from by omega]
+          rw [hY, neg_pow, mul_comm ((-1 : ℝ) ^ i) ((t + ((n - k : ℕ) : ℝ)) ^ i), ← div_div,
+            div_eq_mul_inv (a i k / (t + ((n - k : ℕ) : ℝ)) ^ i) ((-1 : ℝ) ^ i), hinvI, hsgn]
+          ring
+  have hb := pf_unique n a (fun i k => (-1) ^ (i - 1) * a i (n - k)) hsum
+  intro i hi k hk
+  exact hb i hi k hk
 
 /-! ### Lemma 3: the ζ-representations of `r_n` and `r̂_n` (paper e07, e08)
 

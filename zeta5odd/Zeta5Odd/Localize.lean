@@ -1071,7 +1071,109 @@ private lemma c_upper_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x�
         (x₀ + ε / 2) * n ≤ (j : ℝ) →
           c q n (j + 1) ≤
             (((j : ℝ) + (2 * n + 2)) / ((j : ℝ) + (2 * n + 2) + 1)) ^ 2 * c q n j) := by
-  sorry
+  obtain ⟨x₁, hx₀x₁, hanti, hflt⟩ := f_shape q hq hx₀ hfx₀
+  have hfpos : ∀ x : ℝ, 0 < x → 0 < f q x := by
+    intro x hx
+    have : (0 : ℝ) < (x + 1) / (x + 2) := by positivity
+    unfold f; positivity
+  have hx2pos : (0 : ℝ) < x₀ + ε / 2 := by linarith
+  set Cub : ℝ := max (x₀ + ε) (20 * q) with hCub
+  have hCub_ge : x₀ + ε ≤ Cub := le_max_left _ _
+  have hCub_ge2 : (20 : ℝ) * q ≤ Cub := le_max_right _ _
+  have hle : x₀ + ε / 2 ≤ Cub := le_trans (by linarith) hCub_ge
+  have hne : (Set.Icc (x₀ + ε / 2) Cub).Nonempty := ⟨x₀ + ε / 2, ⟨le_refl _, hle⟩⟩
+  have hx0ne : ∀ x ∈ Set.Icc (x₀ + ε / 2) Cub, x ≠ 0 := fun x hx h => by
+    have := hx.1; rw [h] at this; linarith
+  have hx2ne : ∀ x ∈ Set.Icc (x₀ + ε / 2) Cub, x + 2 ≠ 0 := fun x hx h => by
+    have := hx.1; nlinarith
+  have hcont : ContinuousOn (f q) (Set.Icc (x₀ + ε / 2) Cub) := by
+    unfold f
+    exact (ContinuousOn.div (by fun_prop) (by fun_prop) hx0ne).mul
+      (ContinuousOn.pow (ContinuousOn.div (by fun_prop) (by fun_prop) hx2ne) q)
+  obtain ⟨xm, hxm_mem, hxm_max⟩ := isCompact_Icc.exists_isMaxOn hne hcont
+  set M : ℝ := f q xm with hM
+  have hxm_gt : x₀ < xm := lt_of_lt_of_le (by linarith) hxm_mem.1
+  have hMlt1 : M < 1 := hflt xm hxm_gt
+  have hMpos : 0 < M := hfpos xm (by linarith)
+  have hM2lt1 : M ^ 2 < 1 := by nlinarith
+  set δ : ℝ := (1 - M ^ 2) / 2 with hδ
+  have hδpos : 0 < δ := by rw [hδ]; linarith
+  have hδlt1 : δ < 1 := by rw [hδ]; nlinarith
+  have hMdle : M ^ 2 < 1 - δ := by rw [hδ]; linarith
+  -- `3/(2n) → 0`
+  have h0 : Tendsto (fun n : ℕ => 3 / (2 * (n : ℝ))) atTop (𝓝 0) :=
+    Tendsto.div_atTop tendsto_const_nhds
+      (Filter.Tendsto.const_mul_atTop (by norm_num : (0:ℝ) < 2) (tendsto_natCast_atTop_atTop (R := ℝ)))
+  have hev1 : ∀ᶠ n : ℕ in atTop, (1 + 3 / (2 * (n : ℝ))) * M ^ 2 ≤ 1 - δ := by
+    have htend : Tendsto (fun n : ℕ => (1 + 3 / (2 * (n : ℝ))) * M ^ 2) atTop (𝓝 (M ^ 2)) := by
+      have := ((tendsto_const_nhds (x := (1:ℝ))).add h0).mul_const (M ^ 2)
+      simpa using this
+    exact htend.eventually_le_const hMdle
+  -- `2/((x₀+ε/2+2)n+3) → 0`
+  have hev3 : ∀ᶠ n : ℕ in atTop, 2 / ((x₀ + ε / 2 + 2) * (n : ℝ) + 3) ≤ δ := by
+    have htend : Tendsto (fun n : ℕ => 2 / ((x₀ + ε / 2 + 2) * (n : ℝ) + 3)) atTop (𝓝 0) :=
+      Tendsto.div_atTop tendsto_const_nhds
+        (tendsto_atTop_add_const_right atTop 3
+          (Filter.Tendsto.const_mul_atTop (by linarith : (0:ℝ) < x₀ + ε / 2 + 2)
+            (tendsto_natCast_atTop_atTop (R := ℝ))))
+    exact htend.eventually_le_const hδpos
+  refine ⟨δ, hδpos, hδlt1, ?_, ?_⟩
+  · -- conjunct 1: middle margin
+    filter_upwards [hev1, eventually_ge_atTop 1] with n hbd hn1 j hjlo hjhi
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn1
+    have hj1 : 1 ≤ j := by
+      rcases Nat.eq_zero_or_pos j with h | h
+      · exfalso; rw [h] at hjlo; push_cast at hjlo; nlinarith
+      · exact h
+    have hub := c_ratio_ub q j n hj1 hn1
+    have hjn_lo : x₀ + ε / 2 ≤ (j : ℝ) / n := by rw [le_div_iff₀ hnR]; exact hjlo
+    have hjn_hi : (j : ℝ) / n ≤ Cub :=
+      le_trans (by rw [div_le_iff₀ hnR]; exact hjhi) hCub_ge
+    have hfle : f q ((j : ℝ) / n) ≤ M := hxm_max ⟨hjn_lo, hjn_hi⟩
+    have hf2le : f q ((j : ℝ) / n) ^ 2 ≤ M ^ 2 :=
+      pow_le_pow_left₀ (hfpos _ (by positivity)).le hfle 2
+    rw [← div_le_iff₀ (c_pos q n j)]
+    calc c q n (j + 1) / c q n j ≤ (1 + 3 / (2 * (n : ℝ))) * f q ((j : ℝ) / n) ^ 2 := hub
+      _ ≤ (1 + 3 / (2 * (n : ℝ))) * M ^ 2 := mul_le_mul_of_nonneg_left hf2le (by positivity)
+      _ ≤ 1 - δ := hbd
+  · -- conjunct 2: telescoping
+    filter_upwards [hev1, hev3, eventually_ge_atTop 1] with n hbd hRbd hn1 j hjlo
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn1
+    rcases le_or_gt (20 * q * n) j with hfar | hmid
+    · rw [← div_le_iff₀ (c_pos q n j)]; exact c_ratio_far q j n hq hn1 hfar
+    · -- middle range: `(x₀+ε/2)n ≤ j < 20qn`
+      have hj1 : 1 ≤ j := by
+        rcases Nat.eq_zero_or_pos j with h | h
+        · exfalso; rw [h] at hjlo; push_cast at hjlo; nlinarith
+        · exact h
+      have hub := c_ratio_ub q j n hj1 hn1
+      have hjn_lo : x₀ + ε / 2 ≤ (j : ℝ) / n := by rw [le_div_iff₀ hnR]; exact hjlo
+      have hjmid : (j : ℝ) < 20 * q * n := by exact_mod_cast hmid
+      have hjn_hi : (j : ℝ) / n ≤ Cub := by
+        rw [div_le_iff₀ hnR]; calc (j : ℝ) ≤ 20 * q * n := hjmid.le
+          _ ≤ Cub * n := by nlinarith [hCub_ge2, hnR.le]
+      have hfle : f q ((j : ℝ) / n) ≤ M := hxm_max ⟨hjn_lo, hjn_hi⟩
+      have hf2le : f q ((j : ℝ) / n) ^ 2 ≤ M ^ 2 :=
+        pow_le_pow_left₀ (hfpos _ (by positivity)).le hfle 2
+      have hP : (0 : ℝ) < (j : ℝ) + (2 * n + 2) + 1 := by positivity
+      have hPne : ((j : ℝ) + (2 * n + 2) + 1) ≠ 0 := hP.ne'
+      have h2le : 2 / ((j : ℝ) + (2 * n + 2) + 1) ≤ δ := by
+        refine le_trans ?_ hRbd
+        apply div_le_div_of_nonneg_left (by norm_num)
+          (by nlinarith [hx2pos, hnR.le] : (0:ℝ) < (x₀ + ε / 2 + 2) * (n : ℝ) + 3)
+        nlinarith [hjlo]
+      have hRHSge : 1 - δ ≤ (((j : ℝ) + (2 * n + 2)) / ((j : ℝ) + (2 * n + 2) + 1)) ^ 2 := by
+        have hu : ((j : ℝ) + (2 * n + 2)) / ((j : ℝ) + (2 * n + 2) + 1)
+            = 1 - 1 / ((j : ℝ) + (2 * n + 2) + 1) := by field_simp; ring
+        have h2u : 2 / ((j : ℝ) + (2 * n + 2) + 1)
+            = 2 * (1 / ((j : ℝ) + (2 * n + 2) + 1)) := by ring
+        rw [hu]
+        nlinarith [sq_nonneg (1 / ((j : ℝ) + (2 * n + 2) + 1)), h2le, h2u]
+      rw [← div_le_iff₀ (c_pos q n j)]
+      calc c q n (j + 1) / c q n j ≤ (1 + 3 / (2 * (n : ℝ))) * f q ((j : ℝ) / n) ^ 2 := hub
+        _ ≤ (1 + 3 / (2 * (n : ℝ))) * M ^ 2 := mul_le_mul_of_nonneg_left hf2le (by positivity)
+        _ ≤ 1 - δ := hbd
+        _ ≤ _ := hRHSge
 
 /-! ### Analytic cores for `chat` -/
 

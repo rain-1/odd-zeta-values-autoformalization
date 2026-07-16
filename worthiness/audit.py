@@ -104,7 +104,11 @@ def recover_p(a, n, dps=None, maxcoeff_digits=None):
     if maxcoeff_digits is None:
         maxcoeff_digits = 2 * height_digits + 20
     mp.dps = dps
-    J = j_numeric(a, n, dps)
+    try:
+        from fast_eval import fast_j
+        J = fast_j(a, n, dps)
+    except ImportError:
+        J = j_numeric(a, n, dps)
     z2, z3, z5 = zeta(2), zeta(3), zeta(5)
     x = (2 * Q * z5 + 4 * Q * z3 * z2 - J) / 2   # = P + 2 Phat z2
     rel = pslq([x, mpf(1), z2], maxcoeff=10 ** (maxcoeff_digits or dps // 3),

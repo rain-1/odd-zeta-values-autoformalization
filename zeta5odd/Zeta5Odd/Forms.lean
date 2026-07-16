@@ -698,6 +698,211 @@ theorem partialFraction_exists (n : ℕ) :
   intro i hi k hk
   exact hb i hi k hk
 
+/-! ### Analytic helpers for Lemma 3 (e07/e08 assembly) -/
+
+/-- **Even column totals vanish** (paper Lemma 3, the `Σ_k a_{i,k} = 0` for even `i`):
+from the well-poised symmetry `a_{i,k} = (−1)^{i−1} a_{i,n−k}`, reflecting the `k`-sum
+gives `Σ_k a_{i,k} = (−1)^{i−1} Σ_k a_{i,k}`, so for even `i` the total is its own
+negative, hence `0`. -/
+private lemma column_even_zero (n i : ℕ) (a : ℕ → ℕ → ℝ)
+    (hsym : ∀ i ∈ Finset.Icc 1 33, ∀ k ∈ Finset.range (n + 1),
+        a i k = (-1) ^ (i - 1) * a i (n - k))
+    (hi : i ∈ Finset.Icc 1 33) (hev : Even i) :
+    ∑ k ∈ Finset.range (n + 1), a i k = 0 := by
+  have hrefl : ∑ k ∈ Finset.range (n + 1), a i (n - k)
+      = ∑ k ∈ Finset.range (n + 1), a i k :=
+    Finset.sum_range_reflect (fun k => a i k) (n + 1)
+  have hsign : ((-1 : ℝ)) ^ (i - 1) = -1 := by
+    have hi1 : 1 ≤ i := (Finset.mem_Icc.mp hi).1
+    have hodd : Odd (i - 1) := Nat.Even.sub_odd hi1 hev (by norm_num)
+    exact hodd.neg_one_pow
+  have hkey : ∑ k ∈ Finset.range (n + 1), a i k
+      = (-1) ^ (i - 1) * ∑ k ∈ Finset.range (n + 1), a i (n - k) := by
+    rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro k hk
+    exact hsym i hi k hk
+  rw [hrefl, hsign, neg_one_mul] at hkey
+  linarith [hkey]
+
+/-- Summability of the base ζ-series `g m = 1/(m+1)^i` for `i ≥ 2`. -/
+private lemma summable_zeta_base (i : ℕ) (hi : 2 ≤ i) :
+    Summable (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1) ^ i) := by
+  have h0 : Summable (fun m : ℕ => (1 : ℝ) / (m : ℝ) ^ i) :=
+    Real.summable_one_div_nat_pow.mpr hi
+  refine ((summable_nat_add_iff 1).mpr h0).congr (fun k => ?_)
+  push_cast; ring
+
+/-- **Tail-to-ζ identity** (paper e07): for `i ≥ 2` and `c ≥ 1`, the shifted tail
+`Σ'_{m} 1/(m+c)^i` equals `ζ(i)` minus its first `c−1` terms. -/
+private lemma tsum_shift_zeta (c i : ℕ) (hc : 1 ≤ c) (hi : 2 ≤ i) :
+    ∑' m : ℕ, (1 : ℝ) / ((m : ℝ) + (c : ℝ)) ^ i
+      = zetaVal i - ∑ ℓ ∈ Finset.Icc 1 (c - 1), (1 : ℝ) / (ℓ : ℝ) ^ i := by
+  have hg := summable_zeta_base i hi
+  -- Split `ζ(i)` into its first `c−1` terms and the shifted tail.
+  have hsplit := hg.sum_add_tsum_nat_add (c - 1)
+  -- Identify the shifted tail with our target series.
+  have htail : (∑' m : ℕ, (1 : ℝ) / (((m + (c - 1) : ℕ) : ℝ) + 1) ^ i)
+      = ∑' m : ℕ, (1 : ℝ) / ((m : ℝ) + (c : ℝ)) ^ i := by
+    apply tsum_congr
+    intro m
+    have : ((m + (c - 1) : ℕ) : ℝ) + 1 = (m : ℝ) + (c : ℝ) := by
+      rw [Nat.cast_add, Nat.cast_sub hc]; push_cast; ring
+    rw [this]
+  -- Reindex the finite head from `range (c-1)` to `Icc 1 (c-1)`.
+  have hfin : (∑ ℓ ∈ Finset.Icc 1 (c - 1), (1 : ℝ) / (ℓ : ℝ) ^ i)
+      = ∑ j ∈ Finset.range (c - 1), (1 : ℝ) / ((j : ℝ) + 1) ^ i := by
+    rw [show Finset.Icc 1 (c - 1) = Finset.Ico 1 c from by
+          ext x; rw [Finset.mem_Icc, Finset.mem_Ico]; omega,
+      Finset.sum_Ico_eq_sum_range]
+    apply Finset.sum_congr rfl
+    intro j _
+    push_cast
+    ring
+  -- Assemble.  `hsplit : head + tail = ∑' g = zetaVal i`.
+  have hz : (∑ j ∈ Finset.range (c - 1), (1 : ℝ) / ((j : ℝ) + 1) ^ i)
+      + (∑' m : ℕ, (1 : ℝ) / ((m : ℝ) + (c : ℝ)) ^ i) = zetaVal i := by
+    rw [zetaVal, ← htail]; exact hsplit
+  rw [hfin]
+  linarith [hz]
+
+/-- Antitonicity and decay of `m ↦ 1/(m+a)` for `a > 0`. -/
+private lemma antitone_tendsto_one_div (a : ℝ) (ha : 0 < a) :
+    Antitone (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + a)) ∧
+      Filter.Tendsto (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + a)) Filter.atTop (nhds 0) := by
+  refine ⟨?_, ?_⟩
+  · intro p q hpq
+    have hpq' : (p : ℝ) ≤ (q : ℝ) := by exact_mod_cast hpq
+    have hp : (0 : ℝ) ≤ (p : ℝ) := Nat.cast_nonneg p
+    exact one_div_le_one_div_of_le (by linarith) (by linarith)
+  · have hd : Filter.Tendsto (fun m : ℕ => (m : ℝ) + a) Filter.atTop Filter.atTop :=
+      Filter.tendsto_atTop_add_const_right _ a tendsto_natCast_atTop_atTop
+    have h0 : Filter.Tendsto (fun m : ℕ => ((m : ℝ) + a)⁻¹) Filter.atTop (nhds 0) :=
+      tendsto_inv_atTop_zero.comp hd
+    simpa only [one_div] using h0
+
+/-- **Telescoping tsum**: for antitone `w → 0`, `Σ'_m (w m − w (m+1)) = w 0`. -/
+private lemma tsum_telescope_nonneg (w : ℕ → ℝ)
+    (hanti : Antitone w) (hw : Filter.Tendsto w Filter.atTop (nhds 0)) :
+    Summable (fun m => w m - w (m + 1)) ∧ ∑' m, (w m - w (m + 1)) = w 0 := by
+  have hwnn : ∀ n, 0 ≤ w n := hanti.le_of_tendsto hw
+  have hnn : ∀ m, 0 ≤ w m - w (m + 1) := fun m => sub_nonneg.mpr (hanti (Nat.le_succ m))
+  have hpart : ∀ M, ∑ m ∈ Finset.range M, (w m - w (m + 1)) = w 0 - w M :=
+    fun M => Finset.sum_range_sub' w M
+  have hsum : Summable (fun m => w m - w (m + 1)) := by
+    apply summable_of_sum_range_le hnn
+    intro M; rw [hpart]; linarith [hwnn M]
+  refine ⟨hsum, ?_⟩
+  have h1 := hsum.hasSum.tendsto_sum_nat
+  have h2 : Filter.Tendsto (fun M => ∑ m ∈ Finset.range M, (w m - w (m + 1)))
+      Filter.atTop (nhds (w 0)) := by
+    simp_rw [hpart]
+    simpa using hw.const_sub (w 0)
+  exact tendsto_nhds_unique h1 h2
+
+/-- **Harmonic telescoping** (paper e07, `i = 1` column): the divergent tails cancel to a
+finite harmonic number.  Used with `Σ_k a_{1,k} = 0` for the `i = 1` residue. -/
+private lemma tsum_harmonic (k : ℕ) :
+    ∑' m : ℕ, ((1 : ℝ) / ((m : ℝ) + 1 + (k : ℝ)) - 1 / ((m : ℝ) + 1))
+      = -∑ ℓ ∈ Finset.Icc 1 k, (1 : ℝ) / (ℓ : ℝ) := by
+  -- Per-column telescoping pieces `e j m = wj (m+1) − wj m`, `wj m = 1/(m + (j+1))`.
+  have hej : ∀ j : ℕ,
+      Summable (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 2)) - 1 / ((m : ℝ) + ((j : ℝ) + 1)))
+      ∧ (∑' m : ℕ, ((1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 2)) - 1 / ((m : ℝ) + ((j : ℝ) + 1))))
+          = -(1 / ((j : ℝ) + 1)) := by
+    intro j
+    obtain ⟨hanti, htend⟩ := antitone_tendsto_one_div ((j : ℝ) + 1) (by positivity)
+    obtain ⟨hs, hval⟩ := tsum_telescope_nonneg (fun m => (1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 1)))
+      hanti htend
+    -- `wj (m+1) - wj m = (1/(m+(j+2)) - 1/(m+(j+1)))`.
+    have hcongr : ∀ m : ℕ,
+        (1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 2)) - 1 / ((m : ℝ) + ((j : ℝ) + 1))
+          = -((1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 1)) - 1 / (((m + 1 : ℕ) : ℝ) + ((j : ℝ) + 1))) := by
+      intro m; push_cast; ring
+    constructor
+    · exact (hs.neg).congr (fun m => (hcongr m).symm)
+    · rw [tsum_congr hcongr, tsum_neg, hval]; simp
+  -- Assemble via a finite telescoping over `j ∈ range k`.
+  have hpt : ∀ m : ℕ,
+      (1 : ℝ) / ((m : ℝ) + 1 + (k : ℝ)) - 1 / ((m : ℝ) + 1)
+        = ∑ j ∈ Finset.range k,
+            ((1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 2)) - 1 / ((m : ℝ) + ((j : ℝ) + 1))) := by
+    intro m
+    have hstep : ∀ K : ℕ,
+        (∑ j ∈ Finset.range K,
+            ((1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 2)) - 1 / ((m : ℝ) + ((j : ℝ) + 1))))
+          = (1 : ℝ) / ((m : ℝ) + ((K : ℝ) + 1)) - 1 / ((m : ℝ) + 1) := by
+      intro K
+      induction K with
+      | zero => simp
+      | succ K ih => rw [Finset.sum_range_succ, ih]; push_cast; ring
+    rw [hstep k]; ring
+  rw [tsum_congr hpt]
+  rw [Summable.tsum_finsetSum (fun j _ => (hej j).1)]
+  have hval2 : ∀ j ∈ Finset.range k,
+      (∑' m : ℕ, ((1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 2)) - 1 / ((m : ℝ) + ((j : ℝ) + 1))))
+        = -(1 / ((j : ℝ) + 1)) := fun j _ => (hej j).2
+  rw [Finset.sum_congr rfl hval2]
+  rw [Finset.sum_neg_distrib]
+  congr 1
+  -- `∑_{j<k} 1/(j+1) = ∑_{ℓ∈Icc 1 k} 1/ℓ`.
+  rw [show Finset.Icc 1 k = Finset.Ico 1 (k + 1) from by
+        ext x; rw [Finset.mem_Icc, Finset.mem_Ico]; omega,
+    Finset.sum_Ico_eq_sum_range]
+  apply Finset.sum_congr rfl
+  intro j _
+  push_cast; ring
+
+/-- Summability of a finite sum of summable series. -/
+private lemma summable_finset_sum (s : Finset ℕ) (f : ℕ → ℕ → ℝ)
+    (hf : ∀ i ∈ s, Summable (fun m => f i m)) :
+    Summable (fun m => ∑ i ∈ s, f i m) := by
+  classical
+  revert hf
+  induction s using Finset.induction_on with
+  | empty => intro _; simp
+  | @insert a s ha ih =>
+    intro hf
+    simp only [Finset.sum_insert ha]
+    exact (hf a (Finset.mem_insert_self a s)).add
+      (ih (fun i hi => hf i (Finset.mem_insert_of_mem hi)))
+
+/-- Summability of the shifted power series `1/(m+c)^i` for `i ≥ 2`, `c ≥ 1`. -/
+private lemma summable_shift_pow (c i : ℕ) (hc : 1 ≤ c) (hi : 2 ≤ i) :
+    Summable (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + (c : ℝ)) ^ i) := by
+  have h := (summable_nat_add_iff (c - 1)).2 (summable_zeta_base i hi)
+  refine h.congr (fun m => ?_)
+  rw [show (((m + (c - 1) : ℕ) : ℝ) + 1) = (m : ℝ) + (c : ℝ) from by
+    rw [Nat.cast_add, Nat.cast_sub hc]; push_cast; ring]
+
+/-- Summability of the telescoping column difference. -/
+private lemma summable_telescope_col (j : ℕ) :
+    Summable (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 2)) - 1 / ((m : ℝ) + ((j : ℝ) + 1))) := by
+  obtain ⟨hanti, htend⟩ := antitone_tendsto_one_div ((j : ℝ) + 1) (by positivity)
+  obtain ⟨hs, _⟩ := tsum_telescope_nonneg (fun m => (1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 1)))
+    hanti htend
+  refine (hs.neg).congr (fun m => ?_)
+  push_cast; ring
+
+/-- Summability of the `i = 1` harmonic difference `1/(m+1+k) − 1/(m+1)`. -/
+private lemma summable_harmonic_diff (k : ℕ) :
+    Summable (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1 + (k : ℝ)) - 1 / ((m : ℝ) + 1)) := by
+  have hpt : (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1 + (k : ℝ)) - 1 / ((m : ℝ) + 1))
+      = (fun m : ℕ => ∑ j ∈ Finset.range k,
+          ((1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 2)) - 1 / ((m : ℝ) + ((j : ℝ) + 1)))) := by
+    funext m
+    have hstep : ∀ K : ℕ,
+        (∑ j ∈ Finset.range K,
+            ((1 : ℝ) / ((m : ℝ) + ((j : ℝ) + 2)) - 1 / ((m : ℝ) + ((j : ℝ) + 1))))
+          = (1 : ℝ) / ((m : ℝ) + ((K : ℝ) + 1)) - 1 / ((m : ℝ) + 1) := by
+      intro K
+      induction K with
+      | zero => simp
+      | succ K ih => rw [Finset.sum_range_succ, ih]; push_cast; ring
+    rw [hstep k]; ring
+  rw [hpt]
+  exact summable_finset_sum (Finset.range k) _ (fun j _ => summable_telescope_col j)
+
 /-! ### Lemma 3: the ζ-representations of `r_n` and `r̂_n` (paper e07, e08)
 
 Multiplying the paper's e07/e08 through by `d_n^{33}` and using

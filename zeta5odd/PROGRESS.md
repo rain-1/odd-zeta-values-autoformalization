@@ -26,11 +26,14 @@ Public API (all in `namespace Zeta5Odd`, parametrized by `q`, with `s = 2q-1`, `
 ## MODULE MAP (remaining work)
 | module | target | status |
 |---|---|---|
-| `ZetaValues.lean` | `zetaVal j := ∑' n, 1/(n+1)^j`, `oddIdx = {5,7,…,33}`, `exists_common_denom` | scaffold+sorry |
-| `Forms.lean` | `elim_integer n : ∃ A A0:ℤ, d_n^33·(7r−r̂) = Σ_{j∈oddIdx} A_j ζ(j) + A0` (Lemmas 1–3 + ζ(3)-elim) | scaffold+sorry |
-| `DnBound.lean` | `lcmUpto_le_three_pow n : (lcmUpto n : ℝ) ≤ 3^n` (Hanson) | scaffold+sorry |
-| `Numeric.lean` | `g_small : ∀ x, 0<x → f 17 x = 1 → 3^33·g 17 x < 1` | scaffold+sorry |
-| `Main.lean` | `zeta_odd_irrational : ∃ j ∈ oddIdx, Irrational (zetaVal j)` | assembly, reduces to above |
+| `ZetaValues.lean` | `zetaVal`, `oddIdx = {5,7,…,33}`, `exists_common_denom` | **DONE (sorry-free)** |
+| `Main.lean` | `zeta_odd_irrational : ∃ j ∈ oddIdx, Irrational (zetaVal j)`; root-test endgame; `tendsto_seven_root` | **DONE (sorry-free)** — reduces to the 3 lemmas below |
+| `Forms.lean` | `elim_integer n : ∃ A A0:ℤ, d_n^33·(7r−r̂) = Σ_{j∈oddIdx} A_j ζ(j) + A0` (Lemmas 1–3 + ζ(3)-elim) | sorry — worker running |
+| `DnBound.lean` | `lcmUpto_le_three_pow n : (lcmUpto n : ℝ) ≤ 3^n` (Hanson) | sorry — worker running |
+| `Numeric.lean` | `g_small : ∀ x, 0<x → f 17 x = 1 → 3^33·g 17 x < 1` | sorry — worker running |
+
+Full build GREEN. Exactly 3 sorries remain, all at clean interface targets, each assigned to an Opus worker.
+Glue lemmas `tendsto_seven_root` (Main) and `exists_common_denom` (ZetaValues) proven & verified.
 
 ## Key interface identity (why `elim_integer` is exactly right)
 ζ(j)-coeff of `r` is `a_j`; of `rhat` is `a_j(2^j−1)`. So `7r−r̂` has ζ(j)-coeff `a_j(8−2^j)`.

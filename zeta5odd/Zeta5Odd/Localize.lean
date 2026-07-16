@@ -961,6 +961,31 @@ private lemma bridge_B_recip (q j n : ℕ) :
   rw [heq] at hbern
   exact hbern
 
+/-- Far-tail telescoping bound: for `j ≥ 20qn` the exact ratio (via `c_ratio` and
+the linear-in-`q` `bridge_B_recip`) obeys the square-ratio majorant. -/
+private lemma c_ratio_far (q j n : ℕ) (hq : 4 ≤ q) (hn : 1 ≤ n) (hj : 20 * q * n ≤ j) :
+    c q n (j + 1) / c q n j
+      ≤ (((j : ℝ) + (2 * n + 2)) / ((j : ℝ) + (2 * n + 2) + 1)) ^ 2 := by
+  have hnR : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  have hjR : (0 : ℝ) ≤ j := Nat.cast_nonneg j
+  have hqR : (4 : ℝ) ≤ q := by exact_mod_cast hq
+  have hjge : 20 * (q : ℝ) * n ≤ j := by exact_mod_cast hj
+  rw [c_ratio]
+  refine le_trans (mul_le_mul_of_nonneg_left (bridge_B_recip q j n) (by positivity)) ?_
+  rw [div_mul_div_comm, div_pow, div_le_div_iff₀ (by positivity) (by positivity), ← sub_nonneg]
+  set a : ℝ := (n : ℝ) - 1 with ha_def
+  set b : ℝ := (q : ℝ) - 4 with hb_def
+  set s : ℝ := (j : ℝ) - 20 * (q : ℝ) * (n : ℝ) with hs_def
+  have ha : 0 ≤ a := by rw [ha_def]; linarith
+  have hb : 0 ≤ b := by rw [hb_def]; linarith
+  have hs : 0 ≤ s := by rw [hs_def]; linarith
+  have hn_eq : (n : ℝ) = a + 1 := by rw [ha_def]; ring
+  have hq_eq : (q : ℝ) = b + 4 := by rw [hb_def]; ring
+  have hj_eq : (j : ℝ) = s + 20 * (b + 4) * (a + 1) := by rw [hs_def, ha_def, hb_def]; ring
+  rw [hn_eq, hq_eq, hj_eq]
+  ring_nf
+  positivity
+
 /-- Upper margins for `c`: a `1 - δ` middle margin on `[(x₀+ε/2)n, (x₀+ε)n]`
 and the telescoping square-ratio majorant above `(x₀+ε/2)n`.
 

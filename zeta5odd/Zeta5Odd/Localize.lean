@@ -490,10 +490,30 @@ private lemma localize_general
       rw [hS n]; exact (hsum n).tsum_pos (fun k => (hpos n k).le) 0 (hpos n 0)
     exact div_nonneg (tsum_nonneg (fun x => (hpos n x).le)) hSpos.le)) hbound htendsto
 
-/-! ### Analytic cores for `c` (term ratio ≈ f(k/n)²) -/
+/-! ### Analytic cores for `c` (term ratio ≈ f(k/n)²)
 
-/-- Lower geometric margin for `c`: below `(x₀ - ε/2)·n` the term ratio exceeds
-`1 + δ`.  (From `c_ratio` compared with `f(k/n)² > 1` on `(0, x₀)`.) -/
+These four `sorry`s are the *only* remaining gaps.  Each reduces, via the exact
+identity `c_ratio` (and `chat`'s analogue), to a bound on the term ratio
+`ρ(j,n) := c q n (j+1) / c q n j
+   = (6n+2j+4)(6n+2j+3)/((2j+3)(2j+2)) · ((n+j+1)/(2n+j+2))^(2q)`,
+which tends to `f(j/n)²` as `n → ∞` (uniformly on `j/n` in compact subsets of
+`(0,∞)`).  Two analytic inputs are needed:
+
+* **Profile shape** (reproduce from `Basic.existsUnique_x0`'s internal `L`,`N`
+  machinery): `f q x > 1` for `0 < x < x₀` and `f q x < 1` for `x > x₀`
+  (here `x₀` is *the* unique positive crossing by `existsUnique_x0` + `hfx₀`).
+* **Ratio ≈ profile²**: `ρ(j,n) = f(j/n)²·(1 + O(1/n))` with the `O(1/n)`
+  uniform on `j/n ∈ [x_min, x_max]` (bounded away from `0`).  For the far-tail
+  telescoping bound the exponent `2q ≥ 8` and `q ≥ 4` are what make the `B`-power
+  decay beat the `A`-growth so that `ρ ≤ ((j+2n+2)/(j+2n+3))²` above `(x₀+ε/2)n`.
+
+The lower core gives a uniform *constant* margin (min of `f²` on `(0,x₀-ε/2]`);
+the upper core gives both a constant margin on `[(x₀+ε/2)n,(x₀+ε)n]` and the
+telescoping square-ratio majorant that controls `k ≫ n` where the margin decays. -/
+
+/-- Lower geometric margin for `c`: below `(x₀ - ε/2)·n` the term ratio
+`c(j+1)/c(j)` (given exactly by `c_ratio`) exceeds `1 + δ`, because
+`f(j/n)² ≥ f(x₀-ε/2)² > 1` on `(0, x₀)` and `ρ → f²`. -/
 private lemma c_lower_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :
     ∃ δ : ℝ, 0 < δ ∧ ∀ᶠ n : ℕ in atTop, ∀ j : ℕ,

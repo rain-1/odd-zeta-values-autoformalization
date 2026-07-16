@@ -938,6 +938,29 @@ private lemma bernoulli_recip {t : ℝ} (ht0 : 0 ≤ t) (ht1 : t < 1) (m : ℕ) 
         mul_le_mul_of_nonneg_left hchain hpm.le
     _ = 1 := by field_simp
 
+/-- Reciprocal bridge for the `B`-part: `((n+j+1)/(2n+j+2))^{2q} ≤
+(2n+j+2)/((2n+j+2)+2q(n+1))` (now `q` is linear). -/
+private lemma bridge_B_recip (q j n : ℕ) :
+    (((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ)) ^ (2 * q)
+      ≤ (2 * (n : ℝ) + j + 2) / ((2 * (n : ℝ) + j + 2) + 2 * q * (n + 1)) := by
+  have hd : (0 : ℝ) < 2 * (n : ℝ) + j + 2 := by positivity
+  have hdne : (2 * (n : ℝ) + j + 2) ≠ 0 := ne_of_gt hd
+  set t : ℝ := ((n : ℝ) + 1) / (2 * (n : ℝ) + j + 2) with ht
+  have ht0 : 0 ≤ t := by rw [ht]; positivity
+  have ht1 : t < 1 := by
+    rw [ht, div_lt_one hd]
+    linarith [(Nat.cast_nonneg j : (0:ℝ) ≤ j), (Nat.cast_nonneg n : (0:ℝ) ≤ n)]
+  have hbase : (((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ)) = 1 - t := by
+    rw [ht]; push_cast; field_simp; ring
+  rw [hbase]
+  have hbern := bernoulli_recip ht0 ht1 (2 * q)
+  push_cast at hbern
+  have heq : (1 : ℝ) / (1 + 2 * (q : ℝ) * t)
+      = (2 * (n : ℝ) + j + 2) / ((2 * (n : ℝ) + j + 2) + 2 * q * (n + 1)) := by
+    rw [ht]; field_simp
+  rw [heq] at hbern
+  exact hbern
+
 /-- Upper margins for `c`: a `1 - δ` middle margin on `[(x₀+ε/2)n, (x₀+ε)n]`
 and the telescoping square-ratio majorant above `(x₀+ε/2)n`.
 

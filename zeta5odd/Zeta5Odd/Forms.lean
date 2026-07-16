@@ -469,6 +469,7 @@ private theorem pf_decomp (n : ℕ) :
           ∃ z : ℤ, (Nat.lcmUpto n : ℝ) ^ (33 - i) * a i k = z) := by
   sorry
 
+open Filter Topology in
 /-- **Uniqueness of the (e04) partial-fraction coefficients.**  [Proof is `sorry`.]
 Two coefficient arrays inducing the same value off the `n+1` poles agree on the grid
 `1 ≤ i ≤ 33`, `0 ≤ k ≤ n`.  (Clear denominators: the difference is a polynomial of degree
@@ -480,7 +481,151 @@ private theorem pf_unique (n : ℕ) (a b : ℕ → ℕ → ℝ)
         ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), a i k / (t + (k : ℝ)) ^ i
           = ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), b i k / (t + (k : ℝ)) ^ i) :
     ∀ i ∈ Finset.Icc 1 33, ∀ k ∈ Finset.range (n + 1), a i k = b i k := by
-  sorry
+  classical
+  set d : ℕ → ℕ → ℝ := fun i k => a i k - b i k with hd
+  -- The difference of coefficient arrays vanishes off the poles.
+  have hS : ∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
+      ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), d i k / (t + (k : ℝ)) ^ i = 0 := by
+    intro t ht
+    have hh := h t ht
+    have hrw : ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), d i k / (t + (k:ℝ))^i
+        = (∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), a i k / (t + (k:ℝ))^i)
+          - (∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), b i k / (t + (k:ℝ))^i) := by
+      rw [← Finset.sum_sub_distrib]
+      apply Finset.sum_congr rfl; intro i _
+      rw [← Finset.sum_sub_distrib]
+      apply Finset.sum_congr rfl; intro k _
+      show (a i k - b i k) / (t + (k:ℝ))^i = a i k/(t+(k:ℝ))^i - b i k/(t+(k:ℝ))^i
+      rw [sub_div]
+    rw [hrw, hh, sub_self]
+  -- Reduce the goal to `d i k = 0` on the grid.
+  suffices hgoal : ∀ k₀ ∈ Finset.range (n+1), ∀ i ∈ Finset.Icc 1 33, d i k₀ = 0 by
+    intro i hi k hk
+    have h0 : a i k - b i k = 0 := hgoal k hk i hi
+    linarith
+  intro k₀ hk₀
+  haveI : (𝓝[≠] (-(k₀:ℝ))).NeBot := inferInstance
+  -- Near `-k₀`, all the poles `-k'` are eventually avoided.
+  have hpole : ∀ᶠ t in 𝓝[≠] (-(k₀:ℝ)), ∀ k' ∈ Finset.range (n+1), t + (k':ℝ) ≠ 0 := by
+    rw [Finset.eventually_all]
+    intro k' _
+    by_cases hcase : k' = k₀
+    · subst hcase
+      filter_upwards [self_mem_nhdsWithin] with t ht
+      simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at ht
+      intro hc; apply ht; linarith
+    · have hne : (-(k₀:ℝ)) + (k':ℝ) ≠ 0 := by
+        have hcast : (k':ℝ) ≠ (k₀:ℝ) := by exact_mod_cast hcase
+        intro hc; apply hcast; linarith
+      have hcont : ContinuousAt (fun t : ℝ => t + (k':ℝ)) (-(k₀:ℝ)) := by fun_prop
+      have hev := hcont.eventually_ne
+        (show (fun t : ℝ => t + (k':ℝ)) (-(k₀:ℝ)) ≠ 0 by simpa using hne)
+      exact nhdsWithin_le_nhds hev
+  -- Peeling step: extract the leading coefficient `a_{P,k₀}` once the higher ones vanish.
+  have leading : ∀ P : ℕ, 1 ≤ P → P ≤ 33 →
+      (∀ j, P < j → j ≤ 33 → d j k₀ = 0) → d P k₀ = 0 := by
+    intro P hP1 hP33 hyp
+    set lim : ℕ → ℕ → ℝ := fun i k => if i = P ∧ k = k₀ then d P k₀ else 0 with hlim
+    -- (A) The scaled sum `(t+k₀)^P · S(t)` is eventually zero near `-k₀`.
+    have factA : Tendsto (fun t : ℝ => ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n+1),
+          d i k * (t+(k₀:ℝ))^P/(t+(k:ℝ))^i) (𝓝[≠] (-(k₀:ℝ))) (𝓝 0) := by
+      have hgz : (fun t : ℝ => ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n+1),
+            d i k * (t+(k₀:ℝ))^P/(t+(k:ℝ))^i) =ᶠ[𝓝[≠] (-(k₀:ℝ))] (fun _ => 0) := by
+        filter_upwards [hpole] with t htp
+        have hmul : ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n+1),
+              d i k * (t+(k₀:ℝ))^P/(t+(k:ℝ))^i
+            = (t+(k₀:ℝ))^P * ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n+1),
+              d i k/(t+(k:ℝ))^i := by
+          rw [Finset.mul_sum]
+          apply Finset.sum_congr rfl; intro i _
+          rw [Finset.mul_sum]
+          apply Finset.sum_congr rfl; intro k _
+          ring
+        rw [hmul, hS t htp, mul_zero]
+      exact Filter.Tendsto.congr' hgz.symm tendsto_const_nhds
+    -- (B) Termwise, the same scaled sum tends to `d_{P,k₀}`.
+    have hlimsum : (∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n+1), lim i k) = d P k₀ := by
+      rw [Finset.sum_eq_single_of_mem P (Finset.mem_Icc.mpr ⟨hP1, hP33⟩)
+        (fun i _ hine => Finset.sum_eq_zero (fun k _ => by
+          simp only [hlim, if_neg (show ¬(i = P ∧ k = k₀) from fun hc => hine hc.1)]))]
+      rw [Finset.sum_eq_single_of_mem k₀ hk₀
+        (fun k _ hkne => by
+          simp only [hlim, if_neg (show ¬(P = P ∧ k = k₀) from fun hc => hkne hc.2)])]
+      simp only [hlim, if_pos (show P = P ∧ k₀ = k₀ from ⟨rfl, rfl⟩)]
+    have factB : Tendsto (fun t : ℝ => ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n+1),
+          d i k * (t+(k₀:ℝ))^P/(t+(k:ℝ))^i) (𝓝[≠] (-(k₀:ℝ))) (𝓝 (d P k₀)) := by
+      rw [← hlimsum]
+      apply tendsto_finsetSum
+      intro i hi
+      apply tendsto_finsetSum
+      intro k _
+      by_cases hkk : k = k₀
+      · subst k
+        by_cases hiP : i ≤ P
+        · -- power collapses to `(t+k₀)^(P-i)`
+          have heq : (fun t : ℝ => d i k₀ * (t+(k₀:ℝ))^P/(t+(k₀:ℝ))^i)
+                   =ᶠ[𝓝[≠] (-(k₀:ℝ))] (fun t : ℝ => d i k₀ * (t+(k₀:ℝ))^(P-i)) := by
+            filter_upwards [self_mem_nhdsWithin] with t ht
+            simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at ht
+            have htk : t + (k₀:ℝ) ≠ 0 := by intro hc; apply ht; linarith
+            rw [mul_div_assoc, div_eq_mul_inv, ← pow_sub₀ _ htk hiP]
+          have hlimval : lim i k₀ = d i k₀ * (0:ℝ)^(P-i) := by
+            rcases eq_or_lt_of_le hiP with hEq | hLt
+            · rw [hEq]
+              simp only [hlim, if_pos (show P = P ∧ k₀ = k₀ from ⟨rfl, rfl⟩),
+                Nat.sub_self, pow_zero, mul_one]
+            · simp only [hlim,
+                if_neg (show ¬(i = P ∧ k₀ = k₀) from fun hc => absurd hc.1 (by omega)),
+                zero_pow (show P - i ≠ 0 by omega), mul_zero]
+          rw [hlimval]
+          refine Filter.Tendsto.congr' heq.symm ?_
+          apply Tendsto.mono_left _ nhdsWithin_le_nhds
+          have hc : ContinuousAt (fun t : ℝ => d i k₀ * (t+(k₀:ℝ))^(P-i)) (-(k₀:ℝ)) := by fun_prop
+          simpa only [show (-(k₀:ℝ)) + (k₀:ℝ) = 0 from by ring] using hc.tendsto
+        · -- `i > P`: the coefficient already vanishes by the inductive hypothesis
+          push_neg at hiP
+          have hd0 : d i k₀ = 0 := hyp i hiP (Finset.mem_Icc.mp hi).2
+          have hlimval : lim i k₀ = 0 := by
+            simp only [hlim,
+              if_neg (show ¬(i = P ∧ k₀ = k₀) from fun hc => absurd hc.1 (by omega))]
+          have hfun : (fun t : ℝ => d i k₀ * (t+(k₀:ℝ))^P/(t+(k₀:ℝ))^i) = (fun _ => (0:ℝ)) := by
+            funext t; rw [hd0]; ring
+          rw [hlimval, hfun]
+          exact tendsto_const_nhds
+      · -- `k ≠ k₀`: the summand is continuous at `-k₀` with value `0`
+        have hlimval : lim i k = 0 := by
+          simp only [hlim, if_neg (show ¬(i = P ∧ k = k₀) from fun hc => hkk hc.2)]
+        rw [hlimval]
+        apply Tendsto.mono_left _ nhdsWithin_le_nhds
+        have hval0 : (-(k₀:ℝ)) + (k:ℝ) ≠ 0 := by
+          have hcast : (k:ℝ) ≠ (k₀:ℝ) := by exact_mod_cast hkk
+          intro hc; apply hcast; linarith
+        have hcont : ContinuousAt (fun t : ℝ => d i k * (t+(k₀:ℝ))^P/(t+(k:ℝ))^i) (-(k₀:ℝ)) :=
+          ContinuousAt.div (by fun_prop) (by fun_prop) (by simpa using pow_ne_zero i hval0)
+        simpa only [show (-(k₀:ℝ)) + (k₀:ℝ) = 0 from by ring,
+          zero_pow (show P ≠ 0 by omega), mul_zero, zero_div] using hcont.tendsto
+    have huniq := tendsto_nhds_unique factA factB
+    exact huniq.symm
+  -- Downward induction: peel coefficients `i = 33, 32, …, 1`.
+  have peel : ∀ m : ℕ, ∀ i : ℕ, 1 ≤ i → 33 - m ≤ i → i ≤ 33 → d i k₀ = 0 := by
+    intro m
+    induction m with
+    | zero =>
+      intro i h1 hle h33
+      have hi33 : i = 33 := by omega
+      subst hi33
+      exact leading 33 (by norm_num) (le_refl 33) (fun j hj hj33 => absurd hj33 (by omega))
+    | succ m ih =>
+      intro i h1 hle h33
+      rcases Nat.lt_or_ge i (33 - m) with hcase | hcase
+      · have hiP : i = 33 - (m+1) := by omega
+        subst hiP
+        exact leading (33 - (m+1)) h1 (by omega)
+          (fun j hj hj33 => ih j (by omega) (by omega) hj33)
+      · exact ih i h1 hcase h33
+  intro i hi
+  rw [Finset.mem_Icc] at hi
+  exact peel 32 i hi.1 (by omega) hi.2
 
 /-- **Partial-fraction data (paper e04 + Lemmas 1–2).**
 There is a coefficient array `a : (i,k) ↦ a_{i,k}` (`1 ≤ i ≤ s = 33`, `0 ≤ k ≤ n`) with:

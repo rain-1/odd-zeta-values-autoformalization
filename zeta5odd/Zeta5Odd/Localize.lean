@@ -141,6 +141,138 @@ private lemma tail_decomp {u : ℕ → ℝ} (hsum : Summable u)
   rw [Finset.mem_range, Nat.lt_ceil] at hk
   exact Set.indicator_of_mem (show k ∈ {k : ℕ | (k : ℝ) < a} from hk) u
 
+/-- Lower (finite) tail bound: geometric growth `≥ 1+δ` up to index `Nlo + D`
+makes the finite head `∑_{k<Nlo} u k` at most `Nlo · (1+δ)^{-(D+1)} · u_{Nlo+D}`. -/
+private lemma lower_tail_le {u : ℕ → ℝ} (hpos : ∀ k, 0 < u k)
+    {δ A : ℝ} (hδ : 0 < δ)
+    (hstep : ∀ j : ℕ, (j : ℝ) ≤ A → (1 + δ) * u j ≤ u (j + 1))
+    (Nlo D : ℕ) (hAbd : ((Nlo + D : ℕ) : ℝ) - 1 ≤ A) :
+    (∑ k ∈ Finset.range Nlo, u k)
+      ≤ (Nlo : ℝ) * ((1 + δ)⁻¹) ^ (D + 1) * u (Nlo + D) := by
+  set mlo := Nlo + D with hmlo
+  set β : ℝ := (1 + δ)⁻¹ with hβ
+  have hδ1 : (0 : ℝ) < 1 + δ := by linarith
+  have hβpos : 0 < β := by rw [hβ]; positivity
+  have hβ1 : β ≤ 1 := by rw [hβ]; exact (inv_le_one₀ hδ1).mpr (by linarith)
+  have hpt : ∀ k, k < Nlo → u k ≤ β ^ (D + 1) * u mlo := by
+    intro k hk
+    have hkmlo : k ≤ mlo := by omega
+    have hstep' : ∀ j, k ≤ j → j < mlo → (1 + δ) * u j ≤ u (j + 1) := by
+      intro j _ hjm
+      apply hstep
+      have hjc : (j : ℝ) ≤ (mlo : ℝ) - 1 := by
+        have : j + 1 ≤ mlo := hjm
+        have h2 := (Nat.cast_le (α := ℝ)).mpr this
+        push_cast at h2; linarith
+      have : (mlo : ℝ) - 1 ≤ A := by push_cast [hmlo] at hAbd ⊢; linarith
+      linarith
+    have hpr := pow_ratio_lower (le_of_lt hδ1) (fun j => (hpos j).le) hkmlo hstep'
+    have huk : u k ≤ u mlo / (1 + δ) ^ (mlo - k) := by
+      rw [le_div_iff₀ (by positivity)]; nlinarith [hpr]
+    calc u k ≤ u mlo / (1 + δ) ^ (mlo - k) := huk
+      _ = u mlo * ((1 + δ) ^ (mlo - k))⁻¹ := by rw [div_eq_mul_inv]
+      _ = u mlo * β ^ (mlo - k) := by rw [hβ, inv_pow]
+      _ ≤ u mlo * β ^ (D + 1) :=
+            mul_le_mul_of_nonneg_left (pow_le_pow_of_le_one hβpos.le hβ1 (by omega)) (hpos mlo).le
+      _ = β ^ (D + 1) * u mlo := by ring
+  calc (∑ k ∈ Finset.range Nlo, u k)
+      ≤ ∑ _k ∈ Finset.range Nlo, β ^ (D + 1) * u mlo :=
+        Finset.sum_le_sum (fun k hk => hpt k (Finset.mem_range.mp hk))
+    _ = (Nlo : ℝ) * β ^ (D + 1) * u mlo := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; ring
+
+/-- Upper (infinite) tail bound: the near-window `1-δ` margin plus the
+telescoping square-ratio majorant bound `∑_{k>C} u k` by
+`(K+σ)² · (∑ 1/(k+1)²) · (1-δ)^E · u_{mhi}`, where `K` is the first index
+above `C`, `mhi + E = K`. -/
+private lemma upper_tail_le {u : ℕ → ℝ} (hpos : ∀ k, 0 < u k) (hsum : Summable u)
+    {δ : ℝ} (hδ0 : 0 < δ) (hδ1 : δ < 1) {B C σ : ℝ} (hσ1 : 1 ≤ σ)
+    (hmid : ∀ j : ℕ, B ≤ (j : ℝ) → (j : ℝ) ≤ C → u (j + 1) ≤ (1 - δ) * u j)
+    (htel : ∀ j : ℕ, B ≤ (j : ℝ) →
+      u (j + 1) ≤ (((j : ℝ) + σ) / ((j : ℝ) + σ + 1)) ^ 2 * u j)
+    (K mhi E : ℕ) (hKmhi : K = mhi + E)
+    (hmhiB : B ≤ (mhi : ℝ)) (hK1C : ((K - 1 : ℕ) : ℝ) ≤ C)
+    (hKrel : ∀ k : ℕ, C < (k : ℝ) ↔ K ≤ k) :
+    (∑' k : {k : ℕ // C < (k : ℝ)}, u k)
+      ≤ ((K : ℝ) + σ) ^ 2 * (∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 2) * ((1 - δ) ^ E * u mhi) := by
+  have hσ0 : (0 : ℝ) < σ := lt_of_lt_of_le one_pos hσ1
+  set w : ℕ → ℝ := fun j => 1 / ((j : ℝ) + σ) ^ 2 with hw
+  have hwpos : ∀ j, 0 < w j := fun j => by rw [hw]; positivity
+  -- telescoping majorant on `[K, ∞)`
+  have htelstep : ∀ j, K ≤ j → u (j + 1) ≤ (w (j + 1) / w j) * u j := by
+    intro j hj
+    have hjB : B ≤ (j : ℝ) := by
+      have : (mhi : ℝ) ≤ (j : ℝ) := by exact_mod_cast (by omega : mhi ≤ j)
+      linarith
+    have hstep := htel j hjB
+    have e1 : ((j : ℝ) + σ) ≠ 0 := by positivity
+    have e2 : ((j : ℝ) + σ + 1) ≠ 0 := by positivity
+    have e3 : ((j : ℝ) + 1 + σ) ≠ 0 := by positivity
+    have hww : (((j : ℝ) + σ) / ((j : ℝ) + σ + 1)) ^ 2 = w (j + 1) / w j := by
+      simp only [hw]; push_cast; field_simp; ring
+    rwa [hww] at hstep
+  have hptmaj : ∀ k : ℕ, K ≤ k → u k ≤ (w k / w K) * u K := fun k hk =>
+    prod_ratio_upper hwpos hk (fun j hj _ => htelstep j hj)
+  -- middle margin gives `u K ≤ (1-δ)^E u mhi`
+  have hUK : u K ≤ (1 - δ) ^ E * u mhi := by
+    have hmk : mhi ≤ K := by omega
+    have hstep : ∀ j, mhi ≤ j → j < K → u (j + 1) ≤ (1 - δ) * u j := by
+      intro j hj hjK
+      apply hmid
+      · have : (mhi : ℝ) ≤ (j : ℝ) := by exact_mod_cast hj
+        linarith
+      · have hle : j ≤ K - 1 := by omega
+        have : (j : ℝ) ≤ ((K - 1 : ℕ) : ℝ) := by exact_mod_cast hle
+        linarith
+    have hpr := pow_ratio_upper (by linarith : (0 : ℝ) ≤ 1 - δ) hmk hstep
+    have hEeq : K - mhi = E := by omega
+    rwa [hEeq] at hpr
+  -- summability of the base and the majorant
+  have hS2sum : Summable (fun k : ℕ => 1 / ((k : ℝ) + 1) ^ 2) := by
+    have h0 : Summable (fun m : ℕ => 1 / (m : ℝ) ^ 2) :=
+      Real.summable_one_div_nat_pow.mpr (by norm_num)
+    refine ((summable_nat_add_iff 1).mpr h0).congr (fun k => ?_)
+    push_cast; ring
+  have hwle : ∀ k : ℕ, w k ≤ 1 / ((k : ℝ) + 1) ^ 2 := by
+    intro k; rw [hw]
+    apply one_div_le_one_div_of_le (by positivity)
+    apply pow_le_pow_left₀ (by positivity)
+    linarith
+  have hwsum : Summable w := hS2sum.of_nonneg_of_le (fun k => (hwpos k).le) hwle
+  set P : ℝ := ((K : ℝ) + σ) ^ 2 * u K with hP
+  have hwKne : ((K : ℝ) + σ) ^ 2 ≠ 0 := by positivity
+  have hmajeq : ∀ k : ℕ, (w k / w K) * u K = P * w k := by
+    intro k
+    simp only [hw, hP]; field_simp
+  have hsummaj : Summable (fun k : ℕ => P * w k) := hwsum.mul_left P
+  -- assemble the tsum bound
+  have hsubU : Summable (fun x : {k : ℕ // C < (k : ℝ)} => u ↑x) :=
+    hsum.subtype (fun k => C < (k : ℝ))
+  have hsubM : Summable (fun x : {k : ℕ // C < (k : ℝ)} => P * w ↑x) :=
+    hsummaj.subtype (fun k => C < (k : ℝ))
+  have hpwpos : 0 ≤ P := by rw [hP]; exact mul_nonneg (by positivity) (hpos K).le
+  calc (∑' k : {k : ℕ // C < (k : ℝ)}, u k)
+      ≤ ∑' k : {k : ℕ // C < (k : ℝ)}, P * w ↑k := by
+        refine hsubU.tsum_le_tsum (fun x => ?_) hsubM
+        have hKx : K ≤ (x : ℕ) := (hKrel _).mp x.2
+        rw [← hmajeq]
+        exact hptmaj _ hKx
+    _ ≤ ∑' k : ℕ, P * w k :=
+        Summable.tsum_subtype_le (fun k => P * w k) {k : ℕ | C < (k : ℝ)}
+          (fun k => by positivity) hsummaj
+    _ = P * ∑' k : ℕ, w k := by rw [tsum_mul_left]
+    _ ≤ P * ∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 2 :=
+        mul_le_mul_of_nonneg_left (hwsum.tsum_le_tsum hwle hS2sum) hpwpos
+    _ ≤ ((K : ℝ) + σ) ^ 2 * (∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 2) * ((1 - δ) ^ E * u mhi) := by
+        have hbase : 0 ≤ ((K : ℝ) + σ) ^ 2 * (∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 2) :=
+          mul_nonneg (by positivity) (tsum_nonneg (fun k => by positivity))
+        calc P * ∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 2
+            = (((K : ℝ) + σ) ^ 2 * (∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 2)) * u K := by rw [hP]; ring
+          _ ≤ (((K : ℝ) + σ) ^ 2 * (∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 2)) * ((1 - δ) ^ E * u mhi) :=
+                mul_le_mul_of_nonneg_left hUK hbase
+          _ = ((K : ℝ) + σ) ^ 2 * (∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 2) * ((1 - δ) ^ E * u mhi) := by
+                ring
+
 /-! ### Generic εn-localization
 
 An abstract positive summable family `u n` whose successive term ratio

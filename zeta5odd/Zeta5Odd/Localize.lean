@@ -108,7 +108,78 @@ private lemma tendsto_Q_geom {lam : ℝ} (hlam0 : 0 ≤ lam) (hlam1 : lam < 1)
   · exact mul_nonneg (hQpos n) (pow_nonneg hlam0 _)
   · exact mul_le_mul_of_nonneg_right (hQ n) (pow_nonneg hlam0 _)
 
-/-! ### Main theorems (to be assembled) -/
+/-! ### Generic εn-localization
+
+An abstract positive summable family `u n` whose successive term ratio
+* is `≥ 1 + δlo` below `(x₀ - ε/2)·n` (geometric growth up to the peak),
+* is `≤ 1 - δhi` on the near-upper window `[(x₀+ε/2)·n, (x₀+ε)·n]`,
+* obeys the telescoping square-ratio majorant `((j+σ)/(j+σ+1))²` above
+  `(x₀+ε/2)·n` (polynomial-with-huge-exponent decay controlling the far tail),
+has negligible tail outside the window `[(x₀-ε)n, (x₀+ε)n]`. -/
+private lemma localize_general
+    (u : ℕ → ℕ → ℝ) (S : ℕ → ℝ) (x₀ ε : ℝ) (hx₀ : 0 < x₀) (hε : 0 < ε)
+    (hpos : ∀ n k, 0 < u n k) (hsum : ∀ n, Summable (u n))
+    (hS : ∀ n, S n = ∑' k, u n k)
+    (shift : ℕ → ℝ) (hshift1 : ∀ n, 1 ≤ shift n) (hshiftbd : ∀ n, shift n ≤ 2 * (n : ℝ) + 2)
+    (δlo : ℝ) (hδlo : 0 < δlo)
+    (hlower : ∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
+        (j : ℝ) ≤ (x₀ - ε / 2) * n → (1 + δlo) * u n j ≤ u n (j + 1))
+    (δhi : ℝ) (hδhi : 0 < δhi) (hδhi1 : δhi < 1)
+    (hupperMid : ∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
+        (x₀ + ε / 2) * n ≤ (j : ℝ) → (j : ℝ) ≤ (x₀ + ε) * n → u n (j + 1) ≤ (1 - δhi) * u n j)
+    (hupperTel : ∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
+        (x₀ + ε / 2) * n ≤ (j : ℝ) →
+          u n (j + 1) ≤ (((j : ℝ) + shift n) / ((j : ℝ) + shift n + 1)) ^ 2 * u n j) :
+    Tendsto (fun n : ℕ =>
+        (∑' k : {k : ℕ // (k : ℝ) < (x₀ - ε) * n ∨ (x₀ + ε) * n < (k : ℝ)}, u n k) / S n)
+      atTop (𝓝 0) := by
+  sorry
+
+/-! ### Analytic cores for `c` (term ratio ≈ f(k/n)²) -/
+
+/-- Lower geometric margin for `c`: below `(x₀ - ε/2)·n` the term ratio exceeds
+`1 + δ`.  (From `c_ratio` compared with `f(k/n)² > 1` on `(0, x₀)`.) -/
+private lemma c_lower_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
+    (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :
+    ∃ δ : ℝ, 0 < δ ∧ ∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
+      (j : ℝ) ≤ (x₀ - ε / 2) * n → (1 + δ) * c q n j ≤ c q n (j + 1) := by
+  sorry
+
+/-- Upper margins for `c`: a `1 - δ` middle margin on `[(x₀+ε/2)n, (x₀+ε)n]`
+and the telescoping square-ratio majorant above `(x₀+ε/2)n`. -/
+private lemma c_upper_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
+    (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :
+    ∃ δ : ℝ, 0 < δ ∧ δ < 1 ∧
+      (∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
+        (x₀ + ε / 2) * n ≤ (j : ℝ) → (j : ℝ) ≤ (x₀ + ε) * n →
+          c q n (j + 1) ≤ (1 - δ) * c q n j) ∧
+      (∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
+        (x₀ + ε / 2) * n ≤ (j : ℝ) →
+          c q n (j + 1) ≤
+            (((j : ℝ) + (2 * n + 2)) / ((j : ℝ) + (2 * n + 2) + 1)) ^ 2 * c q n j) := by
+  sorry
+
+/-! ### Analytic cores for `chat` -/
+
+private lemma chat_lower_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
+    (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :
+    ∃ δ : ℝ, 0 < δ ∧ ∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
+      (j : ℝ) ≤ (x₀ - ε / 2) * n → (1 + δ) * chat q n j ≤ chat q n (j + 1) := by
+  sorry
+
+private lemma chat_upper_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
+    (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :
+    ∃ δ : ℝ, 0 < δ ∧ δ < 1 ∧
+      (∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
+        (x₀ + ε / 2) * n ≤ (j : ℝ) → (j : ℝ) ≤ (x₀ + ε) * n →
+          chat q n (j + 1) ≤ (1 - δ) * chat q n j) ∧
+      (∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
+        (x₀ + ε / 2) * n ≤ (j : ℝ) →
+          chat q n (j + 1) ≤
+            (((j : ℝ) + (2 * n + 2)) / ((j : ℝ) + (2 * n + 2) + 1)) ^ 2 * chat q n j) := by
+  sorry
+
+/-! ### Main theorems -/
 
 /-- Piece 1 (εn-localization): for every ε > 0, the tail of `r n` outside
 the window `|k - x₀ n| ≤ εn` is exponentially negligible relative to the
@@ -119,7 +190,12 @@ theorem sum_localizes (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
         (∑' k : {k : ℕ // (k : ℝ) < (x₀ - ε) * n ∨ (x₀ + ε) * n < (k : ℝ)},
           c q n k) / r q n)
       atTop (𝓝 0) := by
-  sorry
+  obtain ⟨δlo, hδlo, hlower⟩ := c_lower_core q hq hx₀ hfx₀ hε
+  obtain ⟨δhi, hδhi, hδhi1, hmid, htel⟩ := c_upper_core q hq hx₀ hfx₀ hε
+  exact localize_general (c q) (r q) x₀ ε hx₀ hε (fun n k => c_pos q n k)
+    (fun n => summable_c q n hq) (fun _ => rfl) (fun n => 2 * (n : ℝ) + 2)
+    (fun n => by have h : (0:ℝ) ≤ (n:ℝ) := Nat.cast_nonneg n; linarith) (fun n => le_refl _)
+    δlo hδlo hlower δhi hδhi hδhi1 hmid htel
 
 /-- Same localization for the half-shifted series `r̂` (needed by
 `tendsto_ratio`): the machinery is identical — the term ratio
@@ -131,6 +207,11 @@ theorem sum_localizes_chat (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x�
         (∑' k : {k : ℕ // (k : ℝ) < (x₀ - ε) * n ∨ (x₀ + ε) * n < (k : ℝ)},
           chat q n k) / rhat q n)
       atTop (𝓝 0) := by
-  sorry
+  obtain ⟨δlo, hδlo, hlower⟩ := chat_lower_core q hq hx₀ hfx₀ hε
+  obtain ⟨δhi, hδhi, hδhi1, hmid, htel⟩ := chat_upper_core q hq hx₀ hfx₀ hε
+  exact localize_general (chat q) (rhat q) x₀ ε hx₀ hε (fun n k => chat_pos q n k)
+    (fun n => summable_chat q n hq) (fun _ => rfl) (fun n => 2 * (n : ℝ) + 2)
+    (fun n => by have h : (0:ℝ) ≤ (n:ℝ) := Nat.cast_nonneg n; linarith) (fun n => le_refl _)
+    δlo hδlo hlower δhi hδhi hδhi1 hmid htel
 
 end Zeta5Odd

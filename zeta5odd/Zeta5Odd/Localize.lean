@@ -330,7 +330,165 @@ private lemma localize_general
     Tendsto (fun n : ℕ =>
         (∑' k : {k : ℕ // (k : ℝ) < (x₀ - ε) * n ∨ (x₀ + ε) * n < (k : ℝ)}, u n k) / S n)
       atTop (𝓝 0) := by
-  sorry
+  have hδlo1 : (1 : ℝ) < 1 + δlo := by linarith
+  set βlo : ℝ := (1 + δlo)⁻¹ with hβlo
+  have hβlo0 : 0 ≤ βlo := by rw [hβlo]; positivity
+  have hβlo1 : βlo < 1 := by rw [hβlo]; exact (inv_lt_one₀ (by linarith)).mpr hδlo1
+  set S₂ : ℝ := ∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 2 with hS2
+  have hS2nn : 0 ≤ S₂ := by rw [hS2]; exact tsum_nonneg (fun k => by positivity)
+  have hxε : (0 : ℝ) ≤ x₀ + ε := by linarith
+  have hnn2 : ∀ n : ℕ, (n : ℝ) ≤ (n : ℝ) ^ 2 := by
+    intro n; rcases Nat.eq_zero_or_pos n with h | h
+    · simp [h]
+    · have : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast h
+      nlinarith
+  have hceilbd : ∀ n : ℕ, (⌈(x₀ - ε) * (n : ℝ)⌉₊ : ℝ) ≤ (x₀ + ε) * (n : ℝ) + 1 := by
+    intro n
+    have hn : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+    rcases le_or_gt ((x₀ - ε) * (n : ℝ)) 0 with h | h
+    · rw [Nat.ceil_eq_zero.mpr h]; push_cast; nlinarith
+    · have := (Nat.ceil_lt_add_one h.le).le; nlinarith
+  have hfloorbd : ∀ n : ℕ, ((⌊(x₀ + ε) * (n : ℝ)⌋₊ + 1 : ℕ) : ℝ) ≤ (x₀ + ε) * (n : ℝ) + 1 := by
+    intro n
+    have hn : (0 : ℝ) ≤ (x₀ + ε) * (n : ℝ) := mul_nonneg hxε (Nat.cast_nonneg n)
+    have := Nat.floor_le hn
+    push_cast; linarith
+  set M : ℝ := x₀ + ε + 2 with hM
+  have hMpos : 0 < M := by rw [hM]; linarith
+  -- the two vanishing envelope sequences
+  set glo : ℕ → ℝ := fun n =>
+    (⌈(x₀ - ε) * (n : ℝ)⌉₊ : ℝ) * βlo ^ (⌊ε / 4 * (n : ℝ)⌋₊ + 1) with hglo
+  set ghi : ℕ → ℝ := fun n =>
+    (((⌊(x₀ + ε) * (n : ℝ)⌋₊ + 1 : ℕ) : ℝ) + shift n) ^ 2 * S₂ *
+      (1 - δhi) ^ (⌊ε / 4 * (n : ℝ)⌋₊ + 1) with hghi
+  -- Tendsto glo → 0
+  have hgt : Tendsto glo atTop (𝓝 0) := by
+    rw [hglo]
+    refine tendsto_npoly_floor_geom (Q := fun n => (⌈(x₀ - ε) * (n : ℝ)⌉₊ : ℝ))
+      (c := ε / 4) (lam := βlo) (a := x₀ + ε) (b := 1)
+      (by linarith) hβlo0 hβlo1 hxε (fun n => by positivity) (fun n => ?_)
+    have h1 := hceilbd n
+    have h2 : (x₀ + ε) * (n : ℝ) ≤ (x₀ + ε) * (n : ℝ) ^ 2 :=
+      mul_le_mul_of_nonneg_left (hnn2 n) hxε
+    linarith
+  -- Tendsto ghi → 0
+  have hht : Tendsto ghi atTop (𝓝 0) := by
+    rw [hghi]
+    refine tendsto_npoly_floor_geom
+      (Q := fun n => (((⌊(x₀ + ε) * (n : ℝ)⌋₊ + 1 : ℕ) : ℝ) + shift n) ^ 2 * S₂)
+      (c := ε / 4) (lam := 1 - δhi) (a := (M ^ 2 + 6 * M) * S₂) (b := 9 * S₂)
+      (by linarith) (by linarith) (by linarith)
+      (by positivity) (fun n => by positivity) (fun n => ?_)
+    have hks : (((⌊(x₀ + ε) * (n : ℝ)⌋₊ + 1 : ℕ) : ℝ) + shift n) ≤ M * (n : ℝ) + 3 := by
+      have hf := hfloorbd n; have hs := hshiftbd n; rw [hM]; nlinarith
+    have hks0 : 0 ≤ (((⌊(x₀ + ε) * (n : ℝ)⌋₊ + 1 : ℕ) : ℝ) + shift n) := by
+      have := hshift1 n; positivity
+    have hsq : (((⌊(x₀ + ε) * (n : ℝ)⌋₊ + 1 : ℕ) : ℝ) + shift n) ^ 2 ≤ (M * (n : ℝ) + 3) ^ 2 :=
+      pow_le_pow_left₀ hks0 hks 2
+    have hlin : M * (n : ℝ) ≤ M * (n : ℝ) ^ 2 := mul_le_mul_of_nonneg_left (hnn2 n) hMpos.le
+    calc (((⌊(x₀ + ε) * (n : ℝ)⌋₊ + 1 : ℕ) : ℝ) + shift n) ^ 2 * S₂
+        ≤ (M * (n : ℝ) + 3) ^ 2 * S₂ := mul_le_mul_of_nonneg_right hsq hS2nn
+      _ ≤ (M ^ 2 + 6 * M) * S₂ * (n : ℝ) ^ 2 + 9 * S₂ := by nlinarith [hlin, hS2nn, hMpos]
+  have htendsto : Tendsto (fun n => glo n + ghi n) atTop (𝓝 0) := by
+    have := hgt.add hht; simpa using this
+  -- eventual bound  T n / S n ≤ glo n + ghi n
+  have hev1 : ∀ᶠ n : ℕ in atTop, (1 : ℝ) ≤ ε / 4 * (n : ℝ) :=
+    (Filter.Tendsto.const_mul_atTop (by linarith : (0:ℝ) < ε/4)
+      (tendsto_natCast_atTop_atTop (R := ℝ)) |>.eventually_ge_atTop 1)
+  have hbound : ∀ᶠ n : ℕ in atTop,
+      (∑' k : {k : ℕ // (k : ℝ) < (x₀ - ε) * n ∨ (x₀ + ε) * n < (k : ℝ)}, u n k) / S n
+        ≤ glo n + ghi n := by
+    filter_upwards [hlower, hupperMid, hupperTel, hev1] with n hln humn hutn hn1
+    -- shorthands
+    set Nlo := ⌈(x₀ - ε) * (n : ℝ)⌉₊ with hNlo
+    set K := ⌊(x₀ + ε) * (n : ℝ)⌋₊ + 1 with hK
+    set dn := ⌊ε / 4 * (n : ℝ)⌋₊ with hdn
+    have hS_eq : S n = ∑' k, u n k := hS n
+    have hSpos : 0 < S n := by
+      rw [hS_eq]; exact (hsum n).tsum_pos (fun k => (hpos n k).le) 0 (hpos n 0)
+    have hab : (x₀ - ε) * (n : ℝ) ≤ (x₀ + ε) * (n : ℝ) :=
+      mul_le_mul_of_nonneg_right (by linarith) (Nat.cast_nonneg n)
+    have hsplit := tail_decomp (hsum n) hab
+    -- K ≥ dn + 1
+    have hKdn : dn + 1 ≤ K := by
+      rw [hK, hdn]
+      have : ⌊ε / 4 * (n : ℝ)⌋₊ ≤ ⌊(x₀ + ε) * (n : ℝ)⌋₊ :=
+        Nat.floor_mono (mul_le_mul_of_nonneg_right (by linarith) (Nat.cast_nonneg n))
+      omega
+    -- reference points
+    have hmhiB : (x₀ + ε / 2) * (n : ℝ) ≤ ((K - (dn + 1) : ℕ) : ℝ) := by
+      have hKlow : (x₀ + ε) * (n : ℝ) < (K : ℝ) := by
+        rw [hK]; push_cast; exact Nat.lt_floor_add_one _
+      have hdnbd : (dn : ℝ) ≤ ε / 4 * (n : ℝ) := by rw [hdn]; exact Nat.floor_le (by positivity)
+      have hcast : ((K - (dn + 1) : ℕ) : ℝ) = (K : ℝ) - ((dn : ℝ) + 1) := by
+        have : dn + 1 ≤ K := hKdn
+        push_cast [Nat.cast_sub this]; ring
+      rw [hcast]
+      have key : (x₀ + ε / 2) * (n : ℝ) + ε / 4 * (n : ℝ) + ε / 4 * (n : ℝ)
+          = (x₀ + ε) * (n : ℝ) := by ring
+      linarith [hKlow, hdnbd, hn1, key]
+    have hK1C : ((K - 1 : ℕ) : ℝ) ≤ (x₀ + ε) * (n : ℝ) := by
+      rw [hK]
+      simp only [Nat.add_sub_cancel]
+      exact Nat.floor_le (mul_nonneg hxε (Nat.cast_nonneg n))
+    have hKrel : ∀ k : ℕ, (x₀ + ε) * (n : ℝ) < (k : ℝ) ↔ K ≤ k := by
+      intro k
+      rw [hK, Nat.add_one_le_iff, Nat.floor_lt (mul_nonneg hxε (Nat.cast_nonneg n))]
+    have hglonn : 0 ≤ glo n := by rw [hglo]; positivity
+    have hghinn : 0 ≤ ghi n := by
+      rw [hghi]; refine mul_nonneg (mul_nonneg (by positivity) hS2nn) ?_
+      exact pow_nonneg (by linarith) _
+    -- lower finite-sum bound
+    have hlowfin : (∑ k ∈ Finset.range Nlo, u n k) ≤ glo n * u n (Nlo + dn) := by
+      rcases Nat.eq_zero_or_pos Nlo with hN0 | hNpos
+      · rw [hN0, Finset.range_zero, Finset.sum_empty]
+        exact mul_nonneg hglonn (hpos n _).le
+      · have hpos' : 0 < (x₀ - ε) * (n : ℝ) := by
+          by_contra h; push_neg at h
+          rw [hNlo, Nat.ceil_eq_zero.mpr h] at hNpos; exact absurd hNpos (by norm_num)
+        have hAbd : ((Nlo + dn : ℕ) : ℝ) - 1 ≤ (x₀ - ε / 2) * (n : ℝ) := by
+          have hNlobd : (Nlo : ℝ) ≤ (x₀ - ε) * (n : ℝ) + 1 := by
+            rw [hNlo]; exact (Nat.ceil_lt_add_one hpos'.le).le
+          have hdnbd : (dn : ℝ) ≤ ε / 4 * (n : ℝ) := by rw [hdn]; exact Nat.floor_le (by positivity)
+          have key : (x₀ - ε) * (n : ℝ) + ε / 4 * (n : ℝ) ≤ (x₀ - ε / 2) * (n : ℝ) := by
+            have he : (x₀ - ε) * (n : ℝ) + ε / 4 * (n : ℝ) = (x₀ - 3 * ε / 4) * (n : ℝ) := by ring
+            rw [he]; exact mul_le_mul_of_nonneg_right (by linarith) (Nat.cast_nonneg n)
+          push_cast; linarith [hNlobd, hdnbd, key]
+        have hlt := lower_tail_le (hpos n) hδlo hln Nlo dn hAbd
+        calc (∑ k ∈ Finset.range Nlo, u n k)
+            ≤ (Nlo : ℝ) * ((1 + δlo)⁻¹) ^ (dn + 1) * u n (Nlo + dn) := hlt
+          _ = glo n * u n (Nlo + dn) := by simp only [hglo, hβlo, hNlo, hdn]
+    -- upper subtype bound
+    have hupfin : (∑' k : {k : ℕ // (x₀ + ε) * (n : ℝ) < (k : ℝ)}, u n k)
+        ≤ ghi n * u n (K - (dn + 1)) := by
+      have hmain : (∑' k : {k : ℕ // (x₀ + ε) * (n : ℝ) < (k : ℝ)}, u n k)
+          ≤ ((K : ℝ) + shift n) ^ 2 * (∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 2) *
+              ((1 - δhi) ^ (dn + 1) * u n (K - (dn + 1))) :=
+        upper_tail_le (hpos n) (hsum n) hδhi hδhi1 (hshift1 n) humn hutn
+          K (K - (dn + 1)) (dn + 1) (by omega) hmhiB hK1C hKrel
+      rw [hghi]
+      calc (∑' k : {k : ℕ // (x₀ + ε) * (n : ℝ) < (k : ℝ)}, u n k)
+          ≤ ((K : ℝ) + shift n) ^ 2 * (∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 2) *
+              ((1 - δhi) ^ (dn + 1) * u n (K - (dn + 1))) := hmain
+        _ = (((⌊(x₀ + ε) * (n : ℝ)⌋₊ + 1 : ℕ) : ℝ) + shift n) ^ 2 * S₂ *
+              (1 - δhi) ^ (dn + 1) * u n (K - (dn + 1)) := by rw [hS2, hK]; push_cast; ring
+    -- combine
+    have hmlo_le : u n (Nlo + dn) ≤ S n := by
+      rw [hS_eq]; exact (hsum n).le_tsum _ (fun j _ => (hpos n j).le)
+    have hmhi_le : u n (K - (dn + 1)) ≤ S n := by
+      rw [hS_eq]; exact (hsum n).le_tsum _ (fun j _ => (hpos n j).le)
+    rw [hsplit, div_le_iff₀ hSpos]
+    calc (∑ k ∈ Finset.range Nlo, u n k)
+            + (∑' k : {k : ℕ // (x₀ + ε) * (n : ℝ) < (k : ℝ)}, u n k)
+        ≤ glo n * u n (Nlo + dn) + ghi n * u n (K - (dn + 1)) := add_le_add hlowfin hupfin
+      _ ≤ glo n * S n + ghi n * S n :=
+            add_le_add (mul_le_mul_of_nonneg_left hmlo_le hglonn)
+              (mul_le_mul_of_nonneg_left hmhi_le hghinn)
+      _ = (glo n + ghi n) * S n := by ring
+  exact squeeze_zero' (Eventually.of_forall (fun n => by
+    have hSpos : 0 < S n := by
+      rw [hS n]; exact (hsum n).tsum_pos (fun k => (hpos n k).le) 0 (hpos n 0)
+    exact div_nonneg (tsum_nonneg (fun x => (hpos n x).le)) hSpos.le)) hbound htendsto
 
 /-! ### Analytic cores for `c` (term ratio ≈ f(k/n)²) -/
 

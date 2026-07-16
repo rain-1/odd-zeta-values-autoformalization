@@ -18,6 +18,7 @@ Strategy (Worker C).  Work in logarithmic coordinates: it suffices to prove
 -/
 import Zeta5Odd.Basic
 import Zeta5Odd.Localize
+import Zeta5Odd.Ratio
 
 open Filter Finset
 open scoped Nat Topology
@@ -166,7 +167,7 @@ private lemma tendsto_facTerm (a : ℕ → ℕ) {α : ℝ} (hα : 0 < α)
   ring
 
 /-- Ratio limit for an affine index `a n = A·n + B·κ n + C`. -/
-private lemma tendsto_ratio (κ : ℕ → ℕ) {x₀ : ℝ}
+private lemma tendsto_affine_ratio (κ : ℕ → ℕ) {x₀ : ℝ}
     (hκ : Tendsto (fun n : ℕ => (κ n : ℝ) / n) atTop (𝓝 x₀))
     (A B C : ℝ) (a : ℕ → ℕ) (hform : ∀ n, (a n : ℝ) = A * n + B * κ n + C) :
     Tendsto (fun n : ℕ => (a n : ℝ) / n) atTop (𝓝 (A + B * x₀)) := by
@@ -195,19 +196,19 @@ private lemma tendsto_logRoot_peak (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ 
     Tendsto (fun n : ℕ => Real.log (c q n (κ n)) / n) atTop (𝓝 (Real.log (g q x₀))) := by
   -- clean ratio limits
   have hα1 : Tendsto (fun n : ℕ => ((n : ℕ) : ℝ) / n) atTop (𝓝 1) := by
-    have h := tendsto_ratio κ hκ 1 0 0 (fun n => n) (fun n => by push_cast; ring)
+    have h := tendsto_affine_ratio κ hκ 1 0 0 (fun n => n) (fun n => by push_cast; ring)
     rwa [show (1 : ℝ) + 0 * x₀ = 1 by ring] at h
   have hα2 : Tendsto (fun n : ℕ => ((6 * n + 2 * κ n + 2 : ℕ) : ℝ) / n) atTop (𝓝 (2 * (x₀ + 3))) := by
-    have h := tendsto_ratio κ hκ 6 2 2 (fun n => 6 * n + 2 * κ n + 2) (fun n => by push_cast; ring)
+    have h := tendsto_affine_ratio κ hκ 6 2 2 (fun n => 6 * n + 2 * κ n + 2) (fun n => by push_cast; ring)
     rwa [show (6 : ℝ) + 2 * x₀ = 2 * (x₀ + 3) by ring] at h
   have hα3 : Tendsto (fun n : ℕ => ((n + κ n : ℕ) : ℝ) / n) atTop (𝓝 (x₀ + 1)) := by
-    have h := tendsto_ratio κ hκ 1 1 0 (fun n => n + κ n) (fun n => by push_cast; ring)
+    have h := tendsto_affine_ratio κ hκ 1 1 0 (fun n => n + κ n) (fun n => by push_cast; ring)
     rwa [show (1 : ℝ) + 1 * x₀ = x₀ + 1 by ring] at h
   have hα4 : Tendsto (fun n : ℕ => ((2 * κ n + 1 : ℕ) : ℝ) / n) atTop (𝓝 (2 * x₀)) := by
-    have h := tendsto_ratio κ hκ 0 2 1 (fun n => 2 * κ n + 1) (fun n => by push_cast; ring)
+    have h := tendsto_affine_ratio κ hκ 0 2 1 (fun n => 2 * κ n + 1) (fun n => by push_cast; ring)
     rwa [show (0 : ℝ) + 2 * x₀ = 2 * x₀ by ring] at h
   have hα5 : Tendsto (fun n : ℕ => ((2 * n + κ n + 1 : ℕ) : ℝ) / n) atTop (𝓝 (x₀ + 2)) := by
-    have h := tendsto_ratio κ hκ 2 1 1 (fun n => 2 * n + κ n + 1) (fun n => by push_cast; ring)
+    have h := tendsto_affine_ratio κ hκ 2 1 1 (fun n => 2 * n + κ n + 1) (fun n => by push_cast; ring)
     rwa [show (2 : ℝ) + 1 * x₀ = x₀ + 2 by ring] at h
   -- five factorial asymptotics
   have F1 := tendsto_facTerm (fun n => n) one_pos hα1
@@ -364,19 +365,28 @@ theorem tendsto_root_r (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
   exact tendsto_root_of_logRoot hg (fun n => r q n) (fun n => r_pos q n hq)
     (tendsto_logRoot_r q hq hx₀ hfx₀)
 
-/-- The `r̂` analogue of `tendsto_logRoot_r`.
-
-REMAINING SUB-SORRY (analytic).  Same skeleton as `tendsto_logRoot_r`: a lower
-bound from the peak term `ĉ_{κ n}` and an upper bound from `sum_localizes_chat`.
-The `ĉ` peak asymptotic reduces to `tendsto_facTerm` after writing the odd-index
-product of `chat` (Basic.lean) as factorials and powers of `2`, OR is transferred
-from the `c` peak via the two-sided subexponential ratio bound `c/ĉ` (paper (e10),
-`centralBinom_two_sided`), which is constant-factor and hence invisible under the
-`1/n` root.  Its limit is again `log g x₀` because `f x₀ = 1`. -/
+/-- The `r̂` analogue of `tendsto_logRoot_r`, obtained from the `r`-limit and the
+proven ratio limit `r n / r̂ n → 1` (`Zeta5Odd.tendsto_ratio`):
+`(1/n) log r̂ = (1/n) log r − (1/n) log (r/r̂)`, and `log (r/r̂) → 0` kills the
+second term under the `1/n`. -/
 private lemma tendsto_logRoot_rhat (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) :
     Tendsto (fun n : ℕ => Real.log (rhat q n) / n) atTop (𝓝 (Real.log (g q x₀))) := by
-  sorry
+  have hr := tendsto_logRoot_r q hq hx₀ hfx₀
+  have hratio := tendsto_ratio q hq hx₀ hfx₀
+  -- `log (r/r̂) → log 1 = 0`
+  have hlogratio : Tendsto (fun n : ℕ => Real.log (r q n / rhat q n)) atTop (𝓝 0) := by
+    have := (Real.continuousAt_log (by norm_num : (1 : ℝ) ≠ 0)).tendsto.comp hratio
+    rwa [Real.log_one] at this
+  -- `(1/n) log (r/r̂) → 0`
+  have hdiv : Tendsto (fun n : ℕ => Real.log (r q n / rhat q n) / n) atTop (𝓝 0) :=
+    hlogratio.div_atTop tendsto_natCast_atTop_atTop
+  have heq : ∀ᶠ n : ℕ in atTop,
+      Real.log (r q n) / n - Real.log (r q n / rhat q n) / n = Real.log (rhat q n) / n := by
+    filter_upwards with n
+    rw [Real.log_div (r_pos q n hq).ne' (rhat_pos q n hq).ne']
+    ring
+  simpa using (hr.sub hdiv).congr' heq
 
 /-- Lemma 4, first claim for `r̂`. -/
 theorem tendsto_root_rhat (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)

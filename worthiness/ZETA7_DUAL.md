@@ -6,8 +6,12 @@ principal-part decomposition of VWP sums into ℚ-linear forms in zeta values).
 **No existing files modified.** All scripts here are `zeta7_dual_*.py`; every
 numeric claim is reproducible with `python3 <script>`.
 
-## Status: PARTIAL (candidates tested and excluded with exact mismatch evidence;
-one decisive structural obstruction identified; best remaining hypothesis stated).
+## Status: PARTIAL → **single-sum VWP route EXCLUDED** (see §7). Candidates tested
+and excluded with exact mismatch evidence; the decisive discriminant is a **sign
+obstruction** (BZ I′ₙ has opposite-sign adjacent zetas; every very-well-poised
+single sum — symmetric or spread — gives same-sign, r5 > 0). Remaining path:
+triple Mellin–Barnes (scout's route (a)). §7 is the coordinator-directed
+spread-pole hunt and its combined exclusion map.
 
 ---
 
@@ -170,6 +174,67 @@ promise:
 - `zeta7_dual_triple.py` / `_exhaust.py` / `_Awide.py` — qₙ multisum searches.
 - `zeta7_dual_calib.py` — F̃₇(3n;n⁷) dual-integral calibration.
 
+---
+
+## 7. Asymmetric / spread-pole hunt (coordinator-directed) — COMBINED EXCLUSION MAP
+
+Following the coordinator's go-ahead I pursued the spread-pole hypothesis of §4.1
+systematically, using the **KR master family** (Krattenthaler–Rivoal
+arXiv math/0311114, eq. 782, the generator of the engine's built-in ζ(4/5..11)
+series):
+
+    S_{n,A,B,C,r}(z) = n!^{A−2Br} Σ_{k≥1} (1/C!) ∂^C/∂k^C [ (k+n/2)
+                        (k−rn)_{rn}^B (k+n+1)_{rn}^B / (k)_{n+1}^A ] z^{−k}.
+
+**Content rule [KR, verbatim].** For z=(−1)^A with **A even**, S(1) is a ℚ-form in
+1, ζ(C+3), ζ(C+5), …, ζ(C+A−1). Hence **A=6, C=2 targets exactly {1, ζ5, ζ7}** —
+the I′ₙ structure, no ζ3, no auxiliary ζ3-kill needed. This resolves §3.4's worry
+that the obstruction might be a C=0 artefact: it is **not** — see below.
+
+### 7.1 Sign is the discriminant, and it does not turn over [VERIFIED]
+BZ's I′ₙ needs **r5 = z5/z7 = −48/61 < 0** (ζ7 and ζ5 opposite). Tested, exact:
+- **Symmetric single-block** S_{n,6,B,2,r}(1), all valid (B,r): r5 = 22/15, 3/2,
+  39/25 — **all > 0** [`zeta7_dual_master.py`].
+- **KR ζ(5..11) asymmetric series** itself (`compute_Zn`): z5/z7 **> 0** at n=1,2
+  — spread poles do **not** flip the sign.
+- **Staircase-asymmetric grid** (num (k−Pn)_{Pn}^B(k+Qn+1)_{Pn}^B, den =
+  ∏_{u=1}^U (k+(M−u)n)_{(base+step·u)n+1}, half-shift Qn/2, C∈{0,1,2}):
+  **11 284 configs** scanned [`zeta7_dual_asym.py`]. Every config with clean
+  odd content (no even zetas) has r5 > 0.
+- **Systematic genuinely-VWP spreads** (symmetric pole windows — contiguous AND
+  gapped — with mirror-symmetric numerator zero-pairs, C∈{0,2}):
+  **1 248 configs giving clean {ζ5,ζ7} ⊆ {ζ3,ζ5,ζ7}; ZERO with r5 < 0**
+  [`zeta7_dual_vwpsign.py`].
+
+### 7.2 Why the negative-r5 configs don't count [VERIFIED]
+Configs that *do* achieve r5 < 0 exist in the staircase grid, but **every one of
+them carries even zeta values (ζ4, ζ6)** — i.e. the reflection symmetry is broken,
+they are **not very-well-poised**, and their linear form is
+{ζ4,ζ5,ζ6,ζ7}, not BZ's clean {ζ5,ζ7}. As soon as even zetas are forced to vanish
+(the actual BZ constraint), r5 is positive without exception across all four
+families above.
+
+### 7.3 Conclusion of the series route [EXCLUDED — the whole single-sum VWP class]
+The BZ eliminated form I′ₙ is a *small* linear form with **opposite-sign** adjacent
+zeta coefficients; every very-well-poised single sum (symmetric or spread) is a
+*simultaneous approximation* whose adjacent odd-zeta coefficients are **same-sign**
+(the constant term carries the cancellation). These are structurally different
+objects. This is consistent with BZ's own framing: I′ₙ is obtained by the
+*projection* "set ζ(2)=0" applied to Iₙ, i.e. a **subleading/eliminated** form, not
+a primary series — precisely the kind of object that need not be a single VWP sum.
+
+**Verdict (matches the coordinator's stated stop condition and the scout's route
+(a)):** the ζ(7) dual, if it exists as a series, lives **outside the single-sum
+VWP class**. The **triple Mellin–Barnes reduction of the primal integral**
+(scout's route (a), `ZETA7_FAMILY.md` §2a) is the remaining path to I′ₙ exactly
+and to the n≥3 denominator audit. The series route is closed with this exclusion
+map; no absolute-normalization step was reached because no candidate cleared the
+normalization-free sign test.
+
+New scripts for §7: `zeta7_dual_master.py`, `zeta7_dual_asym.py`,
+`zeta7_dual_vwpsign.py`. KR master family source cached at
+`…/scratchpad/kr/kratriv.tex` (eq. 782, content rule at "Quand on spécialise").
+
 ## 6. Honesty ledger
 - §1 engine/recipe validation on ζ(5): **[VERIFIED]** exact-rational equality on
   Zudilin's printed r_n (n=0,1,2) and on ℓ_n ratios.
@@ -179,4 +244,9 @@ promise:
   observed to block every tested construction; it is the operative reason the
   ζ(5)→ζ(7) lift fails.
 - §4 hypotheses: **[SPECULATION]**, ranked with the mechanism (alternating-sign ⇒
-  spread poles) that motivates #1.
+  spread poles) that motivates #1. **Note §7 refutes #1's premise**: spread poles
+  do *not* flip the sign; that mechanism was wrong, and §7 supersedes §4.
+- §7 spread-pole hunt: **[VERIFIED/EXCLUDED]** — 11 284 staircase + 1 248
+  systematic-VWP + symmetric-block + `compute_Zn`, all exact-rational; r5 > 0
+  universally among VWP-clean forms. Excludes the entire single-sum VWP class.
+  The KR content rule (A even ⇒ {ζ(C+3)…ζ(C+A−1)}) is transcribed verbatim.

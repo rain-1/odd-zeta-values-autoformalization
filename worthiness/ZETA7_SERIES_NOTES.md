@@ -19,13 +19,24 @@ series gives **same-sign** odd zetas. Hence:
 - The naïve den⁸ ζ(7) sibling of Zudilin's eq.7 exists (I tabulate it, ρ_n, in
   §2 of ZETA7_DUAL.md — a clean new {1,ζ3,ζ5,ζ7} family, ρ₀=ζ7) but is **not** BZ.
 
-## Where the series route says to look next
-Alternating signs ⇒ **spread-pole / asymmetric VWP** (the structure of
-`zn_check.compute_Zn`'s ζ(5..11) family), not the symmetric block form. A tuned
-one-parameter asymmetric VWP in {ζ3,ζ5,ζ7} is the natural I′/I″ candidate. This is
-the recommended series-side experiment; it is cheaper than your route (a) triple
-Barnes and, if it lands, gives qₙ,sₙ,Pₙ at all n (enabling your n≥3 denominator
-audit — the deliverable we both want).
+## UPDATE — spread-pole route also EXCLUDED (ZETA7_DUAL.md §7)
+The "alternating signs ⇒ spread poles" idea was **tested and refuted**. Using the
+KR master family (math/0311114 eq. 782; A=6,C=2 targets {1,ζ5,ζ7} directly):
+- `compute_Zn` itself gives z5/z7 **> 0** — spread poles do NOT flip the sign;
+- 11 284 staircase-asymmetric + 1 248 systematic-VWP + symmetric-block configs:
+  **every VWP-clean {ζ5,ζ7} form has r5 > 0**; the only r5<0 configs carry even
+  zetas (ζ4,ζ6) → not VWP → not BZ.
+Reason: I′ₙ is a *projection* (ζ2=0) of Iₙ with opposite-sign adjacent zetas; VWP
+single sums are simultaneous approximations with same-sign adjacent zetas. Distinct
+object classes. **The single-sum VWP route is closed.**
+
+## Where to look next
+**Your route (a), the triple Mellin–Barnes reduction of the primal integral, is now
+the only path to I′ₙ** (hence qₙ,sₙ,Pₙ at n≥3 and the denominator audit). The series
+side has exhausted single sums. If a double-sum representation is admissible, the
+M₀,₁₀ analogue of your `sumQ` double-sum (a triple sum) is the object — but see
+ZETA7_DUAL.md §3.5: qₙ is not a product-weight subset-coupled multisum, so the
+triple sum's coupling is non-obvious and must come from the Barnes bookkeeping.
 
 ## qₙ is NOT a Q_n-style multisum
 Exhaustive search (`zeta7_dual_{triple,exhaust,Awide}.py`): qₙ = 1,61,52921 is not

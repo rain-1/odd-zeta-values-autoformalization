@@ -463,15 +463,158 @@ theorem Rn_wellPoised (n : ℕ) (t : ℝ) :
       hpar.add_one.neg_one_pow]
     ring
 
+/-! ### Elementary two-pole partial fraction (engine for Lemma 1 integrality) -/
+
+/-- **Two-pole partial fraction.**  For `u ≠ 0`, `δ ≠ 0`, `u+δ ≠ 0`:
+`1/(uⁱ·(u+δ)) = Σ_{r<i} (-1)ʳ/δ^{r+1}/u^{i-r} + (-1)ⁱ/δⁱ/(u+δ)`.
+With `u = t+k`, `δ = m-k` (so `u+δ = t+m`), this expands `1/[(t+k)ⁱ(t+m)]` into
+partial fractions at the poles `-k` (orders `1..i`) and `-m` (order `1`), with the
+coefficients being `±1/(m-k)^p`; multiplying by `d_n^p` clears them (Lemma 1). -/
+private lemma pf_two_pole (i : ℕ) (u δ : ℝ) (hu : u ≠ 0) (hδ : δ ≠ 0) (huδ : u + δ ≠ 0) :
+    1 / (u ^ i * (u + δ))
+      = (∑ r ∈ Finset.range i, (-1 : ℝ) ^ r / δ ^ (r + 1) / u ^ (i - r))
+        + (-1 : ℝ) ^ i / δ ^ i / (u + δ) := by
+  induction i with
+  | zero => simp
+  | succ i ih =>
+    have hSrec : (∑ r ∈ Finset.range (i + 1), (-1 : ℝ) ^ r / δ ^ (r + 1) / u ^ (i + 1 - r))
+        = (1 / u) * (∑ r ∈ Finset.range i, (-1 : ℝ) ^ r / δ ^ (r + 1) / u ^ (i - r))
+          + (-1 : ℝ) ^ i / δ ^ (i + 1) / u := by
+      rw [Finset.sum_range_succ, Finset.mul_sum]
+      congr 1
+      · apply Finset.sum_congr rfl
+        intro r hr
+        rw [Finset.mem_range] at hr
+        rw [show i + 1 - r = (i - r) + 1 from by omega, pow_succ]
+        field_simp; ring
+      · rw [show i + 1 - i = 1 from by omega, pow_one]
+    have hkey : (1 : ℝ) / (u ^ (i + 1) * (u + δ)) = (1 / u) * (1 / (u ^ i * (u + δ))) := by
+      rw [pow_succ]; field_simp
+    have hsgn : (-1 : ℝ) ^ (i + 1) = -((-1) ^ i) := by rw [pow_succ]; ring
+    rw [hkey, ih, hSrec, mul_add, hsgn]
+    field_simp
+    ring
+
+/-! ### Product of `simple` integer functions: decomposition + integrality (paper Lemma 1) -/
+
+/-- A `simple` rational function `Σ_{k=0}^n c_k/(t+k)` with integer coefficients `c`
+(the building blocks of tex 96–114). -/
+private noncomputable def simpleFn (n : ℕ) (c : ℕ → ℤ) (t : ℝ) : ℝ :=
+  ∑ k ∈ Finset.range (n + 1), (c k : ℝ) / (t + (k : ℝ))
+
+/-- Product of the `simple` functions in the list `cs`. -/
+private noncomputable def simpleProd (n : ℕ) (cs : List (ℕ → ℤ)) (t : ℝ) : ℝ :=
+  (cs.map (fun c => simpleFn n c t)).prod
+
+/-- **Multiply a decomposition by one `simple` integer function** (the inductive step of
+paper Lemma 1, tex 138–153).  If `G` decomposes as `Σ_{i≤L} Σ_k a_{i,k}/(t+k)^i` with
+`d_n^{L-i} a_{i,k} ∈ ℤ`, then `simpleFn c · G` decomposes to order `L+1` with
+`d_n^{L+1-i} a'_{i,k} ∈ ℤ`.  The new coefficients arise from `pf_two_pole` applied to each
+cross term `1/[(t+m)(t+k)^i]`; the extra `d_n` powers are absorbed by `d_n/(m-k) ∈ ℤ`
+(`dvd_lcmUpto`, since `|m-k| ≤ n`).  [PROOF: `sorry` — the coefficient-collection algebra.] -/
+private theorem pf_mul_simple (n L : ℕ) (hL : 1 ≤ L) (c : ℕ → ℤ) (G : ℝ → ℝ)
+    (a : ℕ → ℕ → ℝ)
+    (hdec : ∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
+        G t = ∑ i ∈ Finset.Icc 1 L, ∑ k ∈ Finset.range (n + 1), a i k / (t + (k : ℝ)) ^ i)
+    (hint : ∀ i ∈ Finset.Icc 1 L, ∀ k ∈ Finset.range (n + 1),
+        ∃ z : ℤ, (Nat.lcmUpto n : ℝ) ^ (L - i) * a i k = z) :
+    ∃ a' : ℕ → ℕ → ℝ,
+      (∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
+          simpleFn n c t * G t
+            = ∑ i ∈ Finset.Icc 1 (L + 1), ∑ k ∈ Finset.range (n + 1), a' i k / (t + (k : ℝ)) ^ i)
+      ∧ (∀ i ∈ Finset.Icc 1 (L + 1), ∀ k ∈ Finset.range (n + 1),
+          ∃ z : ℤ, (Nat.lcmUpto n : ℝ) ^ (L + 1 - i) * a' i k = z) := by
+  sorry
+
+/-- **Product of `simple` integer functions decomposes with integrality** (paper Lemma 1).
+By induction on the list `cs`, base case a singleton, inductive step `pf_mul_simple`. -/
+private theorem pf_prod (n : ℕ) (cs : List (ℕ → ℤ)) (hcs : cs ≠ []) :
+    ∃ a : ℕ → ℕ → ℝ,
+      (∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
+          simpleProd n cs t
+            = ∑ i ∈ Finset.Icc 1 cs.length, ∑ k ∈ Finset.range (n + 1), a i k / (t + (k : ℝ)) ^ i)
+      ∧ (∀ i ∈ Finset.Icc 1 cs.length, ∀ k ∈ Finset.range (n + 1),
+          ∃ z : ℤ, (Nat.lcmUpto n : ℝ) ^ (cs.length - i) * a i k = z) := by
+  induction cs with
+  | nil => exact absurd rfl hcs
+  | cons c rest ih =>
+    rcases eq_or_ne rest [] with hrest | hrest
+    · -- singleton base: `cs = [c]`, length 1, `a 1 k = c k`.
+      subst hrest
+      refine ⟨fun i k => if i = 1 then (c k : ℝ) else 0, ?_, ?_⟩
+      · intro t ht
+        simp only [simpleProd, List.map_cons, List.map_nil, List.prod_cons, List.prod_nil,
+          mul_one, List.length_cons, List.length_nil, Nat.zero_add, Finset.Icc_self,
+          Finset.sum_singleton, if_pos, pow_one]
+        rfl
+      · intro i hi k hk
+        rw [Finset.mem_Icc] at hi
+        have hi1 : i = 1 := by
+          have : (([c]).length) = 1 := rfl
+          omega
+        subst hi1
+        exact ⟨c k, by simp⟩
+    · -- inductive step: peel `c`, apply `pf_mul_simple`.
+      obtain ⟨a, hdec, hint⟩ := ih hrest
+      have hL : 1 ≤ rest.length := by
+        cases rest with
+        | nil => exact absurd rfl hrest
+        | cons _ _ => simp
+      obtain ⟨a', hdec', hint'⟩ :=
+        pf_mul_simple n rest.length hL c (simpleProd n rest) a hdec hint
+      have hlen : (c :: rest).length = rest.length + 1 := by simp
+      refine ⟨a', ?_, ?_⟩
+      · intro t ht
+        have hfac : simpleProd n (c :: rest) t = simpleFn n c t * simpleProd n rest t := by
+          simp [simpleProd, List.map_cons, List.prod_cons]
+        rw [hfac, hdec' t ht, hlen]
+      · intro i hi k hk
+        rw [hlen] at hi ⊢
+        exact hint' i hi k hk
+
+/-! ### The six explicit integer coefficient arrays (tex 96–114) -/
+
+/-- `f1 = n!/∏(t+j)`: coefficient `(-1)^k C(n,k)` (tex 98). -/
+private def pfC1 (n : ℕ) : ℕ → ℤ := fun k => (-1 : ℤ) ^ k * (n.choose k : ℤ)
+/-- `f2 = ∏(t-j)/∏(t+j)`: coefficient `(-1)^{n+k} C(n+k,n) C(n,k)` (tex 101). -/
+private def pfC2 (n : ℕ) : ℕ → ℤ := fun k => (-1 : ℤ) ^ (n + k) * ((n + k).choose n : ℤ) * (n.choose k : ℤ)
+/-- `f3 = ∏(t+n+j)/∏(t+j)`: coefficient `(-1)^k C(2n-k,n) C(n,k)` (tex 104). -/
+private def pfC3 (n : ℕ) : ℕ → ℤ := fun k => (-1 : ℤ) ^ k * ((2 * n - k).choose n : ℤ) * (n.choose k : ℤ)
+/-- `f4 = 2^{2n}∏(t+½-j)/∏(t+j)`: coefficient `(-1)^{n+k} C(2n+2k,2n) C(2n,n+k)` (tex 107). -/
+private def pfC4 (n : ℕ) : ℕ → ℤ :=
+  fun k => (-1 : ℤ) ^ (n + k) * ((2 * n + 2 * k).choose (2 * n) : ℤ) * ((2 * n).choose (n + k) : ℤ)
+/-- `f5 = 2^{2n}∏(t-½+j)/∏(t+j)`: coefficient `C(2k,k) C(2n-2k,n-k)` (tex 110). -/
+private def pfC5 (n : ℕ) : ℕ → ℤ :=
+  fun k => ((2 * k).choose k : ℤ) * ((2 * n - 2 * k).choose (n - k) : ℤ)
+/-- `f6 = 2^{2n}∏(t+n-½+j)/∏(t+j)`: coefficient `(-1)^k C(4n-2k,2n) C(2n,k)` (tex 113). -/
+private def pfC6 (n : ℕ) : ℕ → ℤ :=
+  fun k => (-1 : ℤ) ^ k * ((4 * n - 2 * k).choose (2 * n) : ℤ) * ((2 * n).choose k : ℤ)
+
+/-- The list of `33` `simple`-function coefficient arrays whose product is `R_n(t)`:
+`28` copies of `f1` (from the `n!^{28}` prefactor `= (n!/∏(t+j))^{28}·∏(t+j)^{28}` absorbed
+into the denominator power), followed by `f2, f3, f4, f5, f6`.  See `Rn_as_simpleProd`. -/
+private def pfList (n : ℕ) : List (ℕ → ℤ) :=
+  List.replicate 28 (pfC1 n) ++ [pfC2 n, pfC3 n, pfC4 n, pfC5 n, pfC6 n]
+
+/-- **`R_n` as a product of the six `simple` integer functions** (tex 115–119):
+`R_n(t) = f1(t)^{28}·f2(t)·f3(t)·f4(t)·f5(t)·f6(t)`, i.e. `simpleProd n (pfList n) t`, using the
+six partial-fraction identities of tex 96–114.  [PROOF: `sorry` — the six single-power
+identities (each provable by clearing denominators at the `n+1` points `t=-k`) plus the
+product-of-factorials bookkeeping that matches `n!^{28}`, `2^{6n}` and the `33` denominator
+power, analogous to `Rn_eq_c`.] -/
+private theorem Rn_as_simpleProd (n : ℕ) (t : ℝ)
+    (ht : ∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) :
+    Rn 17 n t = simpleProd n (pfList n) t := by
+  sorry
+
 /-! ### Partial fractions with the coefficients `a_{i,k}` (paper e04 + Lemmas 1, 2) -/
 
 /-- **Decomposition (e04) + integrality (Lemma 1)** for `R_n` at `s = 33`.
-[ANALYTIC HEART — proof is `sorry`.]  `a i k` is the coefficient of `(t+k)^{-i}` in the
-Laurent expansion of `R_n` at its order-`33` pole `t = -k`.  Existence of the decomposition
-is the partial-fraction theorem; `d_n^{33-i}·a_{i,k} ∈ ℤ` (Lemma 1) follows from the paper's
-differentiation formula (tex 138–153) applied to `R_n` as a product of the six
-`simpler` integer-coefficient functions of tex 96–114 together with `d_n/(k_j-k_1) ∈ ℤ`
-(available as `dvd_lcmUpto`).  These two conjuncts are exactly what `repr_combined` still needs. -/
+ASSEMBLED from `pf_prod` (the abstract decomposition-with-integrality of a product of `simple`
+integer functions, whose analytic engine `pf_two_pole` and inductive step `pf_mul_simple` sit
+above) applied to `pfList n`, together with `Rn_as_simpleProd` (the algebraic identity
+`R_n = simpleProd (pfList n)`).  `pfList n` has length `33`, giving `Icc 1 33` and the exponent
+`33 - i`.  These two conjuncts are exactly what `repr_combined` still needs. -/
 private theorem pf_decomp (n : ℕ) :
     ∃ a : ℕ → ℕ → ℝ,
       (∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
@@ -479,7 +622,15 @@ private theorem pf_decomp (n : ℕ) :
               a i k / (t + (k : ℝ)) ^ i)
       ∧ (∀ i ∈ Finset.Icc 1 33, ∀ k ∈ Finset.range (n + 1),
           ∃ z : ℤ, (Nat.lcmUpto n : ℝ) ^ (33 - i) * a i k = z) := by
-  sorry
+  have hlen : (pfList n).length = 33 := by
+    simp [pfList, List.length_append, List.length_replicate]
+  have hne : pfList n ≠ [] := by
+    intro h; rw [h] at hlen; simp at hlen
+  obtain ⟨a, hdec, hint⟩ := pf_prod n (pfList n) hne
+  rw [hlen] at hdec hint
+  refine ⟨a, ?_, hint⟩
+  intro t ht
+  rw [Rn_as_simpleProd n t ht, hdec t ht]
 
 open Filter Topology in
 /-- **Uniqueness of the (e04) partial-fraction coefficients.**  [PROVED.]

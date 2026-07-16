@@ -108,6 +108,39 @@ private lemma tendsto_Q_geom {lam : ℝ} (hlam0 : 0 ≤ lam) (hlam1 : lam < 1)
   · exact mul_nonneg (hQpos n) (pow_nonneg hlam0 _)
   · exact mul_le_mul_of_nonneg_right (hQ n) (pow_nonneg hlam0 _)
 
+/-- Split the two-sided tail into a finite lower part and an upper subtype tail. -/
+private lemma tail_decomp {u : ℕ → ℝ} (hsum : Summable u)
+    {a b : ℝ} (hab : a ≤ b) :
+    (∑' k : {k : ℕ // (k : ℝ) < a ∨ b < (k : ℝ)}, u k)
+      = (∑ k ∈ Finset.range ⌈a⌉₊, u k) + (∑' k : {k : ℕ // b < (k : ℝ)}, u k) := by
+  classical
+  have hdisj : Disjoint {k : ℕ | (k : ℝ) < a} {k : ℕ | b < (k : ℝ)} := by
+    rw [Set.disjoint_left]
+    intro k hk hk'
+    simp only [Set.mem_setOf_eq] at hk hk'
+    linarith
+  have key : (∑' k : {k : ℕ // (k : ℝ) < a ∨ b < (k : ℝ)}, u k)
+      = (∑' k : {k : ℕ | (k : ℝ) < a}, u k) + (∑' k : {k : ℕ | b < (k : ℝ)}, u k) := by
+    have h1 := tsum_subtype ({k : ℕ | (k : ℝ) < a} ∪ {k : ℕ | b < (k : ℝ)}) u
+    rw [Set.indicator_union_of_disjoint hdisj,
+        Summable.tsum_add (hsum.indicator _) (hsum.indicator _),
+        ← _root_.tsum_subtype, ← _root_.tsum_subtype] at h1
+    exact h1
+  rw [key]
+  congr 1
+  rw [_root_.tsum_subtype]
+  have hz : ∀ k ∉ Finset.range ⌈a⌉₊, {k : ℕ | (k : ℝ) < a}.indicator u k = 0 := by
+    intro k hk
+    rw [Finset.mem_range] at hk
+    have hnm : k ∉ {k : ℕ | (k : ℝ) < a} := by
+      rw [Set.mem_setOf_eq, ← Nat.lt_ceil]; exact hk
+    exact Set.indicator_of_notMem hnm _
+  rw [tsum_eq_sum hz]
+  apply Finset.sum_congr rfl
+  intro k hk
+  rw [Finset.mem_range, Nat.lt_ceil] at hk
+  exact Set.indicator_of_mem (show k ∈ {k : ℕ | (k : ℝ) < a} from hk) u
+
 /-! ### Generic εn-localization
 
 An abstract positive summable family `u n` whose successive term ratio

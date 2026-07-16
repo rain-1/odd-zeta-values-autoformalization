@@ -53,9 +53,10 @@ against a non-primitive integral Betti class produced by the
 construction's motivic elimination of $\zeta(2)$, so the correction is a
 lattice index bounded by the Bernoulli constant $24$ arising from
 $\zeta(2)=-(2\pi i)^2/24$; an elementary elimination-cost lemma, a
-conditional theorem, and a concrete derivation in the totally symmetric
-case (where the factor $12$ appears as a doubled sine-kernel Laurent
-coefficient $\tfrac16$) support this. As by-products we determine the
+conditional theorem, and a heuristic localization in the totally
+symmetric case (the factor $12$ appearing as a doubled sine-kernel
+Laurent coefficient $\tfrac16$; all symmetric-case laws verified exactly
+for $n\le8$) support this. As by-products we determine the
 supremum of the Brown--Zudilin ``worthiness'' exponent over the full
 parameter cone, verify that the leading factor $2$ in a denominator
 conjecture of Krattenthaler--Rivoal is unnecessary for $n\le 5$, and
@@ -110,10 +111,10 @@ $\zeta(2)=-(2\pi i)^2/24$ prices any integral elimination at a lattice
 index dividing $24$. An elementary lemma makes this precise; the
 measured constants $12$ and $2$ then \emph{measure} $2$-adic indices of
 the integral Betti lattice of the underlying rank-$3$ mixed Tate motive.
-In the totally symmetric case we exhibit the factor concretely: the
-excess enters through the doubled Laurent coefficient $\tfrac16$ of the
-reciprocal-sine kernel, and we prove unconditionally that no prime
-$p\ge5$ contributes (\S\ref{sec:symmetric}).
+In the totally symmetric case the excess is localized (heuristically)
+in the doubled Laurent coefficient $\tfrac16$ of the reciprocal-sine
+kernel; no $p\ge5$ excess is observed through $n=8$, though the support
+statement remains conjectural (\S\ref{sec:symmetric}).
 \item All measured denominator slack (cells where the true denominator
 is \emph{smaller} than predicted) is bounded along every measured
 direction, including growth series $n\le8$; consequently the
@@ -336,17 +337,28 @@ $B_j=(-1)^n\binom{n+a}{a}\binom{n}{a}^2/n!$ and
 $A_j=B_j\,(3H_a-H_{n+a}-2H_{n-a})$ with $a=j-n-1$ (verified exactly for
 $n\le6$). Two consequences, proved in the accompanying notes:
 
-\begin{theorem}[support; proof in the companion notes, under
-independent audit]\label{thm:support}
+\begin{conjecture}[support; verified $n\le8$]\label{thm:support}
 In the totally symmetric case every prime dividing $\den(P_n)$ is at
-most $2n+1$, and no prime $p\ge5$ exceeds the $\dn{n}^5$ budget.
-\end{theorem}
+most $2n+1$, and $\ord_p\den(P_n)\le 5\,\ord_p \dn{n}$ for every
+$p\ge5$ (inequality only: the corresponding equality fails at
+$(n,p)=(8,7)$).
+\end{conjecture}
 
-\noindent\emph{Status.} The proof is written in the companion
-computational notes and its instances are machine-verified for
-$n\le6$; it will be reproduced in this paper only after a full
-independent audit, and until then the reader should weight it
-accordingly.
+\noindent\emph{Status.} An adversarial audit of our own earlier notes
+found that a claimed unconditional proof of this statement silently
+invoked the open collapse below, and that even the prime-support bound
+is open in general (higher sine-kernel Laurent coefficients
+$\zeta(2k)/\pi^{2k}$ carry Bernoulli numerators with large primes,
+whose non-contribution is exactly what must be proven). What is proven:
+the Barnes specialization and the sine-kernel reduction (complete
+analytic proofs), and the classical partial-fraction/harmonic-clearing
+integrality inputs. What is open: the general-$n$ ``$\dn{n}^5$-collapse''
+of the residue sums (the coupling polynomial of the double kernel admits
+no closed-form reduction to the elementary kernels, which is precisely
+where an earlier claimed reduction was found to be circular) and the
+$2$-adic attainment. All laws --- $12\,\dn{n}^5P_n\in\Z$, the
+$2$-adic equality $\ord_2\den(P_n)=2+5\,\ord_2\dn{n}$, and the
+$\hat P$ companion --- are verified exactly for $n\le8$.
 
 Moreover the $\{2,3\}$-excess enters \emph{only} through the Laurent
 coefficients $1,\tfrac16,\tfrac1{90},\dots$ of the sine kernel: the

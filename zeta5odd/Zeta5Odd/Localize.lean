@@ -777,6 +777,50 @@ private lemma c_ratio_lb (q j n : ℕ) (hj : 1 ≤ j) (hn : 1 ≤ n) (hn2q : 2 *
       exact mul_nonpos_of_nonpos_of_nonneg this (mul_nonneg hg1nn hg2nn)
     exact le_trans hLneg (by positivity)
 
+/-- Small-index regime: for `j ≤ J₀` the term ratio blows up (`≥ 36n²·4⁻q /
+((2J₀+3)(2J₀+2))`), hence eventually dominates any `M`. -/
+private lemma c_ratio_smallj (q J₀ : ℕ) (M : ℝ) :
+    ∀ᶠ n : ℕ in atTop, ∀ j : ℕ, j ≤ J₀ → M ≤ c q n (j + 1) / c q n j := by
+  have hCbound : ∀ n : ℕ, 1 ≤ n → ∀ j : ℕ, j ≤ J₀ →
+      36 * (n : ℝ) ^ 2 / (((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2)) * 4 ^ q)
+        ≤ c q n (j + 1) / c q n j := by
+    intro n hn j hj
+    rw [c_ratio]
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+    have hjR : (0 : ℝ) ≤ j := Nat.cast_nonneg j
+    have hjJ : (j : ℝ) ≤ J₀ := by exact_mod_cast hj
+    have hAp : 36 * (n : ℝ) ^ 2 / ((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2))
+        ≤ (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)
+            / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2)) := by
+      have hnum : 36 * (n : ℝ) ^ 2
+          ≤ (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3) := by
+        have : (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3) - 36 * (n : ℝ) ^ 2
+            = 24 * n * j + 42 * n + 4 * (j : ℝ) ^ 2 + 14 * j + 12 := by ring
+        nlinarith [this, hjR, hnR.le, sq_nonneg (j : ℝ), mul_nonneg hnR.le hjR]
+      calc 36 * (n : ℝ) ^ 2 / ((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2))
+          ≤ 36 * (n : ℝ) ^ 2 / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2)) := by
+            gcongr <;> linarith
+        _ ≤ _ := by gcongr
+    have hBp : (1 : ℝ) / 4 ^ q
+        ≤ (((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ)) ^ (2 * q) := by
+      have hbase : (1 : ℝ) / 2 ≤ ((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ) := by
+        rw [le_div_iff₀ (by positivity)]; push_cast; linarith [hjR]
+      have hp := pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 1/2) hbase (2 * q)
+      rwa [show ((1:ℝ)/2)^(2*q) = 1/4^q from by
+        rw [div_pow, one_pow, pow_mul]; norm_num] at hp
+    calc 36 * (n : ℝ) ^ 2 / (((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2)) * 4 ^ q)
+        = (36 * (n : ℝ) ^ 2 / ((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2))) * (1 / 4 ^ q) := by
+          rw [mul_comm ((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2)) (4 ^ q), ← div_div]; ring
+      _ ≤ _ := mul_le_mul hAp hBp (by positivity) (le_trans (by positivity) hAp)
+  have htend : Tendsto
+      (fun n : ℕ => 36 * (n : ℝ) ^ 2 / (((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2)) * 4 ^ q))
+      atTop atTop := by
+    apply Filter.Tendsto.atTop_div_const (by positivity)
+    exact Filter.Tendsto.const_mul_atTop (by norm_num : (0:ℝ) < 36)
+      ((tendsto_pow_atTop (n := 2) (by norm_num)).comp (tendsto_natCast_atTop_atTop (R := ℝ)))
+  filter_upwards [htend.eventually_ge_atTop M, eventually_ge_atTop 1] with n hM hn j hj
+  exact le_trans hM (hCbound n hn j hj)
+
 /-- Lower geometric margin for `c`: below `(x₀ - ε/2)·n` the term ratio
 `c(j+1)/c(j)` (given exactly by `c_ratio`) exceeds `1 + δ`, because
 `f(j/n)² ≥ f(x₀-ε/2)² > 1` on `(0, x₀)` and `ρ → f²`. -/

@@ -22,13 +22,59 @@ namespace Zeta5Odd
 open Filter Topology
 open scoped BigOperators
 
+/-- For `u n → L > 0`, the `n`-th roots `u n ^ (1/n) → 1`. -/
+private lemma tendsto_rpow_natinv_one {u : ℕ → ℝ} {L : ℝ} (hL : 0 < L)
+    (hu : Tendsto u atTop (𝓝 L)) :
+    Tendsto (fun n : ℕ => u n ^ (1 / (n : ℝ))) atTop (𝓝 1) := by
+  have hupos : ∀ᶠ n in atTop, 0 < u n := hu.eventually (Ioi_mem_nhds hL)
+  have hlog : Tendsto (fun n => Real.log (u n)) atTop (𝓝 (Real.log L)) :=
+    (Real.continuousAt_log (ne_of_gt hL)).tendsto.comp hu
+  have hdiv : Tendsto (fun n => Real.log (u n) / (n : ℝ)) atTop (𝓝 0) :=
+    hlog.div_atTop tendsto_natCast_atTop_atTop
+  have hexp : Tendsto (fun n => Real.exp (Real.log (u n) / (n : ℝ))) atTop (𝓝 1) := by
+    have h0 : Tendsto (fun n : ℕ => Real.exp (Real.log (u n) / (n : ℝ))) atTop
+        (𝓝 (Real.exp 0)) := (Real.continuous_exp.tendsto 0).comp hdiv
+    rwa [Real.exp_zero] at h0
+  have key : (fun n : ℕ => u n ^ (1 / (n : ℝ)))
+      =ᶠ[atTop] (fun n => Real.exp (Real.log (u n) / (n : ℝ))) := by
+    filter_upwards [hupos] with n hn
+    rw [Real.rpow_def_of_pos hn, mul_one_div]
+  exact hexp.congr' key.symm
+
 /-- The `n`-th root of the eliminated form tends to `g q x₀`.
 Follows from `tendsto_root_r` and `tendsto_ratio` (`7 r − r̂ = r·(7 − r̂/r)`,
 `r̂/r → 1`, and `h^{1/n} → 1` for `h → 6 > 0`). -/
 lemma tendsto_seven_root (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) :
     Tendsto (fun n : ℕ => (7 * r q n - rhat q n) ^ (1 / (n : ℝ))) atTop (𝓝 (g q x₀)) := by
-  sorry
+  -- r̂/r → 1
+  have hrr : Tendsto (fun n => r q n / rhat q n) atTop (𝓝 1) := tendsto_ratio q hq hx₀ hfx₀
+  have hrhr : Tendsto (fun n => rhat q n / r q n) atTop (𝓝 1) := by
+    have h := hrr.inv₀ one_ne_zero
+    rw [inv_one] at h
+    refine h.congr (fun n => ?_)
+    rw [inv_div]
+  -- h n := 7 − r̂/r → 6, eventually positive
+  have hh : Tendsto (fun n => 7 - rhat q n / r q n) atTop (𝓝 6) := by
+    have h6 : (7 : ℝ) - 1 = 6 := by norm_num
+    have := (tendsto_const_nhds (x := (7 : ℝ))).sub hrhr
+    rwa [h6] at this
+  have hhpos : ∀ᶠ n in atTop, 0 < 7 - rhat q n / r q n :=
+    hh.eventually (Ioi_mem_nhds (by norm_num : (0 : ℝ) < 6))
+  -- pointwise  7 r − r̂ = r · (7 − r̂/r)
+  have hid : ∀ n, 7 * r q n - rhat q n = r q n * (7 - rhat q n / r q n) := by
+    intro n
+    have hrne : r q n ≠ 0 := (r_pos q n hq).ne'
+    field_simp
+  -- product of roots
+  have hroot_r := tendsto_root_r q hq hx₀ hfx₀
+  have hroot_h := tendsto_rpow_natinv_one (by norm_num : (0 : ℝ) < 6) hh
+  have hprod := hroot_r.mul hroot_h
+  have hEq : (fun n => r q n ^ (1 / (n : ℝ)) * (7 - rhat q n / r q n) ^ (1 / (n : ℝ)))
+      =ᶠ[atTop] (fun n => (7 * r q n - rhat q n) ^ (1 / (n : ℝ))) := by
+    filter_upwards [hhpos] with n hn
+    rw [hid n, Real.mul_rpow (r_pos q n hq).le hn.le]
+  simpa using hprod.congr' hEq
 
 /-- If `w^{1/n} < σ` with `w ≥ 0`, `σ > 0`, `n ≥ 1`, then `w < σ^n`. -/
 private lemma lt_pow_of_root_lt {w σ : ℝ} {n : ℕ} (hn : 1 ≤ n) (hw : 0 ≤ w) (hσ : 0 < σ)

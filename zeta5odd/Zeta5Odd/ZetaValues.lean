@@ -22,6 +22,33 @@ lemma zetaVal_nonneg (j : ℕ) : 0 ≤ zetaVal j :=
 integer denominator `a` with `a·ζ(j) ∈ ℤ` for all these `j`. -/
 lemma exists_common_denom (h : ∀ j ∈ oddIdx, ¬ Irrational (zetaVal j)) :
     ∃ a : ℕ, 0 < a ∧ ∀ j ∈ oddIdx, ∃ z : ℤ, (a : ℝ) * zetaVal j = z := by
-  sorry
+  classical
+  -- `den · q = num` in ℝ
+  have hQd : ∀ q : ℚ, ((q.den : ℝ)) * (q : ℝ) = (q.num : ℝ) := by
+    intro q
+    have hd : (q.den : ℝ) ≠ 0 := by exact_mod_cast q.den_ne_zero
+    rw [Rat.cast_def]
+    field_simp
+  -- each ζ(j) is some rational Q j
+  have hex : ∀ j ∈ oddIdx, ∃ q : ℚ, (q : ℝ) = zetaVal j := by
+    intro j hj
+    have hmem : zetaVal j ∈ Set.range ((↑) : ℚ → ℝ) := by
+      by_contra hc; exact h j hj hc
+    obtain ⟨q, hq⟩ := hmem
+    exact ⟨q, hq⟩
+  choose! Q hQ using hex
+  refine ⟨∏ i ∈ oddIdx, (Q i).den, Finset.prod_pos (fun i _ => (Q i).den_pos), ?_⟩
+  intro j hj
+  have hdvd : (Q j).den ∣ ∏ i ∈ oddIdx, (Q i).den :=
+    Finset.dvd_prod_of_mem (fun i => (Q i).den) hj
+  set m : ℕ := (∏ i ∈ oddIdx, (Q i).den) / (Q j).den with hm
+  have hma : m * (Q j).den = ∏ i ∈ oddIdx, (Q i).den := Nat.div_mul_cancel hdvd
+  refine ⟨(m : ℤ) * (Q j).num, ?_⟩
+  rw [← hQ j hj]
+  have hacast : ((∏ i ∈ oddIdx, (Q i).den : ℕ) : ℝ) = (m : ℝ) * ((Q j).den : ℝ) := by
+    rw [← hma]; push_cast; ring
+  rw [hacast]
+  push_cast
+  rw [mul_assoc, hQd (Q j)]
 
 end Zeta5Odd

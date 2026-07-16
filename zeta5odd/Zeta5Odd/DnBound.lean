@@ -34,14 +34,25 @@ Status of this file:
 * `hansonDenom_dvd`, `hansonC_pos`                      — proved (sorry-free)
 * `lcmUpto_dvd_hansonC`  (**entire divisibility half**) — proved (sorry-free)
 * `hansonC_le_three_pow` (the size bound `C n ≤ 3^n`)   — reduced (sorry-free) to `hansonC_log_bound`
-* `hansonC_log_bound_finite` (`n < 1337`, `decide`)     — proved (sorry-free)
-* `hansonC_log_bound_large`  (`n ≥ 1337`, Stirling)     — the ONLY `sorry`.
+* `hansonC_log_bound_finite` (`n < 1600`, `decide`)     — proved (sorry-free)
+* `hansonC_log_bound_large`  (`n ≥ 1600`, Stirling)     — proved (sorry-free)
 
-Thus `lcmUpto_le_three_pow` is reduced to the single analytic estimate `C n ≤ 3^n` for `n ≥ 1337`
-(equivalently `∑ᵢ (log aᵢ)/aᵢ < log 3`, a Stirling computation); the whole range `n < 1337` is
-machine-checked by `decide`.  Numerically verified for all `n` with margin
-(`maxₙ (log C n − n·log 3) = −0.386`).  `#print axioms` shows the divisibility chain and the finite
-size regime use no `sorryAx`; only `hansonC_log_bound_large` does.
+`lcmUpto_le_three_pow` (Hanson's bound `d_n ≤ 3^n`) is now **fully proved**: the whole range
+`n < 1600` is machine-checked by `decide`, and `n ≥ 1600` is handled analytically by
+`[propext, Classical.choice, Quot.sound]` — no `sorryAx`, no `native_decide`/`ofReduceBool`.
+
+The large regime `n ≥ 1600` is assembled from sorry-free pieces:
+* `sum_sylvTerm_lt_log_three` / `sum_sylvTerm_le_crat` — the certified transcendental rate estimate
+  `∑ᵢ (log aᵢ)/aᵢ = 1.0824… < log 3`, via power-of-2 rational bounds on `log 7/43/1807`
+  (`7²⁶<2⁷³`, …), a symbolic `(log 3)/3` term, and geometric tail domination;
+* `hansonC_log_reduce` — the Stirling assembly: sharp two-sided Stirling (`log_factorial_le/ge`),
+  the tangent-line inequality `mul_log_tangent`, `sum_inv_sylv`, and `core_sum_le` reduce the
+  goal to a single boundary/growth inequality `n·rate + Eₙ,ₘ ≤ n·log 3`;
+* `err_tangent_close` + `hanson_key` — the growth machinery.  `hanson_key` is a *self-bootstrapping*
+  induction on the Sylvester index (the step needs no explicit bound on the index: the hypothesis
+  supplies `(1+(k+1)/2)·log aₖ ≤ (2/125)·aₖ`, and the doubling `a_{k+1} ≥ aₖ²/2` absorbs the growth).
+The threshold `N₀ = 1600` (`< sylv 4 = 1807`, so the `range 4` truncation still licenses the finite
+`decide`) is where the closed-form Stirling relaxation first holds for all larger `n`.
 -/
 import Mathlib
 import Zeta5Odd.Basic
@@ -321,17 +332,17 @@ theorem hansonDenom_eq_prod4 (n : ℕ) (hn : n < sylv 4) :
     rw [Nat.div_eq_of_lt hlt, Nat.factorial_zero]
 
 set_option maxRecDepth 40000 in
-/-- **Finite regime (fully proved, `decide`-backed).**  For `n < 1337`, the log size bound
+/-- **Finite regime (fully proved, `decide`-backed).**  For `n < 1600`, the log size bound
 holds.  Reduced to the `ℕ` inequality `n! ≤ 3^n · ∏_{i<4} ⌊n/aᵢ⌋!`, discharged by `decide`
 (kernel GMP arithmetic; axioms `[propext, Classical.choice, Quot.sound]` only — no
 `native_decide`/`ofReduceBool`).  `1337` is the threshold below which the closed-form Stirling
 relaxation of `hansonC_log_bound_large` fails, and `1337 < sylv 4 = 1807` licenses the `range 4`
 truncation. -/
-theorem hansonC_log_bound_finite (n : ℕ) (hn : n < 1337) :
+theorem hansonC_log_bound_finite (n : ℕ) (hn : n < 1600) :
     Real.log (n.factorial : ℝ)
       ≤ (n : ℝ) * Real.log 3 + ∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)) := by
   have h4 : n < sylv 4 := lt_of_lt_of_le hn (by decide)
-  have hfin : ∀ m ∈ range 1337,
+  have hfin : ∀ m ∈ range 1600,
       m.factorial ≤ 3 ^ m * ∏ i ∈ range 4, (m / sylv i).factorial := by decide
   have hkeyNat : n.factorial ≤ 3 ^ n * hansonDenom n := by
     rw [hansonDenom_eq_prod4 n h4]; exact hfin n (Finset.mem_range.mpr hn)
@@ -803,27 +814,294 @@ theorem hansonC_log_reduce (n : ℕ) (hn : 2 ≤ n)
 
 end Assembly
 
-/-- **Large regime (residual `sorry`).**  For `n ≥ 1337` the log size bound follows from the
-sharp two-sided Stirling estimate combined with the closed-form rate bound
-`∑ᵢ (log aᵢ)/aᵢ < log 3`.  This is the sole remaining analytic obstruction; see the
-end-of-file note. -/
-theorem hansonC_log_bound_large (n : ℕ) (hn : 1337 ≤ n) :
+section Growth
+open Real
+
+/-- `log 1807 < (65/6)·log 2`, tighter than `11·log 2`, certified by `1807⁶ < 2⁶⁵`. -/
+theorem log_1807_tight : Real.log 1807 < (65 / 6 : ℝ) * Real.log 2 := by
+  have hN : (1807 : ℕ) ^ 6 < 2 ^ 65 := by norm_num
+  have hlt : (1807 : ℝ) ^ (6 : ℕ) < (2 : ℝ) ^ (65 : ℕ) := by exact_mod_cast hN
+  have h := Real.log_lt_log (by positivity) hlt
+  rw [Real.log_pow, Real.log_pow] at h
+  push_cast at h; linarith
+
+/-- `log 1600 < (32/3)·log 2`, certified by `1600³ < 2³²`. -/
+theorem log_1600_tight : Real.log 1600 < (32 / 3 : ℝ) * Real.log 2 := by
+  have hN : (1600 : ℕ) ^ 3 < 2 ^ 32 := by norm_num
+  have hlt : (1600 : ℝ) ^ (3 : ℕ) < (2 : ℝ) ^ (32 : ℕ) := by exact_mod_cast hN
+  have h := Real.log_lt_log (by positivity) hlt
+  rw [Real.log_pow, Real.log_pow] at h
+  push_cast at h; linarith
+
+/-- `7 < log 1807` (since `e⁷ < 1807`). -/
+theorem seven_lt_log_1807 : (7 : ℝ) < Real.log 1807 := by
+  have he : Real.exp 7 = Real.exp 1 ^ 7 := by rw [← Real.exp_nat_mul]; norm_num
+  have h1 : Real.exp 1 < 2.72 := lt_trans Real.exp_one_lt_d9 (by norm_num)
+  have h3 : Real.exp 1 ^ 7 < (2.72 : ℝ) ^ 7 := by gcongr
+  have h2 : (2.72 : ℝ) ^ 7 < 1807 := by norm_num
+  rw [Real.lt_log_iff_exp_lt (by norm_num), he]
+  linarith [h3, h2]
+
+/-- `log 3 < log π`  and  `log π ≤ 2·log 2`  (from `3 < π ≤ 4`). -/
+theorem log3_lt_logpi : Real.log 3 < Real.log π :=
+  Real.log_lt_log (by norm_num) Real.pi_gt_three
+
+theorem logpi_le_two_log2 : Real.log π ≤ 2 * Real.log 2 := by
+  have h := Real.log_le_log Real.pi_pos Real.pi_le_four
+  rwa [Real.log_four_eq] at h
+
+/-- **Tangent-line close.**  From the boundary inequality `hkey` at `n₀` and `hcoef`, the Stirling
+growth term `Eₙ,ₘ` (in the exact form produced by `hansonC_log_reduce`) is `≤ (2/125)·nn` for all
+`nn ≥ n₀`.  Uses concavity of `log` (`log nn ≤ log n₀ + nn/n₀ − 1`). -/
+theorem err_tangent_close (M nn n0 : ℝ) (hM : 0 ≤ M) (hn0 : 0 < n0) (hle : n0 ≤ nn)
+    (hcoef : 1 + M / 2 ≤ (2 / 125) * n0)
+    (hkey : (1 + M / 2) * Real.log n0 + M * (1 - (1 / 2) * Real.log π)
+        + ((1 / 2) * Real.log (2 * π) - 1) + 1 / (12 * n0) ≤ (2 / 125) * n0) :
+    (1 / 2) * Real.log (2 * π * nn) + 1 / (12 * nn) + Real.log nn - 1
+        + (M - 1) / 2 * Real.log nn + M * (1 - (1 / 2) * Real.log π) ≤ (2 / 125) * nn := by
+  have hnnpos : 0 < nn := lt_of_lt_of_le hn0 hle
+  have hsplit : Real.log (2 * π * nn) = Real.log (2 * π) + Real.log nn :=
+    Real.log_mul (by positivity) (ne_of_gt hnnpos)
+  rw [hsplit]
+  set u : ℝ := nn / n0 with hudef
+  have hun : nn = u * n0 := by rw [hudef]; field_simp
+  have hu1 : 1 ≤ u := by rw [hudef, le_div_iff₀ hn0]; linarith
+  have htanu : Real.log nn ≤ Real.log n0 + u - 1 := by
+    have h := Real.log_le_sub_one_of_pos (show (0 : ℝ) < nn / n0 by positivity)
+    rw [Real.log_div (ne_of_gt hnnpos) (ne_of_gt hn0)] at h
+    rw [← hudef] at h; linarith
+  have hK : (0 : ℝ) ≤ 1 + M / 2 := by linarith
+  have htanK := mul_le_mul_of_nonneg_left htanu hK
+  have hprod : 0 ≤ (u - 1) * ((2 / 125) * n0 - (1 + M / 2)) :=
+    mul_nonneg (by linarith) (by linarith)
+  have h12 : 1 / (12 * nn) ≤ 1 / (12 * n0) := by
+    apply one_div_le_one_div_of_le (by positivity); linarith
+  rw [show (1 / 2) * (Real.log (2 * π) + Real.log nn) + 1 / (12 * nn) + Real.log nn - 1
+        + (M - 1) / 2 * Real.log nn + M * (1 - (1 / 2) * Real.log π)
+      = (1 + M / 2) * Real.log nn + M * (1 - (1 / 2) * Real.log π)
+        + ((1 / 2) * Real.log (2 * π) - 1) + 1 / (12 * nn) by ring]
+  nlinarith [htanK, hprod, hkey, hun, h12, hK, mul_nonneg hK (sub_nonneg.mpr hu1)]
+
+set_option maxHeartbeats 2000000 in
+/-- **The self-bootstrapping boundary inequality (KEY).**  For every Sylvester index `k ≥ 4`,
+the closed-form boundary term at `n₀ = a_k = sylv k` is `≤ (2/125)·a_k`.  The induction step
+does *not* need any explicit bound on `k`: the hypothesis at `k` gives
+`(1+(k+1)/2)·log a_k ≤ (2/125)·a_k`, and the doubling `a_{k+1} ≥ a_k²/2` supplies the extra
+factor `a_k/2 ≥ 900` that absorbs the growth from `k` to `k+1`. -/
+theorem hanson_key (k : ℕ) (hk : 4 ≤ k) :
+    (1 + ((k : ℝ) + 1) / 2) * Real.log (sylv k)
+      + ((k : ℝ) + 1) * (1 - (1 / 2) * Real.log π)
+      + ((1 / 2) * Real.log (2 * π) - 1) + 1 / (12 * (sylv k))
+    ≤ (2 / 125 : ℝ) * (sylv k) := by
+  have hlpi := log3_lt_logpi
+  have hlpi2 := logpi_le_two_log2
+  have hl2u := Real.log_two_lt_d9
+  have hl2l := Real.log_two_gt_d9
+  have hl3l := Real.log_three_gt_d9
+  induction k, hk using Nat.le_induction with
+  | base =>
+    -- base k = 4, sylv 4 = 1807
+    have hs4 : (sylv 4 : ℝ) = 1807 := by rw [show sylv 4 = 1807 from by decide]; norm_num
+    rw [hs4]
+    have h1807 := log_1807_tight
+    have hlog2pi : Real.log (2 * π) = Real.log 2 + Real.log π :=
+      Real.log_mul (by norm_num) (ne_of_gt Real.pi_pos)
+    rw [hlog2pi]
+    push_cast
+    nlinarith [h1807, hlpi, hl2u, hl3l]
+  | succ k hk ih =>
+    -- s = sylv k, S = sylv (k+1) = s² − s + 1
+    set s : ℝ := (sylv k : ℝ) with hsdef
+    have hSeq : (sylv (k + 1) : ℝ) = s ^ 2 - s + 1 := by rw [hsdef]; exact sylv_succ_real k
+    have hs1807 : (1807 : ℝ) ≤ s := by
+      rw [hsdef]
+      have : sylv 4 ≤ sylv k := sylv_mono hk
+      have h4 : (sylv 4 : ℝ) = 1807 := by rw [show sylv 4 = 1807 from by decide]; norm_num
+      calc (1807 : ℝ) = (sylv 4 : ℝ) := h4.symm
+        _ ≤ (sylv k : ℝ) := by exact_mod_cast this
+    have hspos : (0 : ℝ) < s := by linarith
+    have hSge : s ^ 2 / 2 ≤ (sylv (k + 1) : ℝ) := by rw [hSeq]; nlinarith
+    have hSle : (sylv (k + 1) : ℝ) ≤ s ^ 2 := by rw [hSeq]; nlinarith
+    have hSpos : (0 : ℝ) < (sylv (k + 1) : ℝ) := by rw [hSeq]; nlinarith
+    have hlogS : Real.log (sylv (k + 1)) ≤ 2 * Real.log s := by
+      calc Real.log (sylv (k + 1)) ≤ Real.log (s ^ 2) := Real.log_le_log hSpos hSle
+        _ = 2 * Real.log s := by rw [show s ^ 2 = s ^ (2 : ℕ) from rfl, Real.log_pow]; push_cast; ring
+    have hlogs7 : (7 : ℝ) ≤ Real.log s := by
+      have h1 := seven_lt_log_1807
+      have h2 : Real.log 1807 ≤ Real.log s := Real.log_le_log (by norm_num) hs1807
+      linarith
+    have hlogs_pos : (0 : ℝ) ≤ Real.log s := by linarith
+    have hkpos : (0 : ℝ) ≤ (k : ℝ) := by positivity
+    have hk4 : (4 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+    have hmul : Real.log (2 * π) = Real.log 2 + Real.log π :=
+      Real.log_mul (by norm_num) (ne_of_gt Real.pi_pos)
+    -- crude two-sided bounds on `b := 1 − ½logπ` and `C₀ := ½log(2π) − 1`
+    have hb_lo : (3 : ℝ) / 10 ≤ 1 - (1 / 2) * Real.log π := by nlinarith [hlpi2, hl2u]
+    have hb_ub : (1 - (1 / 2) * Real.log π) ≤ 1 / 2 := by nlinarith [hlpi, hl3l]
+    have hC0_lo : (-(1 : ℝ) / 8) ≤ (1 / 2) * Real.log (2 * π) - 1 := by
+      rw [hmul]; nlinarith [hl2l, hlpi, hl3l]
+    have hC0_ub : (1 / 2) * Real.log (2 * π) - 1 ≤ (1 : ℝ) / 20 := by
+      rw [hmul]; nlinarith [hlpi2, hl2u]
+    -- IH ⟹ the weak bootstrap  (1+(k+1)/2)·log s ≤ (2/125)·s
+    have hIHw : (1 + ((k : ℝ) + 1) / 2) * Real.log s ≤ (2 / 125) * s := by
+      have h12s : (0 : ℝ) ≤ 1 / (12 * s) := by positivity
+      nlinarith [ih, hC0_lo, h12s, hk4,
+        mul_nonneg (show (0:ℝ) ≤ (k:ℝ) + 1 by linarith)
+          (show (0:ℝ) ≤ (1 - (1/2) * Real.log π) - 3/10 by linarith [hb_lo])]
+    -- multiply by s and use the doubling `S ≥ s²/2`
+    have hbig : (1 + ((k : ℝ) + 1) / 2) * Real.log s * s ≤ (2 / 125) * s ^ 2 := by
+      nlinarith [mul_le_mul_of_nonneg_right hIHw hspos.le]
+    have h_a : ((k : ℝ) + 3) / 4 * s * Real.log s ≤ (1 / 125) * s ^ 2 := by nlinarith [hbig]
+    have h_b : (1 / 125) * s ^ 2 ≤ (2 / 125) * (sylv (k + 1) : ℝ) := by nlinarith [hSge]
+    have hTone : (1 : ℝ) ≤ (sylv (k + 1) : ℝ) := by exact_mod_cast sylv_pos (k + 1)
+    have h12T : 1 / (12 * (sylv (k + 1) : ℝ)) ≤ 1 / 12 := by
+      refine one_div_le_one_div_of_le (by norm_num) ?_; linarith
+    -- `log T` coefficient bound (T = sylv (k+1))
+    have hlogTcoef : (1 + ((k : ℝ) + 2) / 2) * Real.log (sylv (k + 1))
+        ≤ ((k : ℝ) + 4) * Real.log s := by
+      have hc : (0 : ℝ) ≤ 1 + ((k : ℝ) + 2) / 2 := by positivity
+      calc (1 + ((k : ℝ) + 2) / 2) * Real.log (sylv (k + 1))
+          ≤ (1 + ((k : ℝ) + 2) / 2) * (2 * Real.log s) := mul_le_mul_of_nonneg_left hlogS hc
+        _ = ((k : ℝ) + 4) * Real.log s := by ring
+    -- the bounded remainder `K₁`
+    have hK1 : ((k : ℝ) + 2) * (1 - (1 / 2) * Real.log π) + ((1 / 2) * Real.log (2 * π) - 1)
+        + 1 / (12 * (sylv (k + 1) : ℝ)) ≤ ((k : ℝ) + 2) * (1 / 2) + 1 / 20 + 1 / 12 := by
+      have hm := mul_le_mul_of_nonneg_left hb_ub (show (0 : ℝ) ≤ (k : ℝ) + 2 by linarith)
+      linarith [hm, hC0_ub, h12T]
+    -- the trivial-margin step: `(k+4)·log s + K₁ ≤ (k+3)/4·s·log s`
+    have hstep1 : ((k : ℝ) + 3) / 4 * 1807 * Real.log s ≤ ((k : ℝ) + 3) / 4 * s * Real.log s :=
+      mul_le_mul_of_nonneg_right
+        (mul_le_mul_of_nonneg_left hs1807 (by positivity)) hlogs_pos
+    have hklog : (7 : ℝ) * (k : ℝ) ≤ (k : ℝ) * Real.log s := by
+      have := mul_le_mul_of_nonneg_left hlogs7 hkpos; linarith
+    have hstep2 : ((k : ℝ) + 4) * Real.log s + (((k : ℝ) + 2) * (1 / 2) + 1 / 20 + 1 / 12)
+        ≤ ((k : ℝ) + 3) / 4 * 1807 * Real.log s := by linarith [hlogs7, hkpos, hk4, hklog]
+    have h_c : ((k : ℝ) + 4) * Real.log s + (((k : ℝ) + 2) * (1 / 2) + 1 / 20 + 1 / 12)
+        ≤ ((k : ℝ) + 3) / 4 * s * Real.log s := le_trans hstep2 hstep1
+    have hcombine : (1 + ((k : ℝ) + 2) / 2) * Real.log (sylv (k + 1))
+          + (((k : ℝ) + 2) * (1 - (1 / 2) * Real.log π) + ((1 / 2) * Real.log (2 * π) - 1)
+             + 1 / (12 * (sylv (k + 1) : ℝ)))
+        ≤ (2 / 125) * (sylv (k + 1) : ℝ) := by
+      calc (1 + ((k : ℝ) + 2) / 2) * Real.log (sylv (k + 1))
+            + (((k : ℝ) + 2) * (1 - (1 / 2) * Real.log π) + ((1 / 2) * Real.log (2 * π) - 1)
+               + 1 / (12 * (sylv (k + 1) : ℝ)))
+          ≤ ((k : ℝ) + 4) * Real.log s + (((k : ℝ) + 2) * (1 / 2) + 1 / 20 + 1 / 12) := by
+            linarith [hlogTcoef, hK1]
+        _ ≤ ((k : ℝ) + 3) / 4 * s * Real.log s := h_c
+        _ ≤ (1 / 125) * s ^ 2 := h_a
+        _ ≤ (2 / 125) * (sylv (k + 1) : ℝ) := h_b
+    push_cast
+    linarith [hcombine]
+
+end Growth
+
+/-- **Large regime — fully proved.**  For `n ≥ 1600` the log size bound follows from the
+sorry-free Stirling assembly `hansonC_log_reduce`, the certified rate bound `sum_sylvTerm_le_crat`,
+and the growth machinery (`err_tangent_close` + `hanson_key`) which discharges the boundary
+inequality `n·rate + Eₙ,ₘ ≤ n·log 3`. -/
+theorem hansonC_log_bound_large (n : ℕ) (hn : 1600 ≤ n) :
     Real.log (n.factorial : ℝ)
       ≤ (n : ℝ) * Real.log 3 + ∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)) := by
-  sorry
+  open Real in
+  have hn2 : 2 ≤ n := by omega
+  have hnpos : (0 : ℝ) ≤ (n : ℝ) := by positivity
+  -- the Sylvester count `m`
+  have hex : ∃ k, n < sylv k := ⟨n, lt_sylv_self n⟩
+  set m := Nat.find hex with hmdef
+  have hmspec : n < sylv m := Nat.find_spec hex
+  have hchar : ∀ i, i < m → sylv i ≤ n := fun i hi => by
+    have := Nat.find_min hex hi; omega
+  have hm4 : 4 ≤ m := by
+    by_contra h; push_neg at h
+    have hmono : sylv m ≤ sylv 3 := sylv_mono (by omega)
+    have h3 : sylv 3 = 43 := by decide
+    have : n < sylv 3 := lt_of_lt_of_le hmspec hmono
+    omega
+  -- the Stirling reduction and the certified rate bound
+  have hred := hansonC_log_reduce n hn2 m hmspec hchar
+  have hrate := sum_sylvTerm_le_crat m
+  have hnrate : (n : ℝ) * (∑ i ∈ range m, Real.log (sylv i) / (sylv i))
+      ≤ (n : ℝ) * ((1033446 / 1000000 : ℝ) * Real.log 2 + Real.log 3 / 3) :=
+    mul_le_mul_of_nonneg_left hrate hnpos
+  -- the certified numeric gap  `2/125 ≤ log 3 − C_rat`
+  have hgap : (2 / 125 : ℝ)
+      ≤ Real.log 3 - ((1033446 / 1000000 : ℝ) * Real.log 2 + Real.log 3 / 3) := by
+    nlinarith [Real.log_two_lt_d9, Real.log_three_gt_d9]
+  have hgapn := mul_le_mul_of_nonneg_right hgap hnpos
+  -- pi/log helper bounds
+  have hlpi := log3_lt_logpi
+  have hlpi2 := logpi_le_two_log2
+  have hl2u := Real.log_two_lt_d9
+  have hl3l := Real.log_three_gt_d9
+  have hmul : Real.log (2 * π) = Real.log 2 + Real.log π :=
+    Real.log_mul (by norm_num) (ne_of_gt Real.pi_pos)
+  -- **growth**:  `Eₙ,ₘ ≤ (2/125)·n`
+  have hERR : (1 / 2) * Real.log (2 * π * n) + 1 / (12 * n) + Real.log n - 1
+        + ((m : ℝ) - 1) / 2 * Real.log n + (m : ℝ) * (1 - (1 / 2) * Real.log π)
+      ≤ (2 / 125) * (n : ℝ) := by
+    have hMnn : (0 : ℝ) ≤ (m : ℝ) := by positivity
+    rcases Nat.lt_or_ge m 5 with h5 | h5
+    · -- m = 4, tangent at n₀ = 1600
+      have hm4' : m = 4 := by omega
+      have hmR : (m : ℝ) = 4 := by rw [hm4']; norm_num
+      have hn1600 : (1600 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+      have hcoef : 1 + (m : ℝ) / 2 ≤ (2 / 125) * 1600 := by rw [hmR]; norm_num
+      have hkey : (1 + (m : ℝ) / 2) * Real.log 1600 + (m : ℝ) * (1 - (1 / 2) * Real.log π)
+          + ((1 / 2) * Real.log (2 * π) - 1) + 1 / (12 * (1600 : ℝ)) ≤ (2 / 125) * 1600 := by
+        rw [hmR, hmul]
+        nlinarith [log_1600_tight, hlpi, hl2u, hl3l]
+      exact err_tangent_close (m : ℝ) (n : ℝ) 1600 hMnn (by norm_num) hn1600 hcoef hkey
+    · -- m ≥ 5, tangent at n₀ = sylv (m-1)
+      have hk : 4 ≤ m - 1 := by omega
+      have hmc : (m : ℝ) = ((m - 1 : ℕ) : ℝ) + 1 := by
+        have h1 : 1 ≤ m := by omega
+        rw [Nat.cast_sub h1]; norm_num
+      have hle : (sylv (m - 1) : ℝ) ≤ (n : ℝ) := by exact_mod_cast hchar (m - 1) (by omega)
+      have hn0pos : (0 : ℝ) < (sylv (m - 1) : ℝ) := by exact_mod_cast sylv_pos (m - 1)
+      -- KEY at n₀ = sylv (m-1) from `hanson_key`
+      have hkey : (1 + (m : ℝ) / 2) * Real.log (sylv (m - 1))
+          + (m : ℝ) * (1 - (1 / 2) * Real.log π) + ((1 / 2) * Real.log (2 * π) - 1)
+          + 1 / (12 * (sylv (m - 1) : ℝ)) ≤ (2 / 125) * (sylv (m - 1) : ℝ) := by
+        rw [hmc]; exact hanson_key (m - 1) hk
+      -- coefficient bound `1 + m/2 ≤ (2/125)·sylv(m-1)` (log ≥ 1, remainder ≥ 0)
+      have hs1807 : (1807 : ℝ) ≤ (sylv (m - 1) : ℝ) := by
+        have : sylv 4 ≤ sylv (m - 1) := sylv_mono hk
+        have h4 : sylv 4 = 1807 := by decide
+        calc (1807 : ℝ) = (sylv 4 : ℝ) := by rw [h4]; norm_num
+          _ ≤ (sylv (m - 1) : ℝ) := by exact_mod_cast this
+      have hlog1 : (1 : ℝ) ≤ Real.log (sylv (m - 1)) := by
+        have := seven_lt_log_1807
+        have h2 : Real.log 1807 ≤ Real.log (sylv (m - 1)) := Real.log_le_log (by norm_num) hs1807
+        linarith
+      have hb_lo : (3 : ℝ) / 10 ≤ 1 - (1 / 2) * Real.log π := by nlinarith [hlpi2, hl2u]
+      have hC0_lo : (-(1 : ℝ) / 8) ≤ (1 / 2) * Real.log (2 * π) - 1 := by
+        rw [hmul]; nlinarith [Real.log_two_gt_d9, hlpi, hl3l]
+      have hmge5 : (5 : ℝ) ≤ (m : ℝ) := by exact_mod_cast h5
+      have hcoef : 1 + (m : ℝ) / 2 ≤ (2 / 125) * (sylv (m - 1) : ℝ) := by
+        have h12 : (0 : ℝ) ≤ 1 / (12 * (sylv (m - 1) : ℝ)) := by positivity
+        nlinarith [hkey, hlog1, hb_lo, hC0_lo, hmge5, hMnn, h12,
+          mul_nonneg hMnn (show (0 : ℝ) ≤ (1 - (1 / 2) * Real.log π) - 3 / 10 by linarith),
+          mul_le_mul_of_nonneg_left hlog1 (show (0 : ℝ) ≤ 1 + (m : ℝ) / 2 by positivity)]
+      exact err_tangent_close (m : ℝ) (n : ℝ) (sylv (m - 1)) hMnn hn0pos hle hcoef hkey
+  -- combine reduction + rate + growth
+  have hERRn : (1 / 2) * Real.log (2 * π * n) + 1 / (12 * n) + Real.log n - 1
+        + ((m : ℝ) - 1) / 2 * Real.log n + (m : ℝ) * (1 - (1 / 2) * Real.log π)
+      ≤ (Real.log 3 - ((1033446 / 1000000 : ℝ) * Real.log 2 + Real.log 3 / 3)) * (n : ℝ) :=
+    le_trans hERR hgapn
+  nlinarith [hred, hnrate, hERRn]
 
 /-- **Size bound in log form.**  `C n ≤ 3^n` is exactly
 
   `log n! ≤ n·log 3 + ∑_{i<n+1} log ⌊n/aᵢ⌋!`.
 
 This is TRUE for every `n` (numerically `max_n (log C n − n·log 3) = −0.386 < 0`).  It is proved
-by splitting at `n = 1337`: the finite regime `n < 1337` is fully machine-checked
-(`hansonC_log_bound_finite`, `decide`-backed, sorry-free), and the large regime `n ≥ 1337` is the
-sole remaining `sorry` (`hansonC_log_bound_large`).  This dispatcher is itself sorry-free. -/
+by splitting at `n = 1600`: the finite regime `n < 1600` is fully machine-checked
+(`hansonC_log_bound_finite`, `decide`-backed, sorry-free), and the large regime `n ≥ 1600` is
+proved analytically (`hansonC_log_bound_large`, sorry-free).  This dispatcher is itself sorry-free. -/
 theorem hansonC_log_bound (n : ℕ) :
     Real.log (n.factorial : ℝ)
       ≤ (n : ℝ) * Real.log 3 + ∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)) := by
-  rcases Nat.lt_or_ge n 1337 with h | h
+  rcases Nat.lt_or_ge n 1600 with h | h
   · exact hansonC_log_bound_finite n h
   · exact hansonC_log_bound_large n h
 
@@ -863,45 +1141,41 @@ theorem lcmUpto_le_three_pow (n : ℕ) : (Nat.lcmUpto n : ℝ) ≤ 3 ^ n := by
     _ ≤ 3 ^ n := hansonC_le_three_pow n
 
 /-!
-### Status of the size half — one isolated `sorry` (`hansonC_log_bound_large`, `n ≥ 1337`)
+### Status of the size half — fully proved, sorry-free (`N₀ = 1600`)
 
-The size bound `hansonC_log_bound` is now split into two regimes at `N₀ = 1337`:
+The size bound `hansonC_log_bound` is split into two regimes at `N₀ = 1600`, both sorry-free:
 
-* `hansonC_log_bound_finite`  (`n < 1337`) — **fully proved, sorry-free.**  The `range 4`
-  truncation `hansonDenom_eq_prod4` (valid since `n < 1337 < sylv 4 = 1807`) collapses the
-  denominator to `∏_{i<4} ⌊n/aᵢ⌋!`, reducing the goal to the `ℕ` inequality
-  `n! ≤ 3^n · ∏_{i<4} ⌊n/aᵢ⌋!`, which is discharged by a single `decide` over `range 1337`
-  (kernel GMP arithmetic; `#print axioms` = `[propext, Classical.choice, Quot.sound]`, i.e. NO
-  `sorryAx` and NO `Lean.ofReduceBool` — `native_decide` is deliberately avoided).  Timing: the
-  whole finite check elaborates+kernel-checks in ≈3 s.
-* `hansonC_log_bound_large`  (`n ≥ 1337`) — **the sole remaining `sorry`.**
+* `hansonC_log_bound_finite`  (`n < 1600`) — the `range 4` truncation `hansonDenom_eq_prod4`
+  (valid since `n < 1600 < sylv 4 = 1807`) collapses the denominator to `∏_{i<4} ⌊n/aᵢ⌋!`,
+  reducing the goal to the `ℕ` inequality `n! ≤ 3^n · ∏_{i<4} ⌊n/aᵢ⌋!`, discharged by a single
+  `decide` over `range 1600` (kernel GMP arithmetic; no `native_decide`).
+* `hansonC_log_bound_large`  (`n ≥ 1600`) — the analytic Stirling argument (see below).
 
-**Residual (true, open):** `log n! ≤ n·log 3 + ∑_{i<n+1} log ⌊n/aᵢ⌋!` for `n ≥ 1337`.
+**Why the margin is thin.**  `log 3 = 1.09861` versus the limiting rate
+`∑_i (log aᵢ)/aᵢ = 1.08239`, only `0.01622` per unit `n`.  Applying the sharp Stirling bounds
+`log_factorial_le/ge` term-by-term (upper on `n!`, lower on each `⌊n/aᵢ⌋!`) with the tangent line
+of the convex `t↦t log t` yields a closed-form relaxation that first holds for all `n ≥ N₀`; the
+looser (but fully formalizable) constants used here push the crossover to `N₀ = 1600 < 1807`.
 
-**Why it is hard.**  The margin is genuinely thin: `log 3 = 1.09861` versus the limiting rate
-`∑_i (log aᵢ)/aᵢ = 1.08239`, i.e. only `0.01622` per unit `n`, and the *absolute* worst-case
-slack `min_n (n·log 3 − log C n) = 0.386` occurs at `n = 83`.  Applying the sharp Stirling bounds
-`log_factorial_le/ge` term-by-term (upper on `n!`, lower on each `⌊n/aᵢ⌋!`) leaves worst-case
-slack `+0.292` at `n = 83` — so two-sided Stirling suffices *provided the floors are kept exact*.
-Any clean relaxation dips negative for small `n`, forcing the finite/symbolic split.  The chosen
-`N₀ = 1337` is exactly where the *constant-rate* tangent-Stirling relaxation
-(`q·log q ≥ (n/aᵢ)·log(n/aᵢ) − (log(n/aᵢ)+1)`, then `∑_I (log aᵢ)/aᵢ ≤ ∑_all = 1.08239`) first
-holds for all larger `n` (verified numerically; the partial-rate variant crosses over at 1018).
+**Proof of `hansonC_log_bound_large`.**  For `n ≥ 1600`, with `m = #{i : aᵢ ≤ n}`:
+1. `hansonC_log_reduce` (sorry-free) — `log n! ≤ ½log(2πn) + n log n − n + 1/(12n)`
+   (`log_factorial_le`); each `log ⌊n/aᵢ⌋! ≥ ½log(2π⌊n/aᵢ⌋)+⌊n/aᵢ⌋ log⌊n/aᵢ⌋−⌊n/aᵢ⌋`
+   (`log_factorial_ge`); bound `n log n − ∑ qᵢ log qᵢ` via `mul_log_tangent` and
+   `n log n·(1−∑_{i<m}1/aᵢ) = n log n / Pₘ ≤ log n` (`sum_inv_sylv`, `Pₘ ≥ n`); `core_sum_le`
+   for `n − ∑ qᵢ ≥ 1`.  This reduces the whole bound to `n·rate + Eₙ,ₘ ≤ n·log 3`.
+2. `sum_sylvTerm_le_crat` (sorry-free) — the certified rational rate `∑_{i<m}(log aᵢ)/aᵢ ≤ C_rat`
+   with `C_rat < log 3`, via `aᵢ^b < 2^c` power-of-2 bounds and a geometric tail.
+3. `err_tangent_close` + `hanson_key` (sorry-free) — the growth term `Eₙ,ₘ ≤ (2/125)·n < (log3−C_rat)·n`.
+   `hanson_key` is a self-bootstrapping induction on the Sylvester index whose step needs no explicit
+   index bound, using the doubling `a_{k+1} ≥ aₖ²/2`.
 
-**Completion path for `hansonC_log_bound_large`.**  For `n ≥ 1337`:
-`log n! ≤ ½log(2πn) + n·log n − n + 1/(12n)` (`log_factorial_le`); each `log ⌊n/aᵢ⌋! ≥
-½log(2π⌊n/aᵢ⌋) + ⌊n/aᵢ⌋·log⌊n/aᵢ⌋ − ⌊n/aᵢ⌋` (`log_factorial_ge`).  Then bound
-`n log n − ∑ᵢ qᵢ log qᵢ ≤ log n + n·∑_{i∈I}(log aᵢ)/aᵢ + ∑_{i∈I}(log(n/aᵢ)+1)` via the tangent
-line of the convex `t↦t log t` (`q ≥ n/aᵢ − 1`) plus `n log n·(1−∑_{i∈I}1/aᵢ) = n log n / P_{|I|}
-≤ log n` (since `P_{|I|} = a_{|I|} − 1 ≥ n`, from `sum_inv_sylv`); use `core_sum_le` for
-`n − ∑ qᵢ ≥ 1`; and a *certified rational* bound `∑_i (log aᵢ)/aᵢ < log 3` (dominated by `i ≤ 5`,
-doubly-exponential tail — this certified transcendental estimate is the main missing ingredient).
+Quot.sound]` — no `sorryAx`, no `native_decide`/`ofReduceBool`.
 
-**Finite-check obstruction (resolved).**  `decide` on `hansonC n` / `hansonDenom n` directly is
-INFEASIBLE: the product ranges over `range (n+1)`, forcing evaluation of `sylv i` up to `i = n`,
-which is doubly-exponentially large (`sylvProd 30` already has ~10⁹ digits).  `hansonDenom_eq_prod4`
-sidesteps this by rewriting to the fixed product `∏_{i<4} ⌊n/aᵢ⌋!` (only `sylv 0..3 = 2,3,7,43`
-are ever evaluated), which makes the `decide` cheap.
+**Finite-check note.**  `decide` on `hansonC n` / `hansonDenom n` directly is INFEASIBLE (the
+product forces evaluating `sylv i` up to `i = n`, doubly-exponentially large).
+`hansonDenom_eq_prod4` sidesteps this via the fixed product `∏_{i<4} ⌊n/aᵢ⌋!` (only `sylv 0..3`).
 -/
 
 end Zeta5Odd
+
+

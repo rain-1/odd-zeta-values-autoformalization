@@ -1,0 +1,3 @@
+BZ point t=(41, 7, 9, 11, 13, 15, 17, 19)  gamma=0.86597136
+local optimum: t=(41, 7, 9, 11, 13, 15, 17, 19)  gamma=0.86597136  (equals BZ)
+refined (x2 lattice): gamma=0.86597136

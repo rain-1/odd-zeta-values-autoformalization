@@ -1,0 +1,33 @@
+scanning 31710 AP points (cap 160)
+  2000/31710 done; current best 0.83291042 at (134, -12, 24)
+  4000/31710 done; current best 0.83372011 at (26, 2, 2)
+  6000/31710 done; current best 0.86256392 at (38, 6, 2)
+  8000/31710 done; current best 0.86597136 at (41, 7, 2)
+  10000/31710 done; current best 0.86597136 at (41, 7, 2)
+  12000/31710 done; current best 0.86597136 at (41, 7, 2)
+  14000/31710 done; current best 0.86597136 at (41, 7, 2)
+  16000/31710 done; current best 0.86597136 at (41, 7, 2)
+  18000/31710 done; current best 0.86597136 at (41, 7, 2)
+  20000/31710 done; current best 0.86597136 at (41, 7, 2)
+  22000/31710 done; current best 0.86597136 at (41, 7, 2)
+  24000/31710 done; current best 0.86597136 at (41, 7, 2)
+  26000/31710 done; current best 0.86597136 at (41, 7, 2)
+  28000/31710 done; current best 0.86597136 at (41, 7, 2)
+  30000/31710 done; current best 0.86597136 at (41, 7, 2)
+
+top 15 AP points:
+  gamma=0.86597136  t0=41 c=7 e=2
+  gamma=0.86530645  t0=126 c=22 e=6
+  gamma=0.86514965  t0=85 c=15 e=4
+  gamma=0.86504650  t0=120 c=20 e=6
+  gamma=0.86480687  t0=129 c=23 e=6
+  gamma=0.86432535  t0=79 c=13 e=4
+  gamma=0.86389083  t0=117 c=19 e=6
+  gamma=0.86373527  t0=132 c=24 e=6
+  gamma=0.86373527  t0=88 c=16 e=4
+  gamma=0.86373527  t0=44 c=8 e=2
+  gamma=0.86369294  t0=150 c=30 e=6
+  gamma=0.86369294  t0=100 c=20 e=4
+  gamma=0.86369294  t0=50 c=10 e=2
+  gamma=0.86368029  t0=147 c=29 e=6
+  gamma=0.86358788  t0=135 c=25 e=6

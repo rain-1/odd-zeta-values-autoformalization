@@ -530,7 +530,278 @@ theorem mul_log_tangent (q t : ℝ) (hq : 0 < q) (ht : 0 < t) :
       = q * Real.log t + q - t := by ring
   rw [expand]; linarith [h2]
 
+/-- `∏_{i<m} aᵢ = P_m` (`sylvProd` is the running product of Sylvester's sequence). -/
+theorem sylvProd_eq_prod (m : ℕ) : sylvProd m = ∏ i ∈ range m, sylv i := by
+  induction m with
+  | zero => simp [sylvProd]
+  | succ m ih => rw [Finset.prod_range_succ, ← ih, sylvProd_succ]
+
+/-- **Numeric rate bound.** `∑_{i<N} (log aᵢ)/aᵢ ≤ C_rat` with `C_rat` an explicit rational
+`< log 3`; the assembly needs the quantitative gap `log 3 − C_rat`, not just strictness. -/
+theorem sum_sylvTerm_le_crat (N : ℕ) :
+    ∑ i ∈ range N, Real.log (sylv i) / (sylv i)
+      ≤ (1033446 / 1000000 : ℝ) * Real.log 2 + Real.log 3 / 3 := by
+  have hsplit : ∑ i ∈ range N, Real.log (sylv i) / (sylv i)
+      ≤ (∑ i ∈ range 5, Real.log (sylv i) / (sylv i))
+        + 2 * (Real.log (sylv 5) / (sylv 5)) := by
+    rcases lt_or_ge N 6 with hN | hN
+    · have hsub : ∑ i ∈ range N, Real.log (sylv i) / (sylv i)
+          ≤ ∑ i ∈ range 5, Real.log (sylv i) / (sylv i) := by
+        apply Finset.sum_le_sum_of_subset_of_nonneg
+          (Finset.range_subset_range.mpr (show N ≤ 5 by omega))
+        intro i _ _; exact sylvTerm_nonneg i
+      have h2 : 0 ≤ 2 * (Real.log (sylv 5) / (sylv 5)) := by
+        have := sylvTerm_nonneg 5; linarith
+      linarith
+    · rw [← Finset.sum_range_add_sum_Ico _ (by omega : 5 ≤ N),
+        Finset.sum_Ico_eq_sum_range]
+      have htail := sylvTerm_tail_sum (N - 5)
+      gcongr
+  obtain ⟨s0, s1, s2, s3, s4, s5⟩ := sylv_vals
+  have hfive : (∑ i ∈ range 5, Real.log (sylv i) / (sylv i))
+      = Real.log 2 / 2 + Real.log 3 / 3 + Real.log 7 / 7 + Real.log 43 / 43
+        + Real.log 1807 / 1807 := by
+    simp only [Finset.sum_range_succ, Finset.sum_range_zero, s0, s1, s2, s3, s4]
+    push_cast; ring
+  have hs5 : (sylv 5 : ℝ) = 3263443 := by rw [s5]; norm_num
+  have h6 : 2 * (Real.log (sylv 5) / (sylv 5)) ≤ 2 * (22 * Real.log 2 / 3263443) := by
+    rw [hs5]
+    have hlog : Real.log 3263443 ≤ 22 * Real.log 2 := by
+      have hlt : (3263443 : ℝ) < (2 : ℝ) ^ (22 : ℕ) := by norm_num
+      have h := (Real.log_le_log (by norm_num) hlt.le)
+      rw [Real.log_pow] at h; push_cast at h; linarith
+    have : Real.log 3263443 / 3263443 ≤ 22 * Real.log 2 / 3263443 := by gcongr
+    linarith
+  rw [hfive] at hsplit
+  have h7 := log_seven_lt
+  have h43 := log_fortythree_lt
+  have h1807 := log_1807_lt
+  have hl2pos : (0:ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  nlinarith [hsplit, h6, h7, h43, h1807, hl2pos]
+
+/-- `2^i ≤ P_i`: a crude single-exponential lower bound on the Sylvester products. -/
+theorem two_pow_le_sylvProd (i : ℕ) : 2 ^ i ≤ sylvProd i := by
+  induction i with
+  | zero => simp [sylvProd]
+  | succ i ih =>
+    have hp := sylvProd_pos i
+    calc 2 ^ (i + 1) = 2 ^ i * 2 := by ring
+      _ ≤ sylvProd i * (sylvProd i + 1) := by
+          apply Nat.mul_le_mul ih; omega
+      _ = sylvProd (i + 1) := rfl
+
 end Rate
+
+section Assembly
+open Real
+
+/-- **Stirling assembly (sorry-free reduction).**  With `m` the number of Sylvester terms `≤ n`
+(so `∑` over the goal's `range (n+1)` collapses to `range m`), the sharp two-sided Stirling
+bounds, the tangent-line inequality, `sum_inv_sylv`, and `core_sum_le` reduce the goal to the
+purely-analytic *growth* term `Eₙ,ₘ`: the whole Hanson size bound `log n! ≤ n·log 3 + ∑ …`
+now follows from the single inequality `n·rate + Eₙ,ₘ ≤ n·log 3`. -/
+theorem hansonC_log_reduce (n : ℕ) (hn : 2 ≤ n)
+    (m : ℕ) (hmspec : n < sylv m) (hchar : ∀ i, i < m → sylv i ≤ n) :
+    Real.log (n.factorial : ℝ)
+      ≤ (∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)))
+        + (n : ℝ) * (∑ i ∈ range m, Real.log (sylv i) / (sylv i))
+        + ((1 / 2) * Real.log (2 * π * n) + 1 / (12 * n) + Real.log n - 1
+           + ((m : ℝ) - 1) / 2 * Real.log n + (m : ℝ) * (1 - (1 / 2) * Real.log π)) := by
+  have hn1 : 1 ≤ n := by omega
+  have hnR : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn1
+  have hnpos : (0 : ℝ) < (n : ℝ) := by linarith
+  have hlogn_nn : 0 ≤ Real.log n := Real.log_nonneg hnR
+  have hqpos : ∀ i, i < m → 1 ≤ n / sylv i := fun i hi =>
+    (Nat.one_le_div_iff (sylv_pos i)).mpr (hchar i hi)
+  -- collapse the goal sum to `range m`
+  have hgt : ∀ i, m ≤ i → n < sylv i := fun i hi => lt_of_lt_of_le hmspec (sylv_mono hi)
+  have hmn : m ≤ n := by
+    by_contra h; push_neg at h
+    have h1 := hchar n h
+    have h2 := lt_sylv_self n
+    omega
+  have hsplit : (∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)))
+      = ∑ i ∈ range m, Real.log (((n / sylv i).factorial : ℝ)) := by
+    symm
+    apply Finset.sum_subset (Finset.range_subset_range.mpr (show m ≤ n + 1 by omega))
+    intro i _ hi
+    rw [Finset.mem_range] at hi
+    have hlt : n < sylv i := hgt i (by omega)
+    rw [Nat.div_eq_of_lt hlt, Nat.factorial_zero, Nat.cast_one, Real.log_one]
+  rw [hsplit]
+  -- Stirling upper bound on `log n!`
+  have hUB := log_factorial_le n hn1
+  -- Stirling lower bound on each `log ⌊n/aᵢ⌋!`, summed over `range m`
+  have hLB : ∑ i ∈ range m, ((1 / 2) * Real.log π + (1 / 2) * Real.log (2 * ((n / sylv i : ℕ) : ℝ))
+        + ((n / sylv i : ℕ) : ℝ) * Real.log ((n / sylv i : ℕ)) - ((n / sylv i : ℕ) : ℝ))
+      ≤ ∑ i ∈ range m, Real.log (((n / sylv i).factorial : ℝ)) := by
+    apply Finset.sum_le_sum
+    intro i hi
+    rw [Finset.mem_range] at hi
+    exact log_factorial_ge (n / sylv i) (hqpos i hi)
+  -- === tangent-line lower bound on `∑ qᵢ log qᵢ` ===
+  have htan : ∀ i ∈ range m,
+      ((n : ℝ) / sylv i) * Real.log ((n : ℝ) / sylv i) - (Real.log ((n : ℝ) / sylv i) + 1)
+        ≤ ((n / sylv i : ℕ) : ℝ) * Real.log ((n / sylv i : ℕ)) := by
+    intro i hi
+    rw [Finset.mem_range] at hi
+    have hsi : (0 : ℝ) < (sylv i : ℝ) := by exact_mod_cast sylv_pos i
+    have hti : (0 : ℝ) < (n : ℝ) / sylv i := by positivity
+    have hqiR : (1 : ℝ) ≤ ((n / sylv i : ℕ) : ℝ) := by exact_mod_cast hqpos i hi
+    have hqipos : (0 : ℝ) < ((n / sylv i : ℕ) : ℝ) := by linarith
+    have hqle : ((n / sylv i : ℕ) : ℝ) ≤ (n : ℝ) / sylv i := Nat.cast_div_le
+    have hti1 : (1 : ℝ) ≤ (n : ℝ) / sylv i := le_trans hqiR hqle
+    have hlogt_nn : 0 ≤ Real.log ((n : ℝ) / sylv i) := Real.log_nonneg hti1
+    have hnlt : n < (n / sylv i + 1) * sylv i := by
+      have hdm := Nat.div_add_mod n (sylv i)
+      have hmod : n % sylv i < sylv i := Nat.mod_lt n (sylv_pos i)
+      have heq : (n / sylv i + 1) * sylv i = sylv i * (n / sylv i) + sylv i := by ring
+      omega
+    have htlt : (n : ℝ) / sylv i < ((n / sylv i : ℕ) : ℝ) + 1 := by
+      rw [div_lt_iff₀ hsi]
+      calc (n : ℝ) < (((n / sylv i : ℕ) + 1) * sylv i : ℕ) := by exact_mod_cast hnlt
+        _ = (((n / sylv i : ℕ) : ℝ) + 1) * sylv i := by push_cast; ring
+    have htang := mul_log_tangent ((n / sylv i : ℕ) : ℝ) ((n : ℝ) / sylv i) hqipos hti
+    have e1 : (Real.log ((n : ℝ) / sylv i) + 1)
+          * (((n / sylv i : ℕ) : ℝ) - (n : ℝ) / sylv i + 1)
+        = (Real.log ((n : ℝ) / sylv i) + 1) * (((n / sylv i : ℕ) : ℝ) - (n : ℝ) / sylv i)
+          + (Real.log ((n : ℝ) / sylv i) + 1) := by ring
+    have hprod : 0 ≤ (Real.log ((n : ℝ) / sylv i) + 1)
+        * (((n / sylv i : ℕ) : ℝ) - (n : ℝ) / sylv i + 1) :=
+      mul_nonneg (by linarith) (by linarith)
+    rw [e1] at hprod
+    linarith [htang, hprod]
+  have hAsum := Finset.sum_le_sum htan
+  -- rewrite `∑ tᵢ log tᵢ` in terms of the rate `∑ (log aᵢ)/aᵢ`
+  have htlogt : ∀ i ∈ range m, ((n : ℝ) / sylv i) * Real.log ((n : ℝ) / sylv i)
+      = (n : ℝ) * Real.log n * (1 / sylv i) - (n : ℝ) * (Real.log (sylv i) / (sylv i)) := by
+    intro i hi
+    rw [Finset.mem_range] at hi
+    have hsi : (0 : ℝ) < (sylv i : ℝ) := by exact_mod_cast sylv_pos i
+    rw [Real.log_div (ne_of_gt hnpos) (ne_of_gt hsi)]
+    field_simp
+  have hsumtlogt : ∑ i ∈ range m, ((n : ℝ) / sylv i) * Real.log ((n : ℝ) / sylv i)
+      = (n : ℝ) * Real.log n * (∑ i ∈ range m, (1 : ℝ) / sylv i)
+        - (n : ℝ) * (∑ i ∈ range m, Real.log (sylv i) / (sylv i)) := by
+    rw [Finset.sum_congr rfl htlogt, Finset.sum_sub_distrib, ← Finset.mul_sum, ← Finset.mul_sum]
+  -- the `n log n · (1 − ∑ 1/aᵢ) = n log n / P_m ≤ log n` collapse
+  have hsuminv : ∑ i ∈ range m, (1 : ℝ) / (sylv i) = 1 - 1 / (sylvProd m) := sum_inv_sylv m
+  have hPpos : (0 : ℝ) < (sylvProd m : ℝ) := by exact_mod_cast sylvProd_pos m
+  have hPm : (n : ℝ) ≤ (sylvProd m : ℝ) := by
+    have : n ≤ sylvProd m := by simp only [sylv] at hmspec; omega
+    exact_mod_cast this
+  have hcollapse : (n : ℝ) * Real.log n
+      - (n : ℝ) * Real.log n * (∑ i ∈ range m, (1 : ℝ) / sylv i) ≤ Real.log n := by
+    rw [show (n : ℝ) * Real.log n - (n : ℝ) * Real.log n * (∑ i ∈ range m, (1 : ℝ) / sylv i)
+          = (n : ℝ) * Real.log n * (1 - ∑ i ∈ range m, (1 : ℝ) / sylv i) by ring,
+      hsuminv, show (1 : ℝ) - (1 - 1 / (sylvProd m)) = 1 / (sylvProd m) by ring, mul_one_div,
+      div_le_iff₀ hPpos]
+    nlinarith [mul_le_mul_of_nonneg_left hPm hlogn_nn]
+  -- assemble (A):  n log n − ∑ qᵢ log qᵢ ≤ log n + n·rate + ∑ (log tᵢ + 1)
+  have hA : (n : ℝ) * Real.log n
+        - ∑ i ∈ range m, ((n / sylv i : ℕ) : ℝ) * Real.log ((n / sylv i : ℕ))
+      ≤ Real.log n + (n : ℝ) * (∑ i ∈ range m, Real.log (sylv i) / (sylv i))
+        + ∑ i ∈ range m, (Real.log ((n : ℝ) / sylv i) + 1) := by
+    rw [Finset.sum_sub_distrib, hsumtlogt] at hAsum
+    linarith [hAsum, hcollapse]
+  -- (B):  ∑ qᵢ − n ≤ −1
+  have hB : (∑ i ∈ range m, ((n / sylv i : ℕ) : ℝ)) - (n : ℝ) ≤ -1 := by
+    have hcore := core_sum_le n hn1 m
+    have h1 : ((∑ i ∈ range m, (n / sylv i : ℕ) : ℕ) : ℝ) ≤ ((n - 1 : ℕ) : ℝ) := by
+      exact_mod_cast hcore
+    rw [Nat.cast_sub hn1] at h1
+    push_cast at h1 ⊢
+    linarith
+  -- (half-log) per-term bound + summed, then ∑ log tᵢ ≤ (m−1) log n
+  have hterm : ∀ i ∈ range m,
+      (Real.log ((n : ℝ) / sylv i) + 1
+        - ((1 / 2) * Real.log π + (1 / 2) * Real.log (2 * ((n / sylv i : ℕ) : ℝ))))
+      ≤ (1 / 2) * Real.log ((n : ℝ) / sylv i) + (1 - (1 / 2) * Real.log π) := by
+    intro i hi
+    rw [Finset.mem_range] at hi
+    have hsi : (0 : ℝ) < (sylv i : ℝ) := by exact_mod_cast sylv_pos i
+    have hti : (0 : ℝ) < (n : ℝ) / sylv i := by positivity
+    have hqiR : (1 : ℝ) ≤ ((n / sylv i : ℕ) : ℝ) := by exact_mod_cast hqpos i hi
+    have hqle : ((n / sylv i : ℕ) : ℝ) ≤ (n : ℝ) / sylv i := Nat.cast_div_le
+    have hnlt : n < (n / sylv i + 1) * sylv i := by
+      have hdm := Nat.div_add_mod n (sylv i)
+      have hmod : n % sylv i < sylv i := Nat.mod_lt n (sylv_pos i)
+      have heq : (n / sylv i + 1) * sylv i = sylv i * (n / sylv i) + sylv i := by ring
+      omega
+    have htlt : (n : ℝ) / sylv i < ((n / sylv i : ℕ) : ℝ) + 1 := by
+      rw [div_lt_iff₀ hsi]
+      calc (n : ℝ) < (((n / sylv i : ℕ) + 1) * sylv i : ℕ) := by exact_mod_cast hnlt
+        _ = (((n / sylv i : ℕ) : ℝ) + 1) * sylv i := by push_cast; ring
+    have h2q : (n : ℝ) / sylv i ≤ 2 * ((n / sylv i : ℕ) : ℝ) := by linarith
+    have hlogmono : Real.log ((n : ℝ) / sylv i) ≤ Real.log (2 * ((n / sylv i : ℕ) : ℝ)) :=
+      Real.log_le_log hti h2q
+    linarith [hlogmono]
+  have htermsum := Finset.sum_le_sum hterm
+  have hsumlogt : ∑ i ∈ range m, Real.log ((n : ℝ) / sylv i) ≤ ((m : ℝ) - 1) * Real.log n := by
+    have hexp : ∀ i ∈ range m, Real.log ((n : ℝ) / sylv i) = Real.log n - Real.log (sylv i) := by
+      intro i hi
+      rw [Finset.mem_range] at hi
+      have hsi : (0 : ℝ) < (sylv i : ℝ) := by exact_mod_cast sylv_pos i
+      rw [Real.log_div (ne_of_gt hnpos) (ne_of_gt hsi)]
+    rw [Finset.sum_congr rfl hexp, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_range,
+      nsmul_eq_mul]
+    have hprodlog : ∑ i ∈ range m, Real.log (sylv i) = Real.log ((sylvProd m : ℝ)) := by
+      rw [sylvProd_eq_prod, Nat.cast_prod,
+        Real.log_prod (fun i _ => Nat.cast_ne_zero.mpr (sylv_pos i).ne')]
+    rw [hprodlog]
+    have hlogPm : Real.log n ≤ Real.log ((sylvProd m : ℝ)) := Real.log_le_log hnpos hPm
+    nlinarith [hlogPm]
+  -- combine the half-log pieces
+  have hRHSsum : ∑ i ∈ range m, ((1 / 2) * Real.log ((n : ℝ) / sylv i) + (1 - (1 / 2) * Real.log π))
+      = (1 / 2) * (∑ i ∈ range m, Real.log ((n : ℝ) / sylv i))
+        + (m : ℝ) * (1 - (1 / 2) * Real.log π) := by
+    rw [Finset.sum_add_distrib, ← Finset.mul_sum, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  -- also decompose `∑ (log tᵢ + 1)` = ∑ log tᵢ + m
+  have hlogt1 : ∑ i ∈ range m, (Real.log ((n : ℝ) / sylv i) + 1)
+      = (∑ i ∈ range m, Real.log ((n : ℝ) / sylv i)) + (m : ℝ) := by
+    rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+  -- decompose the summed Stirling lower bound `L`
+  have hLdecomp : ∑ i ∈ range m, ((1 / 2) * Real.log π
+        + (1 / 2) * Real.log (2 * ((n / sylv i : ℕ) : ℝ))
+        + ((n / sylv i : ℕ) : ℝ) * Real.log ((n / sylv i : ℕ)) - ((n / sylv i : ℕ) : ℝ))
+      = (m : ℝ) * ((1 / 2) * Real.log π)
+        + (∑ i ∈ range m, (1 / 2) * Real.log (2 * ((n / sylv i : ℕ) : ℝ)))
+        + (∑ i ∈ range m, ((n / sylv i : ℕ) : ℝ) * Real.log ((n / sylv i : ℕ)))
+        - (∑ i ∈ range m, ((n / sylv i : ℕ) : ℝ)) := by
+    rw [Finset.sum_sub_distrib, Finset.sum_add_distrib, Finset.sum_add_distrib,
+      Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  -- `∑ term_i` where `term_i = (log t_i + 1) − ½logπ − ½log(2 q_i)`:  its value in the pieces
+  have htermval : ∑ i ∈ range m, (Real.log ((n : ℝ) / sylv i) + 1
+        - ((1 / 2) * Real.log π + (1 / 2) * Real.log (2 * ((n / sylv i : ℕ) : ℝ))))
+      = (∑ i ∈ range m, Real.log ((n : ℝ) / sylv i)) + (m : ℝ)
+        - (m : ℝ) * ((1 / 2) * Real.log π)
+        - (∑ i ∈ range m, (1 / 2) * Real.log (2 * ((n / sylv i : ℕ) : ℝ))) := by
+    rw [Finset.sum_sub_distrib, hlogt1, Finset.sum_add_distrib, ← Finset.mul_sum, Finset.sum_const,
+      Finset.card_range, nsmul_eq_mul]
+    ring
+  -- `π`-log identity
+  have hlogid : (1 / 2) * Real.log π + (1 / 2) * Real.log (2 * (n : ℝ))
+      = (1 / 2) * Real.log (2 * π * n) := by
+    have h := Real.log_mul (ne_of_gt Real.pi_pos) (show (2 * (n : ℝ)) ≠ 0 by positivity)
+    rw [show (2 : ℝ) * π * (n : ℝ) = π * (2 * (n : ℝ)) by ring, h]; ring
+  -- Now `log n! ≤ ∑ log q_i! + (U − L)`, and `U − L ≤ n·rate + ERR`.
+  -- Push everything into one linear combination.
+  have hfinal : ((1 / 2) * Real.log π + (1 / 2) * Real.log (2 * (n : ℝ))
+        + (n : ℝ) * Real.log n - (n : ℝ) + 1 / (12 * n))
+      - (∑ i ∈ range m, ((1 / 2) * Real.log π
+          + (1 / 2) * Real.log (2 * ((n / sylv i : ℕ) : ℝ))
+          + ((n / sylv i : ℕ) : ℝ) * Real.log ((n / sylv i : ℕ)) - ((n / sylv i : ℕ) : ℝ)))
+      ≤ (n : ℝ) * (∑ i ∈ range m, Real.log (sylv i) / (sylv i))
+        + ((1 / 2) * Real.log (2 * π * n) + 1 / (12 * n) + Real.log n - 1
+           + ((m : ℝ) - 1) / 2 * Real.log n + (m : ℝ) * (1 - (1 / 2) * Real.log π)) := by
+    rw [hLdecomp]
+    have htss := htermsum
+    rw [hRHSsum, htermval] at htss
+    -- htss now: ∑ log t_i + m − (m/2)logπ − ∑½log(2q_i) ≤ ½ ∑ log t_i + m(1−½logπ)
+    nlinarith [hA, hB, htss, hsumlogt, hlogid, hlogn_nn]
+  linarith [hUB, hLB, hfinal]
+
+end Assembly
 
 /-- **Large regime (residual `sorry`).**  For `n ≥ 1337` the log size bound follows from the
 sharp two-sided Stirling estimate combined with the closed-form rate bound

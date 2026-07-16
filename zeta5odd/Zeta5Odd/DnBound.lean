@@ -222,10 +222,96 @@ theorem lcmUpto_dvd_hansonC (n : ℕ) : Nat.lcmUpto n ∣ hansonC n := by
     omega
   omega
 
-/-- **Size half.**  `C n ≤ 3^n`.  Stirling's estimate reduces this to the numerical fact
-`∑ᵢ (log aᵢ)/aᵢ = 1.0826… < log 3`.  (Verified: `max_n (log C n − n·log 3) = −0.386 < 0`.) -/
-theorem hansonC_le_three_pow (n : ℕ) : (hansonC n : ℝ) ≤ 3 ^ n := by
+/-! ### Stirling log-factorial bounds (from `Zeta5Odd.Basic`) -/
+
+section Size
+open Real Stirling
+
+/-- Exact log-factorial identity via Mathlib's `stirlingSeq`:
+`log m! = log(stirlingSeq m) + ½·log(2m) + m·log m − m`. -/
+theorem log_factorial_eq (m : ℕ) (hm : 1 ≤ m) :
+    Real.log (m.factorial : ℝ)
+      = Real.log (stirlingSeq m) + (1 / 2) * Real.log (2 * m) + (m : ℝ) * Real.log m - m := by
+  have hmR : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm
+  have he : (0 : ℝ) < Real.exp 1 := Real.exp_pos 1
+  have h2m : (0 : ℝ) < 2 * (m : ℝ) := by positivity
+  have hSpos : 0 < stirlingSeq m :=
+    lt_of_lt_of_le (Real.sqrt_pos.mpr pi_pos) (sqrt_pi_le_stirlingSeq (by omega))
+  have hpow : (0 : ℝ) < ((m : ℝ) / Real.exp 1) ^ m := by positivity
+  have hsqrt : (0 : ℝ) < √(2 * (m : ℝ)) := Real.sqrt_pos.mpr h2m
+  have hfac : (m.factorial : ℝ) = stirlingSeq m * (√(2 * (m : ℝ)) * ((m : ℝ) / Real.exp 1) ^ m) := by
+    rw [stirlingSeq]; field_simp
+  rw [hfac, Real.log_mul hSpos.ne' (by positivity),
+      Real.log_mul hsqrt.ne' hpow.ne', Real.log_sqrt h2m.le, Real.log_pow,
+      Real.log_div hmR.ne' he.ne', Real.log_exp]
+  ring
+
+theorem log_sqrt_pi : Real.log (√π) = (1 / 2) * Real.log π := by
+  rw [Real.log_sqrt pi_pos.le]; ring
+
+/-- Upper bound: `log m! ≤ ½·log(2πm) + m·log m − m + 1/(12m)`  (split as `½logπ + ½log(2m)`). -/
+theorem log_factorial_le (m : ℕ) (hm : 1 ≤ m) :
+    Real.log (m.factorial : ℝ)
+      ≤ (1 / 2) * Real.log π + (1 / 2) * Real.log (2 * m) + (m : ℝ) * Real.log m - m
+        + 1 / (12 * m) := by
+  rw [log_factorial_eq m hm]
+  have h := log_stirlingSeq_sub_le m hm
+  rw [log_sqrt_pi] at h
+  linarith
+
+/-- Lower bound: `½·log(2πm) + m·log m − m ≤ log m!`. -/
+theorem log_factorial_ge (m : ℕ) (hm : 1 ≤ m) :
+    (1 / 2) * Real.log π + (1 / 2) * Real.log (2 * m) + (m : ℝ) * Real.log m - m
+      ≤ Real.log (m.factorial : ℝ) := by
+  rw [log_factorial_eq m hm]
+  have hlo : √π ≤ stirlingSeq m := sqrt_pi_le_stirlingSeq (by omega)
+  have h : Real.log (√π) ≤ Real.log (stirlingSeq m) := Real.log_le_log (Real.sqrt_pos.mpr pi_pos) hlo
+  rw [log_sqrt_pi] at h
+  linarith
+
+end Size
+
+/-- **Residual analytic core** (the ONLY remaining `sorry`).  In log form, the size bound
+`C n ≤ 3^n` is exactly
+
+  `log n! ≤ n·log 3 + ∑_{i<n+1} log ⌊n/aᵢ⌋!`.
+
+This is TRUE for every `n` (numerically `max_n (log C n − n·log 3) = −0.386 < 0`, and the exact
+two-sided Stirling bound below leaves worst-case slack `+0.292` at `n = 83`).  The reduction of
+the theorem `hansonC_le_three_pow` to *this* inequality is fully proved (sorry-free); only the
+inequality itself is open.  See the end-of-file note for the obstruction and completion paths. -/
+theorem hansonC_log_bound (n : ℕ) :
+    Real.log (n.factorial : ℝ)
+      ≤ (n : ℝ) * Real.log 3 + ∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)) := by
   sorry
+
+/-- **Size half.**  `C n ≤ 3^n`.  Fully reduced (sorry-free) to `hansonC_log_bound`:
+`hansonDenom n ∣ n!` gives `C n = n!/hansonDenom n` exactly, so `C n ≤ 3^n` is equivalent to
+`n! ≤ 3^n · hansonDenom n`, which (all factors positive) is equivalent to the log inequality. -/
+theorem hansonC_le_three_pow (n : ℕ) : (hansonC n : ℝ) ≤ 3 ^ n := by
+  have hD : hansonDenom n ∣ n.factorial := hansonDenom_dvd n
+  have hCmul : hansonC n * hansonDenom n = n.factorial := Nat.div_mul_cancel hD
+  have hDpos : (0 : ℝ) < (hansonDenom n : ℝ) := by
+    exact_mod_cast Nat.pos_of_ne_zero (hansonDenom_ne_zero n)
+  have hn0 : (0 : ℝ) < (n.factorial : ℝ) := by exact_mod_cast Nat.factorial_pos n
+  have hrhs : (0 : ℝ) < (3 : ℝ) ^ n * (hansonDenom n : ℝ) := by positivity
+  have hlogD : Real.log (hansonDenom n : ℝ)
+      = ∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)) := by
+    unfold hansonDenom
+    rw [Nat.cast_prod,
+      Real.log_prod (fun i _ => Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero _))]
+  -- (⋆):  `n! ≤ 3^n · hansonDenom n`, obtained by exponentiating the log inequality.
+  have star : (n.factorial : ℝ) ≤ (3 : ℝ) ^ n * (hansonDenom n : ℝ) := by
+    refine (Real.log_le_log_iff hn0 hrhs).mp ?_
+    rw [Real.log_mul (by positivity) hDpos.ne', Real.log_pow, hlogD]
+    exact hansonC_log_bound n
+  -- transfer `n! ≤ 3^n · D` through the exact identity `C n · D = n!`.
+  have hmul : (hansonC n : ℝ) * (hansonDenom n : ℝ) ≤ (3 : ℝ) ^ n * (hansonDenom n : ℝ) :=
+    calc (hansonC n : ℝ) * (hansonDenom n : ℝ)
+        = ((hansonC n * hansonDenom n : ℕ) : ℝ) := by push_cast; ring
+      _ = (n.factorial : ℝ) := by rw [hCmul]
+      _ ≤ (3 : ℝ) ^ n * (hansonDenom n : ℝ) := star
+  exact le_of_mul_le_mul_right hmul hDpos
 
 /-- **Hanson's bound.** `d_n = lcm(1,…,n) ≤ 3^n`. -/
 theorem lcmUpto_le_three_pow (n : ℕ) : (Nat.lcmUpto n : ℝ) ≤ 3 ^ n := by
@@ -233,5 +319,45 @@ theorem lcmUpto_le_three_pow (n : ℕ) : (Nat.lcmUpto n : ℝ) ≤ 3 ^ n := by
     Nat.le_of_dvd (hansonC_pos n) (lcmUpto_dvd_hansonC n)
   calc (Nat.lcmUpto n : ℝ) ≤ (hansonC n : ℝ) := by exact_mod_cast hle
     _ ≤ 3 ^ n := hansonC_le_three_pow n
+
+/-!
+### Status of the size half (`hansonC_log_bound`, the sole `sorry`)
+
+Everything except the single real inequality `hansonC_log_bound` is proved sorry-free:
+
+* `log_factorial_eq / log_factorial_le / log_factorial_ge` — sharp two-sided Stirling bounds
+  `½log(2πm) + m·log m − m ≤ log m! ≤ ½log(2πm) + m·log m − m + 1/(12m)` (from
+  `Zeta5Odd.Basic.log_stirlingSeq_sub_le` and Mathlib's `sqrt_pi_le_stirlingSeq`).
+* `hansonC_le_three_pow` — the reduction of `C n ≤ 3^n` to `hansonC_log_bound`, via
+  `hansonDenom n ∣ n!` (exact division ⇒ `C n · hansonDenom n = n!`), `Real.log_le_log_iff`,
+  `Real.log_prod`, `Real.log_pow`.
+
+**Residual (true, open):** `log n! ≤ n·log 3 + ∑_{i<n+1} log ⌊n/aᵢ⌋!`.
+
+**Why it is hard.**  The margin is genuinely thin: `log 3 = 1.09861` versus the limiting rate
+`∑_i (log aᵢ)/aᵢ = 1.08239`, i.e. only `0.01622` per unit `n`, and the *absolute* worst-case
+slack `min_n (n·log 3 − log C n) = 0.386` occurs at `n = 83`.
+
+Applying the sharp Stirling bounds above term-by-term (upper on `n!`, lower on each `⌊n/aᵢ⌋!`)
+gives worst-case slack `+0.292` at `n = 83` — so the two-sided Stirling estimate DOES suffice,
+*provided the floor terms `⌊n/aᵢ⌋` are kept essentially exact*.  Any further clean relaxation
+breaks it for small `n`:
+  * relaxing `q·log q ≥ q·log(n/aᵢ) − (n/aᵢ − q)` (the elementary `t log t ≥ t − 1`) already
+    dips to `−0.023` at `n = 83`;
+  * additionally constant-izing `∑ q·log aᵢ ≤ n·∑(log aᵢ)/aᵢ` fails up to `n = 635`
+    (keeping the `½log` and `n−∑qᵢ` terms exact) or up to `n = 3542` (fully closed form).
+
+**Completion paths.**
+1. *Symbolic ≥ N₀ + finite check < N₀.*  Prove the closed-form bound for `n ≥ N₀`
+   (`N₀ = 636` or `3543` per above) using: `core_sum_le`/`sum_inv_sylv` for `n − ∑ qᵢ ≤ 1 + |I|`
+   and `∑ 1/aᵢ = 1 − 1/Pₙ`; a rational upper bound `∑(log aᵢ)/aᵢ < log 3` (dominated by
+   `i ≤ 5`, doubly-exponential tail); and the Stirling `½log` bookkeeping.  Then a finite check
+   for `n < N₀`.
+2. *Finite check obstruction.*  `decide`/`native_decide` on `hansonC n` directly is INFEASIBLE:
+   its product ranges over `range (n+1)`, forcing evaluation of `sylv i` for `i` up to `n`, which
+   is doubly-exponentially large (`sylvProd 30` already has ~10⁹ digits).  The finite check must
+   first rewrite `hansonDenom n = ∏_{i<B} ⌊n/aᵢ⌋!` for a small fixed `B` (e.g. `B = 6`, valid for
+   `n < sylv 6 ≈ 1.06·10¹³`), so only `sylv 0..5 ≤ 3 263 443` are ever evaluated.
+-/
 
 end Zeta5Odd

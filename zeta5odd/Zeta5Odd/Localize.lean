@@ -658,6 +658,59 @@ private lemma f_shape (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     calc Real.exp (L x) < Real.exp 0 := Real.exp_lt_exp.mpr hLx
       _ = 1 := Real.exp_zero
 
+/-- Bernoulli bridge for the `2q`-th power (`B`-part of the term ratio): the exact
+base `(n+j+1)/(2n+j+2)` beats the profile base `(n+j)/(2n+j)` up to a `1 - 2q/n`
+factor. -/
+private lemma bridge_B (q j n : ℕ) (hn : 1 ≤ n) :
+    (1 - 2 * (q : ℝ) / n) * (((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ)) ^ (2 * q)
+      ≤ (((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ)) ^ (2 * q) := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hnj1 : (0 : ℝ) < ((n + j : ℕ) : ℝ) := by exact_mod_cast (by omega : 0 < n + j)
+  have hd1 : (0 : ℝ) < ((2 * n + j : ℕ) : ℝ) := by exact_mod_cast (by omega : 0 < 2 * n + j)
+  have hd2 : (0 : ℝ) < ((2 * n + j + 2 : ℕ) : ℝ) := by
+    exact_mod_cast (by omega : 0 < 2 * n + j + 2)
+  have hnj2 : (0 : ℝ) < ((n + j + 1 : ℕ) : ℝ) := by exact_mod_cast (by omega : 0 < n + j + 1)
+  set bB : ℝ := ((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ) with hbB
+  set bg : ℝ := ((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ) with hbg
+  have hbg_pos : 0 < bg := by rw [hbg]; exact div_pos hnj1 hd1
+  -- r := bB / bg ≥ 1 - 1/n
+  set r : ℝ := bB / bg with hr
+  have hbBr : bB = r * bg := by rw [hr]; field_simp
+  have hkey : (1 - 1 / (n : ℝ)) * bg ≤ bB := by
+    rw [← sub_nonneg, hbB, hbg]
+    have expand : ((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ)
+          - (1 - 1 / (n : ℝ)) * (((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ))
+        = ((j : ℝ) ^ 2 + 2 * (n : ℝ) * (j : ℝ) + 2 * (j : ℝ) + 2 * (n : ℝ) ^ 2 + 2 * (n : ℝ))
+          / ((n : ℝ) * ((2 * n + j : ℕ) : ℝ) * ((2 * n + j + 2 : ℕ) : ℝ)) := by
+      rw [eq_div_iff (by positivity)]
+      field_simp
+      push_cast
+      ring
+    rw [expand]
+    positivity
+  have hr_lb : 1 - 1 / (n : ℝ) ≤ r := by rw [hr]; exact (le_div_iff₀ hbg_pos).mpr hkey
+  have h1n : (0 : ℝ) ≤ 1 - 1 / (n : ℝ) := by
+    rw [sub_nonneg, div_le_one hnR]; exact_mod_cast hn
+  -- r^(2q) ≥ (1-1/n)^(2q) ≥ 1 - 2q/n
+  have hpow1 : (1 - 1 / (n : ℝ)) ^ (2 * q) ≤ r ^ (2 * q) :=
+    pow_le_pow_left₀ h1n hr_lb (2 * q)
+  have hbern : 1 - 2 * (q : ℝ) / n ≤ (1 - 1 / (n : ℝ)) ^ (2 * q) := by
+    have hH : (-2 : ℝ) ≤ -(1 / (n : ℝ)) := by
+      have : (1 : ℝ) / n ≤ 1 := by rw [div_le_one hnR]; exact_mod_cast hn
+      linarith
+    have := one_add_mul_le_pow hH (2 * q)
+    have hrw : (1 : ℝ) + (2 * q : ℕ) * (-(1 / (n : ℝ))) = 1 - 2 * (q : ℝ) / n := by
+      push_cast; ring
+    have hrw2 : (1 : ℝ) + -(1 / (n : ℝ)) = 1 - 1 / (n : ℝ) := by ring
+    rw [hrw, hrw2] at this
+    exact this
+  have hr2q : 1 - 2 * (q : ℝ) / n ≤ r ^ (2 * q) := le_trans hbern hpow1
+  calc (1 - 2 * (q : ℝ) / n) * bg ^ (2 * q)
+      ≤ r ^ (2 * q) * bg ^ (2 * q) :=
+        mul_le_mul_of_nonneg_right hr2q (by positivity)
+    _ = (r * bg) ^ (2 * q) := by rw [mul_pow]
+    _ = bB ^ (2 * q) := by rw [← hbBr]
+
 /-- Lower geometric margin for `c`: below `(x₀ - ε/2)·n` the term ratio
 `c(j+1)/c(j)` (given exactly by `c_ratio`) exceeds `1 + δ`, because
 `f(j/n)² ≥ f(x₀-ε/2)² > 1` on `(0, x₀)` and `ρ → f²`. -/

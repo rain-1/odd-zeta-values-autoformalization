@@ -1,0 +1,6 @@
+symmetric point growth series: den(P_n) vs d_n^5 prediction
+n=1: den(P)=2^2  den(Phat)=2^2  d_n^5=1  excess: 2^2 3^0 5^0
+n=2: den(P)=2^7·3  den(Phat)=2^5·3  d_n^5=2^5  excess: 2^2 3^1 5^0
+n=3: den(P)=2^7·3^4  den(Phat)=2^5·3^3·5  d_n^5=2^5·3^5  excess: 2^2 3^-1 5^0
+n=4: den(P)=2^12·3^3  den(Phat)=2^8·3^2  d_n^5=2^10·3^5  excess: 2^2 3^-2 5^0
+n=5: den(P)=2^12·3^4·5^5  den(Phat)=2^8·3^3·5^3·7  d_n^5=2^10·3^5·5^5  excess: 2^2 3^-1 5^0

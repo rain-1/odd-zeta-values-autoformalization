@@ -18,6 +18,7 @@ Strategy (Worker C).  Work in logarithmic coordinates: it suffices to prove
 -/
 import Zeta5Odd.Basic
 import Zeta5Odd.Localize
+import Zeta5Odd.Ratio
 
 open Filter Finset
 open scoped Nat Topology
@@ -166,7 +167,7 @@ private lemma tendsto_facTerm (a : ℕ → ℕ) {α : ℝ} (hα : 0 < α)
   ring
 
 /-- Ratio limit for an affine index `a n = A·n + B·κ n + C`. -/
-private lemma tendsto_ratio (κ : ℕ → ℕ) {x₀ : ℝ}
+private lemma tendsto_affine_ratio (κ : ℕ → ℕ) {x₀ : ℝ}
     (hκ : Tendsto (fun n : ℕ => (κ n : ℝ) / n) atTop (𝓝 x₀))
     (A B C : ℝ) (a : ℕ → ℕ) (hform : ∀ n, (a n : ℝ) = A * n + B * κ n + C) :
     Tendsto (fun n : ℕ => (a n : ℝ) / n) atTop (𝓝 (A + B * x₀)) := by
@@ -195,19 +196,19 @@ private lemma tendsto_logRoot_peak (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ 
     Tendsto (fun n : ℕ => Real.log (c q n (κ n)) / n) atTop (𝓝 (Real.log (g q x₀))) := by
   -- clean ratio limits
   have hα1 : Tendsto (fun n : ℕ => ((n : ℕ) : ℝ) / n) atTop (𝓝 1) := by
-    have h := tendsto_ratio κ hκ 1 0 0 (fun n => n) (fun n => by push_cast; ring)
+    have h := tendsto_affine_ratio κ hκ 1 0 0 (fun n => n) (fun n => by push_cast; ring)
     rwa [show (1 : ℝ) + 0 * x₀ = 1 by ring] at h
   have hα2 : Tendsto (fun n : ℕ => ((6 * n + 2 * κ n + 2 : ℕ) : ℝ) / n) atTop (𝓝 (2 * (x₀ + 3))) := by
-    have h := tendsto_ratio κ hκ 6 2 2 (fun n => 6 * n + 2 * κ n + 2) (fun n => by push_cast; ring)
+    have h := tendsto_affine_ratio κ hκ 6 2 2 (fun n => 6 * n + 2 * κ n + 2) (fun n => by push_cast; ring)
     rwa [show (6 : ℝ) + 2 * x₀ = 2 * (x₀ + 3) by ring] at h
   have hα3 : Tendsto (fun n : ℕ => ((n + κ n : ℕ) : ℝ) / n) atTop (𝓝 (x₀ + 1)) := by
-    have h := tendsto_ratio κ hκ 1 1 0 (fun n => n + κ n) (fun n => by push_cast; ring)
+    have h := tendsto_affine_ratio κ hκ 1 1 0 (fun n => n + κ n) (fun n => by push_cast; ring)
     rwa [show (1 : ℝ) + 1 * x₀ = x₀ + 1 by ring] at h
   have hα4 : Tendsto (fun n : ℕ => ((2 * κ n + 1 : ℕ) : ℝ) / n) atTop (𝓝 (2 * x₀)) := by
-    have h := tendsto_ratio κ hκ 0 2 1 (fun n => 2 * κ n + 1) (fun n => by push_cast; ring)
+    have h := tendsto_affine_ratio κ hκ 0 2 1 (fun n => 2 * κ n + 1) (fun n => by push_cast; ring)
     rwa [show (0 : ℝ) + 2 * x₀ = 2 * x₀ by ring] at h
   have hα5 : Tendsto (fun n : ℕ => ((2 * n + κ n + 1 : ℕ) : ℝ) / n) atTop (𝓝 (x₀ + 2)) := by
-    have h := tendsto_ratio κ hκ 2 1 1 (fun n => 2 * n + κ n + 1) (fun n => by push_cast; ring)
+    have h := tendsto_affine_ratio κ hκ 2 1 1 (fun n => 2 * n + κ n + 1) (fun n => by push_cast; ring)
     rwa [show (2 : ℝ) + 1 * x₀ = x₀ + 2 by ring] at h
   -- five factorial asymptotics
   have F1 := tendsto_facTerm (fun n => n) one_pos hα1
@@ -293,6 +294,112 @@ private lemma tendsto_ceil_div (x₀ : ℝ) (hx₀ : 0 < x₀) :
           (Nat.ceil_lt_add_one (show (0 : ℝ) ≤ x₀ * n by positivity)).le
       _ = (x₀ + 1 / n) * n := by field_simp
 
+/-- Telescoping upward: from `u (j+1) ≤ ρ · u j` (`b ≤ j < a`), `u a ≤ ρ^(a−b)·u b`. -/
+private lemma geom_up {u : ℕ → ℝ} {ρ : ℝ} (hρ : 1 ≤ ρ) {b : ℕ} :
+    ∀ a, b ≤ a → (∀ j, b ≤ j → j < a → u (j + 1) ≤ ρ * u j) → u a ≤ ρ ^ (a - b) * u b := by
+  intro a hba
+  induction a, hba using Nat.le_induction with
+  | base => intro _; simp
+  | succ a hba ih =>
+    intro hstep
+    have ih' := ih (fun j hj1 hj2 => hstep j hj1 (by omega))
+    calc u (a + 1) ≤ ρ * u a := hstep a hba (by omega)
+      _ ≤ ρ * (ρ ^ (a - b) * u b) := mul_le_mul_of_nonneg_left ih' (by linarith)
+      _ = ρ ^ (a + 1 - b) * u b := by rw [← mul_assoc, ← pow_succ']; congr 2; omega
+
+/-- Telescoping downward: from `u j ≤ ρ · u (j+1)` (`b ≤ j < a`), `u b ≤ ρ^(a−b)·u a`. -/
+private lemma geom_down {u : ℕ → ℝ} {ρ : ℝ} (hρ : 1 ≤ ρ) {b : ℕ} :
+    ∀ a, b ≤ a → (∀ j, b ≤ j → j < a → u j ≤ ρ * u (j + 1)) → u b ≤ ρ ^ (a - b) * u a := by
+  intro a hba
+  induction a, hba using Nat.le_induction with
+  | base => intro _; simp
+  | succ a hba ih =>
+    intro hstep
+    have ih' := ih (fun j hj1 hj2 => hstep j hj1 (by omega))
+    calc u b ≤ ρ ^ (a - b) * u a := ih'
+      _ ≤ ρ ^ (a - b) * (ρ * u (a + 1)) :=
+          mul_le_mul_of_nonneg_left (hstep a hba (by omega)) (pow_nonneg (by linarith) _)
+      _ = ρ ^ (a + 1 - b) * u (a + 1) := by rw [← mul_assoc, ← pow_succ]; congr 2; omega
+
+/-- The exact term ratio `c_{k+1}/c_k` is uniformly within `δ` of `1` on a small
+window `|k − x₀ n| ≤ ε n` (its limit profile is `f(x)² → f(x₀)² = 1`).  Mirrors
+`Window.mainFactor_near_one`. -/
+private lemma cratio_near_one (q : ℕ) {x₀ : ℝ} (hx₀ : 0 < x₀) (hfx₀ : f q x₀ = 1)
+    {δ : ℝ} (hδ : 0 < δ) :
+    ∃ ε, 0 < ε ∧ ε < x₀ ∧ ∃ N : ℕ, 1 ≤ N ∧ ∀ n : ℕ, N ≤ n → ∀ k : ℕ,
+      (x₀ - ε) * n ≤ (k : ℝ) → (k : ℝ) ≤ (x₀ + ε) * n →
+      |c q n (k + 1) / c q n k - 1| ≤ δ := by
+  set prof : ℝ × ℝ → ℝ := fun p =>
+    (6 + 2 * p.1 + 4 * p.2) * (6 + 2 * p.1 + 3 * p.2) / ((2 * p.1 + 3 * p.2) * (2 * p.1 + 2 * p.2))
+      * ((1 + p.1 + p.2) / (2 + p.1 + 2 * p.2)) ^ (2 * q) with hprof
+  have hval : prof (x₀, 0) = 1 := by
+    have hf : (x₀ + 3) / x₀ * ((x₀ + 1) / (x₀ + 2)) ^ q = 1 := by rw [← f]; exact hfx₀
+    rw [hprof]
+    show (6 + 2 * x₀ + 4 * 0) * (6 + 2 * x₀ + 3 * 0) / ((2 * x₀ + 3 * 0) * (2 * x₀ + 2 * 0))
+        * ((1 + x₀ + 0) / (2 + x₀ + 2 * 0)) ^ (2 * q) = 1
+    have hx0 : x₀ ≠ 0 := hx₀.ne'
+    have hexp : ((1 + x₀ + 0) / (2 + x₀ + 2 * 0)) ^ (2 * q)
+        = (((x₀ + 1) / (x₀ + 2)) ^ q) ^ 2 := by
+      rw [show (1 + x₀ + 0) / (2 + x₀ + 2 * 0) = (x₀ + 1) / (x₀ + 2) from by ring,
+        show 2 * q = q * 2 from Nat.mul_comm 2 q, pow_mul]
+    have hrat : (6 + 2 * x₀ + 4 * 0) * (6 + 2 * x₀ + 3 * 0) / ((2 * x₀ + 3 * 0) * (2 * x₀ + 2 * 0))
+        = ((x₀ + 3) / x₀) ^ 2 := by
+      rw [div_pow]; field_simp; ring
+    rw [hexp, hrat, ← mul_pow, hf, one_pow]
+  have hcont : ContinuousAt prof (x₀, 0) := by
+    rw [hprof]
+    have hnum1 : Continuous (fun p : ℝ × ℝ => (6 + 2 * p.1 + 4 * p.2) * (6 + 2 * p.1 + 3 * p.2)) := by
+      fun_prop
+    have hden1 : Continuous (fun p : ℝ × ℝ => (2 * p.1 + 3 * p.2) * (2 * p.1 + 2 * p.2)) := by
+      fun_prop
+    have hnum2 : Continuous (fun p : ℝ × ℝ => 1 + p.1 + p.2) := by fun_prop
+    have hden2 : Continuous (fun p : ℝ × ℝ => 2 + p.1 + 2 * p.2) := by fun_prop
+    exact (hnum1.continuousAt.div hden1.continuousAt
+        (by show ((2 * x₀ + 3 * 0) * (2 * x₀ + 2 * 0) : ℝ) ≠ 0; positivity)).mul
+      ((hnum2.continuousAt.div hden2.continuousAt
+        (by show ((2 : ℝ) + x₀ + 2 * 0) ≠ 0; positivity)).pow (2 * q))
+  rw [Metric.continuousAt_iff] at hcont
+  obtain ⟨γ, hγ, hball⟩ := hcont δ hδ
+  set ε : ℝ := min (x₀ / 2) (γ / 2) with hεdef
+  have hεpos : 0 < ε := by rw [hεdef]; positivity
+  have hεlt : ε < x₀ := lt_of_le_of_lt (min_le_left _ _) (by linarith)
+  have hεγ : ε < γ := lt_of_le_of_lt (min_le_right _ _) (by linarith)
+  obtain ⟨N, hN⟩ := exists_nat_ge (1 / ε)
+  refine ⟨ε, hεpos, hεlt, max N 1, le_max_right _ _, ?_⟩
+  intro n hn k hk1 hk2
+  have hn1 : 1 ≤ n := le_trans (le_max_right N 1) hn
+  have hnpos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn1
+  have hnne : (n : ℝ) ≠ 0 := hnpos.ne'
+  have hNn : 1 / ε ≤ (n : ℝ) := le_trans hN (by exact_mod_cast le_trans (le_max_left N 1) hn)
+  have h1n : 1 / (n : ℝ) ≤ ε := by
+    rw [div_le_iff₀ hnpos]; have := (div_le_iff₀ hεpos).mp hNn; linarith
+  have hx1 : x₀ - ε ≤ (k : ℝ) / n := (le_div_iff₀ hnpos).mpr hk1
+  have hx2 : (k : ℝ) / n ≤ x₀ + ε := (div_le_iff₀ hnpos).mpr hk2
+  have habs : |(k : ℝ) / n - x₀| ≤ ε := abs_le.mpr ⟨by linarith, by linarith⟩
+  have hdle : dist ((k : ℝ) / n, 1 / (n : ℝ)) (x₀, (0 : ℝ)) ≤ ε := by
+    rw [Prod.dist_eq]
+    apply max_le
+    · rw [Real.dist_eq]; exact habs
+    · rw [Real.dist_eq, sub_zero, abs_of_pos (by positivity)]; exact h1n
+  have hprofp := hball (lt_of_le_of_lt hdle hεγ)
+  rw [hval, Real.dist_eq] at hprofp
+  have hM0 : c q n (k + 1) / c q n k = prof ((k : ℝ) / n, 1 / (n : ℝ)) := by
+    rw [c_ratio, hprof]
+    show _ = (6 + 2 * ((k : ℝ) / n) + 4 * (1 / n)) * (6 + 2 * ((k : ℝ) / n) + 3 * (1 / n))
+        / ((2 * ((k : ℝ) / n) + 3 * (1 / n)) * (2 * ((k : ℝ) / n) + 2 * (1 / n)))
+        * ((1 + (k : ℝ) / n + 1 / n) / (2 + (k : ℝ) / n + 2 * (1 / n))) ^ (2 * q)
+    have e1 : (6 * (n : ℝ) + 2 * k + 4) * (6 * (n : ℝ) + 2 * k + 3)
+          / ((2 * (k : ℝ) + 3) * (2 * k + 2))
+        = (6 + 2 * ((k : ℝ) / n) + 4 * (1 / n)) * (6 + 2 * ((k : ℝ) / n) + 3 * (1 / n))
+          / ((2 * ((k : ℝ) / n) + 3 * (1 / n)) * (2 * ((k : ℝ) / n) + 2 * (1 / n))) := by
+      rw [div_eq_div_iff (by positivity) (by positivity)]; field_simp
+    have e2 : (((n + k + 1 : ℕ) : ℝ) / ((2 * n + k + 2 : ℕ) : ℝ))
+        = (1 + (k : ℝ) / n + 1 / n) / (2 + (k : ℝ) / n + 2 * (1 / n)) := by
+      push_cast
+      rw [div_eq_div_iff (by positivity) (by positivity)]; field_simp
+    rw [e1, e2]
+  rw [hM0]; exact le_of_lt hprofp
+
 /-! ### Upper bound (localization)
 
 REMAINING SUB-SORRY (analytic).  `logRoot_r_upper` is the only missing input to
@@ -308,10 +415,210 @@ on `[x₀-δ,x₀+δ]`, where `H(x) = Σ coeffᵢ αᵢ(x) log αᵢ(x)` is the 
     `(1/n) log (max_{window} c) ≤ H(x₀)+ε + o(1)`.
 The last item (uniformity of the Stirling remainder over the window) is the real
 content still to formalize; everything else is bookkeeping. -/
+set_option maxHeartbeats 1000000 in
 private lemma logRoot_r_upper (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) :
     ∀ ε > 0, ∀ᶠ n : ℕ in atTop, Real.log (r q n) / n ≤ Real.log (g q x₀) + ε := by
-  sorry
+  intro s hs
+  -- choose the ratio tolerance `δ` and the geometric base `ρ = 1/(1-δ)`
+  set δ : ℝ := min (1 / 2) (s / (8 * x₀)) with hδdef
+  have hδpos : 0 < δ := by
+    rw [hδdef]; exact lt_min (by norm_num) (div_pos hs (by positivity))
+  have hδhalf : δ ≤ 1 / 2 := min_le_left _ _
+  have hδs : δ ≤ s / (8 * x₀) := min_le_right _ _
+  have hδs' : δ * (8 * x₀) ≤ s := (le_div_iff₀ (by positivity)).mp hδs
+  have h1mδ : 0 < 1 - δ := by linarith
+  set ρ : ℝ := 1 / (1 - δ) with hρdef
+  have hρpos : 0 < ρ := by rw [hρdef]; exact div_pos one_pos h1mδ
+  have hρ1 : 1 ≤ ρ := by rw [hρdef, le_div_iff₀ h1mδ]; linarith
+  have h1δρ : 1 + δ ≤ ρ := by rw [hρdef, le_div_iff₀ h1mδ]; nlinarith
+  have hρle : ρ ≤ 1 + 2 * δ := by rw [hρdef, div_le_iff₀ h1mδ]; nlinarith
+  have hlogρ : Real.log ρ ≤ 2 * δ := by
+    have h := Real.log_le_sub_one_of_pos hρpos
+    linarith
+  have hlogρ0 : 0 ≤ Real.log ρ := Real.log_nonneg hρ1
+  -- slack budget: `2ε·log ρ ≤ s/2`
+  obtain ⟨ε, hεpos, hεx₀, N₁, hN₁1, hcr⟩ := cratio_near_one q hx₀ hfx₀ hδpos
+  have hslack : 2 * ε * Real.log ρ ≤ s / 2 := by
+    nlinarith [mul_le_mul_of_nonneg_left hlogρ hεpos.le,
+      mul_le_mul_of_nonneg_right hεx₀.le hδpos.le, hδs']
+  -- peak proxy and its asymptotic
+  set κ : ℕ → ℕ := fun n => ⌈x₀ * n⌉₊ with hκdef
+  have hcore : Tendsto (fun n : ℕ => Real.log (c q n (κ n)) / n) atTop (𝓝 (Real.log (g q x₀))) :=
+    tendsto_logRoot_peak q hq hx₀ hfx₀ κ (tendsto_ceil_div x₀ hx₀)
+  have hloc := sum_localizes q hq hx₀ hfx₀ hεpos
+  -- `term1 → 0`
+  have hterm1 : Tendsto
+      (fun n : ℕ => (Real.log 2 + Real.log ((⌊(x₀ + ε) * (n : ℝ)⌋₊ : ℝ) + 1)) / n)
+      atTop (𝓝 0) := by
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds
+      (show Tendsto (fun n : ℕ => (Real.log 2 + Real.log (x₀ + ε + 1)) / n + Real.log n / n)
+        atTop (𝓝 0) by
+        have := (tendsto_const_div_atTop_nhds_zero_nat (Real.log 2 + Real.log (x₀ + ε + 1))).add
+          tendsto_logNat_div
+        simpa using this) ?_ ?_
+    · filter_upwards [eventually_gt_atTop 0] with n hn0
+      have hnR : (0 : ℝ) ≤ (n : ℝ) := by positivity
+      have hpos : (0 : ℝ) ≤ Real.log 2 + Real.log ((⌊(x₀ + ε) * (n : ℝ)⌋₊ : ℝ) + 1) := by
+        have h2 : (0 : ℝ) ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+        have h3 : (0 : ℝ) ≤ Real.log ((⌊(x₀ + ε) * (n : ℝ)⌋₊ : ℝ) + 1) :=
+          Real.log_nonneg (le_add_of_nonneg_left (Nat.cast_nonneg _))
+        linarith
+      exact div_nonneg hpos hnR
+    · filter_upwards [eventually_gt_atTop 0] with n hn0
+      have hnR : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn0
+      have hn1 : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn0
+      have hbound : ((⌊(x₀ + ε) * (n : ℝ)⌋₊ : ℝ) + 1) ≤ (x₀ + ε + 1) * n := by
+        have hf := Nat.floor_le (show (0 : ℝ) ≤ (x₀ + ε) * n by positivity)
+        nlinarith
+      have hlog : Real.log ((⌊(x₀ + ε) * (n : ℝ)⌋₊ : ℝ) + 1)
+          ≤ Real.log (x₀ + ε + 1) + Real.log n := by
+        calc Real.log ((⌊(x₀ + ε) * (n : ℝ)⌋₊ : ℝ) + 1)
+            ≤ Real.log ((x₀ + ε + 1) * n) := Real.log_le_log (by positivity) hbound
+          _ = Real.log (x₀ + ε + 1) + Real.log n := Real.log_mul (by positivity) hnR.ne'
+      rw [← add_div, div_le_div_iff_of_pos_right hnR]
+      linarith
+  -- everything eventual
+  have hev1 : ∀ᶠ n : ℕ in atTop, (1 : ℝ) ≤ ε * (n : ℝ) :=
+    (Filter.Tendsto.const_mul_atTop hεpos (tendsto_natCast_atTop_atTop (R := ℝ))).eventually_ge_atTop 1
+  filter_upwards [hloc.eventually (Metric.closedBall_mem_nhds (0 : ℝ) (by norm_num : (0:ℝ) < 1/2)),
+      eventually_ge_atTop N₁, eventually_ge_atTop 1, hev1,
+      hcore.eventually_lt_const (show Real.log (g q x₀) < Real.log (g q x₀) + s / 4 by linarith),
+      hterm1.eventually_lt_const (show (0 : ℝ) < s / 4 by linarith)]
+    with n hntail hnN₁ hn1 hn1ε hterm3 hterm1n
+  have hnpos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn1
+  -- κ n lies in the window
+  have hκlo : (x₀ - ε) * n ≤ (κ n : ℝ) := by
+    simp only [hκdef]
+    have hc := Nat.le_ceil (x₀ * (n : ℝ))
+    nlinarith [hc, mul_nonneg hεpos.le hnpos.le]
+  have hκhi : (κ n : ℝ) ≤ (x₀ + ε) * n := by
+    simp only [hκdef]
+    have h := (Nat.ceil_lt_add_one (show (0 : ℝ) ≤ x₀ * n by positivity)).le
+    nlinarith [h, hn1ε]
+  -- the per-window-term bound  c k ≤ ρ^⌊2εn⌋ · c (κ n)
+  set B : ℝ := ρ ^ (⌊2 * ε * (n : ℝ)⌋₊) * c q n (κ n) with hBdef
+  have hBnn : 0 ≤ B := by
+    rw [hBdef]; exact mul_nonneg (pow_nonneg hρpos.le _) (c_pos q n (κ n)).le
+  -- ratio steps on the window
+  have hstepU : ∀ j : ℕ, (x₀ - ε) * n ≤ (j : ℝ) → (j : ℝ) ≤ (x₀ + ε) * n →
+      c q n (j + 1) ≤ ρ * c q n j := by
+    intro j hj1 hj2
+    have hb := hcr n hnN₁ j hj1 hj2
+    have hcp := c_pos q n j
+    have hle : c q n (j + 1) / c q n j ≤ 1 + δ := by have := (abs_le.mp hb).2; linarith
+    have : c q n (j + 1) ≤ (1 + δ) * c q n j := (div_le_iff₀ hcp).mp hle
+    nlinarith [this, mul_le_mul_of_nonneg_right h1δρ hcp.le]
+  have hstepD : ∀ j : ℕ, (x₀ - ε) * n ≤ (j : ℝ) → (j : ℝ) ≤ (x₀ + ε) * n →
+      c q n j ≤ ρ * c q n (j + 1) := by
+    intro j hj1 hj2
+    have hb := hcr n hnN₁ j hj1 hj2
+    have hcj := c_pos q n j
+    have hge : 1 - δ ≤ c q n (j + 1) / c q n j := by have := (abs_le.mp hb).1; linarith
+    rw [le_div_iff₀ hcj] at hge
+    rw [hρdef, one_div, inv_mul_eq_div, le_div_iff₀ h1mδ]
+    nlinarith [hge]
+  have hterm : ∀ k : ℕ, (x₀ - ε) * n ≤ (k : ℝ) → (k : ℝ) ≤ (x₀ + ε) * n → c q n k ≤ B := by
+    intro k hk1 hk2
+    rw [hBdef]
+    rcases Nat.lt_or_ge k (κ n) with hkκ | hkκ
+    · -- k < κ n : telescope down
+      have hkκ' : k ≤ κ n := le_of_lt hkκ
+      have hstep : ∀ j, k ≤ j → j < κ n → c q n j ≤ ρ * c q n (j + 1) := by
+        intro j hj1 hj2
+        refine hstepD j (le_trans hk1 (by exact_mod_cast hj1)) ?_
+        calc (j : ℝ) ≤ (κ n : ℝ) := by exact_mod_cast hj2.le
+          _ ≤ (x₀ + ε) * n := hκhi
+      have hdn := geom_down (u := c q n) hρ1 (b := k) (κ n) hkκ' hstep
+      have hexp : κ n - k ≤ ⌊2 * ε * (n : ℝ)⌋₊ := by
+        apply Nat.le_floor
+        rw [Nat.cast_sub hkκ']
+        calc (κ n : ℝ) - (k : ℝ) ≤ (x₀ + ε) * n - (x₀ - ε) * n := by linarith
+          _ = 2 * ε * n := by ring
+      calc c q n k ≤ ρ ^ (κ n - k) * c q n (κ n) := hdn
+        _ ≤ ρ ^ (⌊2 * ε * (n : ℝ)⌋₊) * c q n (κ n) :=
+            mul_le_mul_of_nonneg_right (pow_le_pow_right₀ hρ1 hexp) (c_pos q n (κ n)).le
+    · -- κ n ≤ k : telescope up
+      have hstep : ∀ j, κ n ≤ j → j < k → c q n (j + 1) ≤ ρ * c q n j := by
+        intro j hj1 hj2
+        refine hstepU j (le_trans hκlo (by exact_mod_cast hj1)) ?_
+        calc (j : ℝ) ≤ (k : ℝ) := by exact_mod_cast hj2.le
+          _ ≤ (x₀ + ε) * n := hk2
+      have hup := geom_up (u := c q n) hρ1 (b := κ n) k hkκ hstep
+      have hexp : k - κ n ≤ ⌊2 * ε * (n : ℝ)⌋₊ := by
+        apply Nat.le_floor
+        rw [Nat.cast_sub hkκ]
+        calc (k : ℝ) - (κ n : ℝ) ≤ (x₀ + ε) * n - (x₀ - ε) * n := by linarith
+          _ = 2 * ε * n := by ring
+      calc c q n k ≤ ρ ^ (k - κ n) * c q n (κ n) := hup
+        _ ≤ ρ ^ (⌊2 * ε * (n : ℝ)⌋₊) * c q n (κ n) :=
+            mul_le_mul_of_nonneg_right (pow_le_pow_right₀ hρ1 hexp) (c_pos q n (κ n)).le
+  -- window/tail decomposition
+  set outsideSet : Set ℕ := {k : ℕ | (k : ℝ) < (x₀ - ε) * ↑n ∨ (x₀ + ε) * ↑n < (k : ℝ)} with hout
+  have hrp := r_pos q n hq
+  have hdecomp : (∑' i : ↥outsideSet, c q n ↑i) + (∑' i : ↥outsideSetᶜ, c q n ↑i) = r q n :=
+    (summable_c q n hq).tsum_subtype_add_tsum_subtype_compl outsideSet
+  -- tail ≤ r/2
+  have htail : (∑' i : ↥outsideSet, c q n ↑i) ≤ (1 / 2) * r q n := by
+    simp only [Metric.mem_closedBall, Real.dist_eq, sub_zero] at hntail
+    have := (abs_le.mp hntail).2
+    exact (div_le_iff₀ hrp).mp this
+  -- window ≤ (⌊(x₀+ε)n⌋+1)·B
+  set Mfl : ℕ := ⌊(x₀ + ε) * (n : ℝ)⌋₊ with hMfl
+  have hwin_le : (∑' i : ↥outsideSetᶜ, c q n ↑i) ≤ ((Mfl : ℝ) + 1) * B := by
+    have hsupp : ∀ k ∉ Finset.range (Mfl + 1), outsideSetᶜ.indicator (c q n) k = 0 := by
+      intro k hk
+      rw [Set.indicator_of_notMem]
+      intro hmem
+      simp only [hout, Set.mem_compl_iff, Set.mem_setOf_eq, not_or, not_lt] at hmem
+      have : k ≤ Mfl := Nat.le_floor hmem.2
+      simp only [Finset.mem_range] at hk; omega
+    rw [tsum_subtype outsideSetᶜ (c q n), tsum_eq_sum hsupp]
+    calc ∑ k ∈ Finset.range (Mfl + 1), outsideSetᶜ.indicator (c q n) k
+        ≤ ∑ _k ∈ Finset.range (Mfl + 1), B := by
+          apply Finset.sum_le_sum
+          intro k _
+          by_cases hk : k ∈ outsideSetᶜ
+          · rw [Set.indicator_of_mem hk]
+            simp only [hout, Set.mem_compl_iff, Set.mem_setOf_eq, not_or, not_lt] at hk
+            exact hterm k hk.1 hk.2
+          · rw [Set.indicator_of_notMem hk]; exact hBnn
+      _ = ((Mfl : ℝ) + 1) * B := by rw [Finset.sum_const, Finset.card_range]; push_cast; ring
+  -- r ≤ 2·(Mfl+1)·B
+  have hrB : r q n ≤ 2 * (((Mfl : ℝ) + 1) * B) := by
+    have hwinlo : r q n / 2 ≤ ∑' i : ↥outsideSetᶜ, c q n ↑i := by linarith [hdecomp, htail]
+    linarith [hwin_le, hwinlo]
+  -- take logs
+  have hcκpos := c_pos q n (κ n)
+  have hBpos : 0 < B := by
+    rw [hBdef]; exact mul_pos (pow_pos hρpos _) hcκpos
+  have hMp : (0 : ℝ) < (Mfl : ℝ) + 1 := by positivity
+  have hnz : (n : ℝ) ≠ 0 := hnpos.ne'
+  have hlogr : Real.log (r q n) ≤ Real.log 2 + Real.log ((Mfl : ℝ) + 1)
+      + (⌊2 * ε * (n : ℝ)⌋₊ : ℝ) * Real.log ρ + Real.log (c q n (κ n)) := by
+    have h := Real.log_le_log hrp hrB
+    rw [show 2 * (((Mfl : ℝ) + 1) * B) = 2 * ((Mfl : ℝ) + 1) * B by ring,
+        Real.log_mul (by positivity) hBpos.ne', Real.log_mul (by norm_num) hMp.ne',
+        hBdef, Real.log_mul (pow_pos hρpos _).ne' hcκpos.ne', Real.log_pow] at h
+    linarith
+  -- assemble the three pieces
+  have hterm2 : (⌊2 * ε * (n : ℝ)⌋₊ : ℝ) / n * Real.log ρ ≤ s / 2 := by
+    have hfloor : (⌊2 * ε * (n : ℝ)⌋₊ : ℝ) ≤ 2 * ε * n := Nat.floor_le (by positivity)
+    have hle : (⌊2 * ε * (n : ℝ)⌋₊ : ℝ) / n ≤ 2 * ε := by
+      rw [div_le_iff₀ hnpos]; nlinarith
+    calc (⌊2 * ε * (n : ℝ)⌋₊ : ℝ) / n * Real.log ρ ≤ 2 * ε * Real.log ρ :=
+          mul_le_mul_of_nonneg_right hle hlogρ0
+      _ ≤ s / 2 := hslack
+  have hkey : Real.log (r q n) / n
+      ≤ (Real.log 2 + Real.log ((Mfl : ℝ) + 1)) / n
+        + (⌊2 * ε * (n : ℝ)⌋₊ : ℝ) / n * Real.log ρ + Real.log (c q n (κ n)) / n := by
+    have hE : (Real.log 2 + Real.log ((Mfl : ℝ) + 1)) / n
+          + (⌊2 * ε * (n : ℝ)⌋₊ : ℝ) / n * Real.log ρ + Real.log (c q n (κ n)) / n
+        = (Real.log 2 + Real.log ((Mfl : ℝ) + 1) + (⌊2 * ε * (n : ℝ)⌋₊ : ℝ) * Real.log ρ
+            + Real.log (c q n (κ n))) / n := by field_simp
+    rw [hE, div_le_div_iff_of_pos_right hnpos]
+    exact hlogr
+  linarith [hkey, hterm2, hterm3, hterm1n]
 
 /-! ### Assembling the log-limit for `r` -/
 
@@ -364,19 +671,28 @@ theorem tendsto_root_r (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
   exact tendsto_root_of_logRoot hg (fun n => r q n) (fun n => r_pos q n hq)
     (tendsto_logRoot_r q hq hx₀ hfx₀)
 
-/-- The `r̂` analogue of `tendsto_logRoot_r`.
-
-REMAINING SUB-SORRY (analytic).  Same skeleton as `tendsto_logRoot_r`: a lower
-bound from the peak term `ĉ_{κ n}` and an upper bound from `sum_localizes_chat`.
-The `ĉ` peak asymptotic reduces to `tendsto_facTerm` after writing the odd-index
-product of `chat` (Basic.lean) as factorials and powers of `2`, OR is transferred
-from the `c` peak via the two-sided subexponential ratio bound `c/ĉ` (paper (e10),
-`centralBinom_two_sided`), which is constant-factor and hence invisible under the
-`1/n` root.  Its limit is again `log g x₀` because `f x₀ = 1`. -/
+/-- The `r̂` analogue of `tendsto_logRoot_r`, obtained from the `r`-limit and the
+proven ratio limit `r n / r̂ n → 1` (`Zeta5Odd.tendsto_ratio`):
+`(1/n) log r̂ = (1/n) log r − (1/n) log (r/r̂)`, and `log (r/r̂) → 0` kills the
+second term under the `1/n`. -/
 private lemma tendsto_logRoot_rhat (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) :
     Tendsto (fun n : ℕ => Real.log (rhat q n) / n) atTop (𝓝 (Real.log (g q x₀))) := by
-  sorry
+  have hr := tendsto_logRoot_r q hq hx₀ hfx₀
+  have hratio := tendsto_ratio q hq hx₀ hfx₀
+  -- `log (r/r̂) → log 1 = 0`
+  have hlogratio : Tendsto (fun n : ℕ => Real.log (r q n / rhat q n)) atTop (𝓝 0) := by
+    have := (Real.continuousAt_log (by norm_num : (1 : ℝ) ≠ 0)).tendsto.comp hratio
+    rwa [Real.log_one] at this
+  -- `(1/n) log (r/r̂) → 0`
+  have hdiv : Tendsto (fun n : ℕ => Real.log (r q n / rhat q n) / n) atTop (𝓝 0) :=
+    hlogratio.div_atTop tendsto_natCast_atTop_atTop
+  have heq : ∀ᶠ n : ℕ in atTop,
+      Real.log (r q n) / n - Real.log (r q n / rhat q n) / n = Real.log (rhat q n) / n := by
+    filter_upwards with n
+    rw [Real.log_div (r_pos q n hq).ne' (rhat_pos q n hq).ne']
+    ring
+  simpa using (hr.sub hdiv).congr' heq
 
 /-- Lemma 4, first claim for `r̂`. -/
 theorem tendsto_root_rhat (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)

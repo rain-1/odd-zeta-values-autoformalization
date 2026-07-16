@@ -743,6 +743,40 @@ private lemma bridge_A (j n : ℕ) (hj : 1 ≤ j) :
   calc (1 - 4 / (j : ℝ)) * g1 ≤ D * g1 := mul_le_mul_of_nonneg_right step2 hg1nn
     _ ≤ A := step1
 
+/-- Combined lower bound for the term ratio (`c_ratio` × `bridge_A` × `bridge_B`):
+`c(j+1)/c(j) ≥ (1-4/j)(1-2q/n)·f(j/n)²`. -/
+private lemma c_ratio_lb (q j n : ℕ) (hj : 1 ≤ j) (hn : 1 ≤ n) (hn2q : 2 * q ≤ n) :
+    (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * f q ((j : ℝ) / n) ^ 2
+      ≤ c q n (j + 1) / c q n j := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hjR : (0 : ℝ) < j := by exact_mod_cast hj
+  set g1 : ℝ := ((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2 with hg1
+  set g2 : ℝ := (((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ)) ^ (2 * q) with hg2
+  have hg1nn : 0 ≤ g1 := by rw [hg1]; positivity
+  have hg2nn : 0 ≤ g2 := by rw [hg2]; positivity
+  have e1 : ((j : ℝ) / n + 3) / ((j : ℝ) / n) = ((j : ℝ) + 3 * n) / (j : ℝ) := by
+    field_simp
+  have e2 : ((j : ℝ) / n + 1) / ((j : ℝ) / n + 2) = ((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ) := by
+    push_cast; field_simp; ring
+  have hfeval : f q ((j : ℝ) / n) ^ 2 = g1 * g2 := by
+    unfold f
+    rw [e1, e2, mul_pow, ← pow_mul, mul_comm q 2, div_pow, hg1, hg2]
+  rw [hfeval]
+  have hA := bridge_A j n hj
+  have hB := bridge_B q j n hn
+  rw [c_ratio]
+  have h2qn : 0 ≤ 1 - 2 * (q : ℝ) / n := by
+    rw [sub_nonneg, div_le_one hnR]; exact_mod_cast hn2q
+  rcases le_or_gt 0 (1 - 4 / (j : ℝ)) with h4 | h4
+  · calc (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * (g1 * g2)
+        = ((1 - 4 / (j : ℝ)) * g1) * ((1 - 2 * (q : ℝ) / n) * g2) := by ring
+      _ ≤ _ := mul_le_mul hA hB (mul_nonneg h2qn hg2nn) (le_trans (by positivity) hA)
+  · have hLneg : (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * (g1 * g2) ≤ 0 := by
+      have : (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) ≤ 0 :=
+        mul_nonpos_of_nonpos_of_nonneg (le_of_lt h4) h2qn
+      exact mul_nonpos_of_nonpos_of_nonneg this (mul_nonneg hg1nn hg2nn)
+    exact le_trans hLneg (by positivity)
+
 /-- Lower geometric margin for `c`: below `(x₀ - ε/2)·n` the term ratio
 `c(j+1)/c(j)` (given exactly by `c_ratio`) exceeds `1 + δ`, because
 `f(j/n)² ≥ f(x₀-ε/2)² > 1` on `(0, x₀)` and `ρ → f²`. -/

@@ -1,0 +1,6 @@
+[anchor 1] totally symmetric a = (1,...,1)
+  n=1: Q=21 P=87/4 Phat=101/4  [OK]
+  n=2: Q=2989 P=1190161/384 Phat=344923/96  [OK]
+[anchor 2] record point, n=1 (paper: no arithmetic losses)
+
+=== audit a = [8, 16, 10, 15, 12, 16, 18, 13] ===

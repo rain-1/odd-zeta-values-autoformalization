@@ -74,8 +74,12 @@ arithmetic of the rational coefficients is traditionally expressed by
 \operatorname{lcm}(1,\dots,n)$. These inclusions are proved (or
 conjectured) from term-by-term analysis, and the question of their
 \emph{sharpness}---whether the true denominators actually attain
-$D_n$---is rarely addressed and, to our knowledge, has never been
-investigated systematically by direct computation.
+$D_n$---is rarely addressed. Proven \emph{upper} bounds in the cellular
+program do exist (most recently Eyre--Muller--Nieto for the Catalan
+constant \cite{EMN}, whose Thm.~8.3.1 clears denominators by an explicit
+factor, with no motivic interpretation claimed); what has, to our
+knowledge, never been done is the systematic \emph{measurement} of true
+denominators --- sharp, per-prime, and interpreted as lattice data.
 
 This paper does so for the family of cellular integrals
 $I(\mathbf{a})$ on $\overline{\mathcal M}_{0,8}$ introduced by Brown and
@@ -309,7 +313,16 @@ cost drops to $24/2^k$. The linear form $I'$ arises exactly by such an
 elimination: $\operatorname{Ext}^1_{MT(\Z)_\Q}(\Q(0),\Q(2))=0$
 \cite{BrownMTZ} splits the weight-$4$ part rationally, and the identity
 $\zeta^{\mathfrak m}(2)=-(\mathbb L^{\mathfrak m})^2/24$ is available
-motivically \cite[\S2.2]{BrownP1}. Under two explicitly stated
+motivically \cite[\S2.2]{BrownP1}. The systematic ($\Q$-linear) theory
+of such extension structures for zeta-value linear forms is due to
+Dupont \cite[\S1.2, Thms.~1.3--1.4]{Dupont}, whose \emph{odd zeta
+motive} realizes all the relevant extensions; we note that the
+Brown--Zudilin motive here, having the product period
+$\zeta(5)+2\zeta(3)\zeta(2)$ in top weight, is provably \emph{not} a
+subquotient of Dupont's motive, and the precise relationship is open
+(raised in \cite{Dupont}). Everything integral --- lattices,
+denominators, indices --- is outside the scope of \cite{Dupont}, which
+is $\Q$-linear throughout. Under two explicitly stated
 hypotheses---(H1) the integrand's de Rham coefficients are
 $\Dnu$-controlled (the integral form of Brown--Zudilin's own sketched
 Barnes analysis), and (H2) a normalization of the integral Betti
@@ -442,7 +455,9 @@ correction factors are uniformly \emph{removable}, in contrast to
 (i) Ap\'ery $\zeta(3)$: here removability is a \emph{theorem}, not
 merely our finite check: Rhin--Viola \cite[Thm.~2.1]{RV3} prove
 $\dn{n}^3a_n\in\Z$ exactly (the genuine $2$ rides on the
-$\zeta(3)$-coefficient parity, not the denominator); our $n\le50$
+$\zeta(3)$-coefficient parity, not the denominator; the geometric
+interpretation of such parity vanishing is Dupont's
+\cite[Thm.~1.2]{Dupont}); our $n\le50$
 verification is a sanity check of their statement.
 (ii) $\zeta(4)$: $\dn{n}^4v_n\in\Z$ for $n\le5$ in Zudilin's derived
 series (the factor $2$ retained in \cite[Th\'eor\`eme 3]{KR} is slack
@@ -531,6 +546,12 @@ motiviques de Tate mixte}, Ann.\ Sci.\ \'Ec.\ Norm.\ Sup\'er.\ 38
 with empirically tamed denominators}, arXiv:1409.7204.
 \bibitem{LS} R.~Lee, R.~Szczarba, \emph{The group $K_3(\Z)$ is cyclic of
 order forty-eight}, Ann.\ of Math.\ 104 (1976), 31--60.
+\bibitem{Dupont} C.~Dupont, \emph{Odd zeta motive and linear forms in
+odd zeta values} (with an appendix by D.~Zagier), arXiv:1601.00950.
+\bibitem{DupontBi} C.~Dupont, \emph{Relative cohomology of
+bi-arrangements}, arXiv:1410.6348.
+\bibitem{EMN} [Eyre--Muller--Nieto, Catalan-constant cellular forms],
+arXiv:2510.20648. [Verify author names before submission.]
 \bibitem{Keel} S.~Keel, \emph{Intersection theory of moduli space of
 stable $n$-pointed curves of genus zero}, Trans.\ Amer.\ Math.\ Soc.\
 330 (1992), 545--574.

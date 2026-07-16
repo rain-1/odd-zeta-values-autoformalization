@@ -828,7 +828,89 @@ private lemma c_lower_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x�
     (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :
     ∃ δ : ℝ, 0 < δ ∧ ∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
       (j : ℝ) ≤ (x₀ - ε / 2) * n → (1 + δ) * c q n j ≤ c q n (j + 1) := by
-  sorry
+  obtain ⟨x₁, hx₀x₁, hanti, _hflt⟩ := f_shape q hq hx₀ hfx₀
+  rcases le_or_gt (x₀ - ε / 2) 0 with hxle | hxpos
+  · -- window degenerate: only `j = 0` can qualify
+    refine ⟨1, one_pos, ?_⟩
+    filter_upwards [c_ratio_smallj q 0 2, eventually_ge_atTop 1] with n hsmall hn1 j hj
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn1
+    have hj0 : j = 0 := by
+      by_contra h
+      have hj1 : (1 : ℝ) ≤ (j : ℝ) := by exact_mod_cast Nat.one_le_iff_ne_zero.mpr h
+      have hxn : (x₀ - ε / 2) * (n : ℝ) ≤ 0 := mul_nonpos_of_nonpos_of_nonneg hxle hnR.le
+      linarith [hj]
+    subst hj0
+    rw [← le_div_iff₀ (c_pos q n 0)]
+    have := hsmall 0 (le_refl 0)
+    linarith
+  · -- main case: `x_ = x₀ - ε/2 ∈ (0, x₀)`
+    set x_ : ℝ := x₀ - ε / 2 with hx_
+    have hx_lt : x_ < x₀ := by rw [hx_]; linarith
+    have hx_x1 : x_ < x₁ := lt_trans hx_lt hx₀x₁
+    have hx_mem : x_ ∈ Set.Ioo 0 x₁ := ⟨hxpos, hx_x1⟩
+    have hx0_mem : x₀ ∈ Set.Ioo 0 x₁ := ⟨hx₀, hx₀x₁⟩
+    set M : ℝ := f q x_ with hM
+    have hM1 : 1 < M := by
+      rw [hM]; have := hanti hx_mem hx0_mem hx_lt; rwa [hfx₀] at this
+    have hMpos : 0 < M := by linarith
+    have hM2 : 1 < M ^ 2 := by nlinarith [hM1]
+    have hM2pos : 0 < M ^ 2 := pow_pos hMpos 2
+    have hM2m1 : 0 < M ^ 2 - 1 := by linarith
+    set δ : ℝ := (M ^ 2 - 1) / 4 with hδ
+    have hδpos : 0 < δ := by rw [hδ]; linarith
+    refine ⟨δ, hδpos, ?_⟩
+    set J₀ : ℕ := ⌈8 * M ^ 2 / (M ^ 2 - 1)⌉₊ with hJ0
+    have hev_n2 : ∀ᶠ n : ℕ in atTop, (M ^ 2 + 3) / (2 * (M ^ 2 + 1)) ≤ 1 - 2 * (q : ℝ) / n := by
+      have htz : Tendsto (fun n : ℕ => 2 * (q : ℝ) / n) atTop (𝓝 0) :=
+        tendsto_const_div_atTop_nhds_zero_nat (2 * (q : ℝ))
+      have ht1 : Tendsto (fun n : ℕ => 1 - 2 * (q : ℝ) / n) atTop (𝓝 1) := by
+        have := (tendsto_const_nhds (x := (1 : ℝ))).sub htz; simpa using this
+      have hclt : (M ^ 2 + 3) / (2 * (M ^ 2 + 1)) < 1 := by
+        rw [div_lt_one (by positivity)]; nlinarith
+      exact ht1.eventually (eventually_ge_nhds hclt)
+    filter_upwards [c_ratio_smallj q J₀ (1 + δ), hev_n2, eventually_ge_atTop (2 * q),
+      eventually_ge_atTop 1] with n hsmall hn2thr hn2q hn1 j hj
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn1
+    rcases le_or_gt j J₀ with hjle | hjgt
+    · rw [← le_div_iff₀ (c_pos q n j)]; exact hsmall j hjle
+    · have hj1 : 1 ≤ j := by omega
+      have hjRpos : (0 : ℝ) < (j : ℝ) :=
+        lt_of_lt_of_le one_pos (by exact_mod_cast hj1 : (1 : ℝ) ≤ (j : ℝ))
+      have hlb := c_ratio_lb q j n hj1 hn1 hn2q
+      -- (M²+1)/(2M²) ≤ 1 - 4/j
+      have hjge : 8 * M ^ 2 / (M ^ 2 - 1) ≤ (j : ℝ) :=
+        le_trans (Nat.le_ceil _) (by exact_mod_cast hjgt.le)
+      have h8 : 8 * M ^ 2 ≤ (M ^ 2 - 1) * (j : ℝ) := by
+        rw [div_le_iff₀ hM2m1] at hjge; linarith
+      have hj4 : (M ^ 2 + 1) / (2 * M ^ 2) ≤ 1 - 4 / (j : ℝ) := by
+        rw [← sub_nonneg]
+        have heq : 1 - 4 / (j : ℝ) - (M ^ 2 + 1) / (2 * M ^ 2)
+            = ((M ^ 2 - 1) * (j : ℝ) - 8 * M ^ 2) / (2 * M ^ 2 * (j : ℝ)) := by
+          field_simp; ring
+        rw [heq]; exact div_nonneg (by linarith) (by positivity)
+      -- f(j/n)² ≥ M²
+      have hjnpos : (0 : ℝ) < (j : ℝ) / n := div_pos hjRpos hnR
+      have hjnle : (j : ℝ) / n ≤ x_ := by rw [div_le_iff₀ hnR, hx_]; exact hj
+      have hjnlt1 : (j : ℝ) / n < x₁ := lt_of_le_of_lt hjnle hx_x1
+      have hfge : M ≤ f q ((j : ℝ) / n) := by
+        rw [hM]; exact hanti.antitoneOn ⟨hjnpos, hjnlt1⟩ hx_mem hjnle
+      have hf2 : M ^ 2 ≤ f q ((j : ℝ) / n) ^ 2 := pow_le_pow_left₀ hMpos.le hfge 2
+      -- combine the three lower bounds
+      have hlb1pos : 0 < (M ^ 2 + 1) / (2 * M ^ 2) := div_pos (by positivity) (by positivity)
+      have hbpos : 0 < 1 - 4 / (j : ℝ) := lt_of_lt_of_le hlb1pos hj4
+      have hlb2pos : 0 < (M ^ 2 + 3) / (2 * (M ^ 2 + 1)) := div_pos (by positivity) (by positivity)
+      have hdpos : 0 < 1 - 2 * (q : ℝ) / n := lt_of_lt_of_le hlb2pos hn2thr
+      have hab : (M ^ 2 + 1) / (2 * M ^ 2) * ((M ^ 2 + 3) / (2 * (M ^ 2 + 1)))
+          ≤ (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) :=
+        mul_le_mul hj4 hn2thr hlb2pos.le hbpos.le
+      have hfin : (M ^ 2 + 1) / (2 * M ^ 2) * ((M ^ 2 + 3) / (2 * (M ^ 2 + 1))) * M ^ 2
+          ≤ (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * f q ((j : ℝ) / n) ^ 2 :=
+        mul_le_mul hab hf2 hM2pos.le (mul_nonneg hbpos.le hdpos.le)
+      have heq : (M ^ 2 + 1) / (2 * M ^ 2) * ((M ^ 2 + 3) / (2 * (M ^ 2 + 1))) * M ^ 2
+          = (M ^ 2 + 3) / 4 := by field_simp; ring
+      have hδeq : 1 + δ = (M ^ 2 + 3) / 4 := by rw [hδ]; ring
+      rw [← le_div_iff₀ (c_pos q n j), hδeq]
+      linarith [hlb, hfin, heq.le, heq.ge]
 
 /-- Upper margins for `c`: a `1 - δ` middle margin on `[(x₀+ε/2)n, (x₀+ε)n]`
 and the telescoping square-ratio majorant above `(x₀+ε/2)n`. -/

@@ -217,16 +217,23 @@ factorial-ratio identity above is exact $p$-adically):
 \frac{\prod_{i\in\cF}(h_i(\mathbf a)n)!}{\prod_{i\in\cF}(h_i(g\mathbf a)n)!}.
 \]
 
-\begin{conjecture}\label{conj:main}
+\begin{conjecture}[robust form]\label{conj:main}
 For all admissible $\mathbf a$ and $n\ge1$, and every prime $p$,
 \[
 \ord_p \den(P_n)\ \le\ \ord_p \Dnu(\mathbf a,n)\;+\;
-\begin{cases} 2, & p=2,\\ 1, & p=3,\\ 0, & p\ge5\ \text{(see
-\S\ref{sec:anomaly})},\end{cases}
+\begin{cases} 2, & p=2,\\ 1, & p=3,\\ 1, & p\ge5,\end{cases}
 \]
-i.e.\ $12\,\Dnu(\mathbf a,n)\,I'(\mathbf a\cdot n)\in\Z\zeta(5)+\Z$, and
-the ceilings at $2$ and $3$ are attained.
+with the ceilings at $2$ and $3$ attained, the $p\ge5$ term nonzero only
+at boundary primes $p=m_1$, and, in the \textbf{strong form}, vanishing
+for $n\ge2$.
 \end{conjecture}
+
+We emphasize the epistemic status: both forms are falsifiable by a
+single future cell, and the boundedness of the $p\ge5$ term---like every
+sharpness statement here---rests on finite evidence only. We know of no
+structural argument excluding infinitely many boundary-prime
+fluctuations; \S\ref{sec:anomaly} documents the one observed orbit and
+the failed attempt to make it recur.
 
 \emph{Evidence.} Over $200$ certified cells (systematic random interior
 points with entries up to $7$, growth series at selected points with
@@ -266,14 +273,18 @@ $\den(P_1(\mathbf a'))=2^6\cdot3^4\cdot5^2\cdot7^2$ against a
 $d$-product paying a single $7$. Excesses are thus \emph{orbit-coherent}:
 the correct invariant is an orbit-level anomaly divisor.
 
-The effect is rare and non-persistent: a targeted scan of $40$ fresh
-points satisfying the same trigger condition ($m_1\in\{5,7,11,13\}$
-prime, $\nu_{m_1}\ge1$) produced \emph{no} further instance, and the
-anomalous orbit itself relaxes to slack ($-2$ at $p=7$) at $n=2$, at
-both partners coherently. We therefore state
-Conjecture~\ref{conj:main}'s $p\ge5$ clause as holding up to such
-isolated small-$n$, boundary-prime ($p=m_1$) fluctuations of size $1$;
-characterizing them exactly is open.
+In our samples the effect is rare and non-persistent: a targeted scan
+of $40$ fresh points satisfying the same trigger condition
+($m_1\in\{5,7,11,13\}$ prime, $\nu_{m_1}\ge1$) produced \emph{no}
+further instance, and the anomalous orbit itself relaxes to slack ($-2$
+at $p=7$) at $n=2$, at both partners coherently. We stress that this
+falsifies the naive ``$\{2,3\}$ only'' clause outright, and that finite
+sampling cannot exclude infinitely many such violations across the cone
+or along $n$; the robust form of Conjecture~\ref{conj:main} prices them
+at one unit at the boundary prime, and even that bound is an empirical
+reading, not a theorem. Characterizing the boundary-prime effect exactly
+is open, and we regard it as the sharpest known probe of what the
+$\frG$-symmetrized inclusion machinery misses.
 
 \section{The mechanism}\label{sec:mechanism}
 
@@ -325,10 +336,17 @@ $B_j=(-1)^n\binom{n+a}{a}\binom{n}{a}^2/n!$ and
 $A_j=B_j\,(3H_a-H_{n+a}-2H_{n-a})$ with $a=j-n-1$ (verified exactly for
 $n\le6$). Two consequences, proved in the accompanying notes:
 
-\begin{theorem}[support]\label{thm:support}
+\begin{theorem}[support; proof in the companion notes, under
+independent audit]\label{thm:support}
 In the totally symmetric case every prime dividing $\den(P_n)$ is at
 most $2n+1$, and no prime $p\ge5$ exceeds the $\dn{n}^5$ budget.
 \end{theorem}
+
+\noindent\emph{Status.} The proof is written in the companion
+computational notes and its instances are machine-verified for
+$n\le6$; it will be reproduced in this paper only after a full
+independent audit, and until then the reader should weight it
+accordingly.
 
 Moreover the $\{2,3\}$-excess enters \emph{only} through the Laurent
 coefficients $1,\tfrac16,\tfrac1{90},\dots$ of the sine kernel: the
@@ -346,10 +364,11 @@ verified exactly for $n\le5$.
 The same measurement standard applied to the classical corpus shows its
 correction factors are uniformly \emph{removable}, in contrast to
 \S\ref{sec:conjecture}:
-(i) Ap\'ery $\zeta(3)$: $\dn{n}^3a_n\in\Z$ for $n\le50$ (the quoted
-$2\dn{n}^3$ is slack; consistent with Rhin--Viola's exact theorem
-\cite{RV3}, where the genuine $2$ rides on the $\zeta(3)$-coefficient
-parity, not the denominator).
+(i) Ap\'ery $\zeta(3)$: here removability is a \emph{theorem}, not
+merely our finite check: Rhin--Viola \cite[Thm.~2.1]{RV3} prove
+$\dn{n}^3a_n\in\Z$ exactly (the genuine $2$ rides on the
+$\zeta(3)$-coefficient parity, not the denominator); our $n\le50$
+verification is a sanity check of their statement.
 (ii) $\zeta(4)$: $\dn{n}^4v_n\in\Z$ for $n\le5$ in Zudilin's derived
 series (the factor $2$ retained in \cite[Th\'eor\`eme 3]{KR} is slack
 there).
@@ -358,10 +377,18 @@ the five coefficients $z_{j,n}$ exactly for $n\le5$ (apparently for the
 first time), the leading factor $2$ retained even in the
 \emph{conjectured} law \cite[eq.~(17.1)]{KR} is unnecessary, with
 $\sim30$ bits of $2$-adic margin; the well-poised parity cancellation
-and the proven inclusion of \cite{KR} serve as engine validations. These
-are finite verifications, not proofs; but they isolate the
+and the proven inclusion of \cite{KR} serve as engine validations. For (ii) and (iii)
+removability is genuinely open (Krattenthaler--Rivoal prove their
+inclusions only ``\`a un facteur $2$ pr\`es'' and could not remove it);
+our checks are finite verifications, and the structural reason to expect
+removability there is identifiable but heuristic: the factor $2$ in the
+proofs arises from termwise $2$-adic over-counting at half-integer
+shifts, which the full sums have no reason to respect. What the controls
+establish is a contrast, not a theorem: in every classical family
+examined the correction is unneeded in all computed cases, while in the
 Brown--Zudilin family---the only construction here that performs a
-$\zeta(2)$-elimination---as the only one whose correction is attained.
+$\zeta(2)$-elimination---it is provably needed (the printed values of
+\S\ref{sec:corrections} already require it).
 
 \section{The worthiness supremum, and what the arithmetic cannot do}
 \label{sec:gamma}

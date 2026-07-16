@@ -906,6 +906,180 @@ private lemma summable_harmonic_diff (k : ℕ) :
   rw [hpt]
   exact summable_finset_sum (Finset.range k) _ (fun j _ => summable_telescope_col j)
 
+/-! ### Half-integer harmonic machinery for the `r̂_n` form (paper e08) -/
+
+/-- **Odd half-integer harmonic integrality** (paper Lemma 3, e08 inclusions, tex 236–237):
+`d_n^i · 2^i · Σ_{ℓ<L} 1/(2ℓ+1)^i ∈ ℤ` whenever the largest odd denominator `2L−1 ≤ n`
+(equivalently `2L ≤ n+1`), so every `2ℓ+1 ≤ n` is cleared by `d_n` via `dvd_lcmUpto`; the
+`2^i` from `(ℓ+½) = (2ℓ+1)/2` is an integer factor. -/
+theorem odd_harmonic_integrality (n i L : ℕ) (hL : 2 * L ≤ n + 1) :
+    ∃ z : ℤ, (Nat.lcmUpto n : ℝ) ^ i
+        * ((2 : ℝ) ^ i * ∑ ℓ ∈ Finset.range L, (1 : ℝ) / ((2 * ℓ + 1 : ℕ) : ℝ) ^ i) = z := by
+  refine ⟨∑ ℓ ∈ Finset.range L, ((2 * (Nat.lcmUpto n / (2 * ℓ + 1)) : ℕ) : ℤ) ^ i, ?_⟩
+  rw [Finset.mul_sum, Finset.mul_sum, Int.cast_sum]
+  apply Finset.sum_congr rfl
+  intro ℓ hℓ
+  rw [Finset.mem_range] at hℓ
+  have hodd : (2 * ℓ + 1) ∣ Nat.lcmUpto n := dvd_lcmUpto (by omega) (by omega)
+  have hne : ((2 * ℓ + 1 : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  rw [Int.cast_pow, Int.cast_natCast, Nat.cast_mul, Nat.cast_ofNat, Nat.cast_div hodd hne,
+    mul_pow, div_pow, mul_one_div]
+  ring
+
+/-- Summability of the odd-denominator ζ-series `1/(2r+1)^i` for `i ≥ 2`. -/
+private lemma summable_odd_base (i : ℕ) (hi : 2 ≤ i) :
+    Summable (fun r : ℕ => (1 : ℝ) / ((2 * r + 1 : ℕ) : ℝ) ^ i) := by
+  apply Summable.of_nonneg_of_le (f := fun r : ℕ => (1 : ℝ) / ((r : ℝ) + 1) ^ i)
+  · intro r; positivity
+  · intro r
+    have hb : ((r : ℝ) + 1) ≤ ((2 * r + 1 : ℕ) : ℝ) := by
+      have h : ((2 * r + 1 : ℕ) : ℝ) = 2 * (r : ℝ) + 1 := by push_cast; ring
+      rw [h]; linarith [(Nat.cast_nonneg r : (0 : ℝ) ≤ (r : ℝ))]
+    have hpow : ((r : ℝ) + 1) ^ i ≤ ((2 * r + 1 : ℕ) : ℝ) ^ i :=
+      pow_le_pow_left₀ (by positivity : (0 : ℝ) ≤ (r : ℝ) + 1) hb i
+    exact one_div_le_one_div_of_le (by positivity) hpow
+  · exact summable_zeta_base i hi
+
+/-- **Odd ζ-sum** (paper e08): for `i ≥ 2`, `2^i · Σ'_r 1/(2r+1)^i = (2^i − 1)·ζ(i)`.
+Proved by splitting `ζ(i) = Σ' 1/(n+1)^i` into its even/odd index parts. -/
+private lemma tsum_odd_eq (i : ℕ) (hi : 2 ≤ i) :
+    (2 : ℝ) ^ i * ∑' r : ℕ, (1 : ℝ) / ((2 * r + 1 : ℕ) : ℝ) ^ i
+      = ((2 : ℝ) ^ i - 1) * zetaVal i := by
+  have hgf : Summable (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1) ^ i) := summable_zeta_base i hi
+  have hinj2 : Function.Injective (fun r : ℕ => 2 * r) := by intro a b h; simpa using h
+  have hinj2' : Function.Injective (fun r : ℕ => 2 * r + 1) := by intro a b h; simpa using h
+  have he : Summable (fun k => (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1) ^ i) (2 * k)) :=
+    hgf.comp_injective hinj2
+  have ho : Summable (fun k => (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1) ^ i) (2 * k + 1)) :=
+    hgf.comp_injective hinj2'
+  have hsplit := tsum_even_add_odd (f := fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1) ^ i) he ho
+  have hOdd : (∑' k, (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1) ^ i) (2 * k))
+      = ∑' r : ℕ, (1 : ℝ) / ((2 * r + 1 : ℕ) : ℝ) ^ i := by
+    apply tsum_congr; intro k; show (1 : ℝ) / (((2 * k : ℕ) : ℝ) + 1) ^ i = _
+    push_cast; ring_nf
+  have hEven : (2 : ℝ) ^ i * (∑' k, (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1) ^ i) (2 * k + 1))
+      = zetaVal i := by
+    rw [← tsum_mul_left, zetaVal]
+    apply tsum_congr; intro k
+    show (2 : ℝ) ^ i * ((1 : ℝ) / (((2 * k + 1 : ℕ) : ℝ) + 1) ^ i) = (1 : ℝ) / ((k : ℝ) + 1) ^ i
+    have h2 : ((2 * k + 1 : ℕ) : ℝ) + 1 = 2 * ((k : ℝ) + 1) := by push_cast; ring
+    rw [h2, mul_pow]; field_simp
+  have hzeta : (∑' k, (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1) ^ i) k) = zetaVal i := by rw [zetaVal]
+  rw [hOdd, hzeta] at hsplit
+  linear_combination (2 : ℝ) ^ i * hsplit - hEven
+
+/-- Summability of the shifted half-integer series with positive base `1/(j+c−½)^i`. -/
+private lemma summable_half_pos (c i : ℕ) (hc : 1 ≤ c) (hi : 2 ≤ i) :
+    Summable (fun j : ℕ => (1 : ℝ) / ((j : ℝ) + (c : ℝ) - 1 / 2) ^ i) := by
+  have hc' : (1 : ℝ) ≤ (c : ℝ) := by exact_mod_cast hc
+  apply Summable.of_nonneg_of_le (f := fun j : ℕ => (2 : ℝ) ^ i * ((1 : ℝ) / ((j : ℝ) + 1) ^ i))
+  · intro j
+    have hbpos : (0 : ℝ) < (j : ℝ) + (c : ℝ) - 1 / 2 := by
+      have := Nat.cast_nonneg (α := ℝ) j; linarith
+    exact div_nonneg zero_le_one (pow_pos hbpos i).le
+  · intro j
+    have hj : (0 : ℝ) ≤ (j : ℝ) := Nat.cast_nonneg j
+    have hbase : ((j : ℝ) + 1) / 2 ≤ (j : ℝ) + (c : ℝ) - 1 / 2 := by linarith
+    have hbpos : (0 : ℝ) < ((j : ℝ) + 1) / 2 := by positivity
+    have hpow : (((j : ℝ) + 1) / 2) ^ i ≤ ((j : ℝ) + (c : ℝ) - 1 / 2) ^ i :=
+      pow_le_pow_left₀ hbpos.le hbase i
+    have h1 : (1 : ℝ) / ((j : ℝ) + (c : ℝ) - 1 / 2) ^ i ≤ 1 / (((j : ℝ) + 1) / 2) ^ i :=
+      one_div_le_one_div_of_le (by positivity) hpow
+    have h2 : (1 : ℝ) / (((j : ℝ) + 1) / 2) ^ i = (2 : ℝ) ^ i * (1 / ((j : ℝ) + 1) ^ i) := by
+      rw [div_pow, one_div_div]; ring
+    rw [h2] at h1; exact h1
+  · exact (summable_zeta_base i hi).mul_left ((2 : ℝ) ^ i)
+
+/-- Summability of the shifted half-integer series with negative base `1/(j−p−½)^i`. -/
+private lemma summable_half_neg (p i : ℕ) (hi : 2 ≤ i) :
+    Summable (fun j : ℕ => (1 : ℝ) / ((j : ℝ) - (p : ℝ) - 1 / 2) ^ i) := by
+  have hg := summable_odd_base i hi
+  have hshift : Summable (fun r : ℕ =>
+      (fun j : ℕ => (1 : ℝ) / ((j : ℝ) - (p : ℝ) - 1 / 2) ^ i) (r + (p + 1))) := by
+    refine (hg.mul_left ((2 : ℝ) ^ i)).congr (fun r => ?_)
+    show (2 : ℝ) ^ i * ((1 : ℝ) / ((2 * r + 1 : ℕ) : ℝ) ^ i)
+        = (1 : ℝ) / (((r + (p + 1) : ℕ) : ℝ) - (p : ℝ) - 1 / 2) ^ i
+    have hbase : (((r + (p + 1) : ℕ) : ℝ) - (p : ℝ) - 1 / 2) = ((2 * r + 1 : ℕ) : ℝ) / 2 := by
+      push_cast; ring
+    rw [hbase, div_pow, one_div_div, mul_one_div]
+  exact (summable_nat_add_iff (p + 1)).1 hshift
+
+/-- **Positive-base half-integer tail** (paper e08, `k ≥ m+1` columns): for `i ≥ 2`, `c ≥ 1`,
+`Σ'_j 1/(j+c−½)^i = (2^i−1)ζ(i) − 2^i·Σ_{ℓ<c−1} 1/(2ℓ+1)^i`.  The harmonic head has odd
+denominators `≤ 2c−3`, small enough to be cleared by `d_n`. -/
+private lemma tail_val_pos (c i : ℕ) (hc : 1 ≤ c) (hi : 2 ≤ i) :
+    ∑' j : ℕ, (1 : ℝ) / ((j : ℝ) + (c : ℝ) - 1 / 2) ^ i
+      = ((2 : ℝ) ^ i - 1) * zetaVal i
+        - (2 : ℝ) ^ i * ∑ ℓ ∈ Finset.range (c - 1), (1 : ℝ) / ((2 * ℓ + 1 : ℕ) : ℝ) ^ i := by
+  have hg := summable_odd_base i hi
+  have hrw : (∑' j : ℕ, (1 : ℝ) / ((j : ℝ) + (c : ℝ) - 1 / 2) ^ i)
+      = (2 : ℝ) ^ i * ∑' j : ℕ, (1 : ℝ) / ((2 * (j + (c - 1)) + 1 : ℕ) : ℝ) ^ i := by
+    rw [← tsum_mul_left]
+    apply tsum_congr; intro j
+    show (1 : ℝ) / ((j : ℝ) + (c : ℝ) - 1 / 2) ^ i
+        = (2 : ℝ) ^ i * ((1 : ℝ) / ((2 * (j + (c - 1)) + 1 : ℕ) : ℝ) ^ i)
+    have hbase : ((j : ℝ) + (c : ℝ) - 1 / 2) = ((2 * (j + (c - 1)) + 1 : ℕ) : ℝ) / 2 := by
+      have hnat : (2 * (j + (c - 1)) + 1 : ℕ) = 2 * j + 2 * c - 1 := by omega
+      rw [hnat, Nat.cast_sub (by omega : 1 ≤ 2 * j + 2 * c)]; push_cast; ring
+    rw [hbase, div_pow, one_div_div, mul_one_div]
+  rw [hrw]
+  have hsplit := hg.sum_add_tsum_nat_add (c - 1)
+  have key : (2 : ℝ) ^ i * (∑' j : ℕ, (1 : ℝ) / ((2 * (j + (c - 1)) + 1 : ℕ) : ℝ) ^ i)
+      = (2 : ℝ) ^ i * ((∑' r : ℕ, (1 : ℝ) / ((2 * r + 1 : ℕ) : ℝ) ^ i)
+          - ∑ r ∈ Finset.range (c - 1), (1 : ℝ) / ((2 * r + 1 : ℕ) : ℝ) ^ i) := by
+    congr 1
+    have hbeta : (∑' j : ℕ, (1 : ℝ) / ((2 * (j + (c - 1)) + 1 : ℕ) : ℝ) ^ i)
+        = ∑' j : ℕ, (fun r : ℕ => (1 : ℝ) / ((2 * r + 1 : ℕ) : ℝ) ^ i) (j + (c - 1)) := by
+      apply tsum_congr; intro j; rfl
+    rw [hbeta]; linarith [hsplit]
+  rw [key, mul_sub, tsum_odd_eq i hi]
+
+/-- **Negative-base half-integer tail** (paper e08, `k ≤ m` columns): for `i ≥ 2`, `p : ℕ`,
+`Σ'_j 1/(j−p−½)^i = (2^i−1)ζ(i) + (−1)^i·2^i·Σ_{ℓ<p+1} 1/(2ℓ+1)^i`.  The finite head, from the
+`p+1` negative-denominator terms, has odd denominators `≤ 2p+1`, cleared by `d_n`. -/
+private lemma tail_val_neg (p i : ℕ) (hi : 2 ≤ i) :
+    ∑' j : ℕ, (1 : ℝ) / ((j : ℝ) - (p : ℝ) - 1 / 2) ^ i
+      = ((2 : ℝ) ^ i - 1) * zetaVal i
+        + (-1) ^ i * (2 : ℝ) ^ i
+            * ∑ ℓ ∈ Finset.range (p + 1), (1 : ℝ) / ((2 * ℓ + 1 : ℕ) : ℝ) ^ i := by
+  have hfsum := summable_half_neg p i hi
+  have hsplit := hfsum.sum_add_tsum_nat_add (p + 1)
+  -- The infinite tail (`j ≥ p+1`) reindexes to the odd ζ-sum.
+  have htailval : (∑' r : ℕ, (1 : ℝ) / (((r + (p + 1) : ℕ) : ℝ) - (p : ℝ) - 1 / 2) ^ i)
+      = ((2 : ℝ) ^ i - 1) * zetaVal i := by
+    have hcong : ∀ r : ℕ, (1 : ℝ) / (((r + (p + 1) : ℕ) : ℝ) - (p : ℝ) - 1 / 2) ^ i
+        = (2 : ℝ) ^ i * ((1 : ℝ) / ((2 * r + 1 : ℕ) : ℝ) ^ i) := by
+      intro r
+      have hbase : (((r + (p + 1) : ℕ) : ℝ) - (p : ℝ) - 1 / 2) = ((2 * r + 1 : ℕ) : ℝ) / 2 := by
+        push_cast; ring
+      rw [hbase, div_pow, one_div_div, mul_one_div]
+    rw [tsum_congr hcong, tsum_mul_left, tsum_odd_eq i hi]
+  -- The finite head (`j = 0,…,p`) reflects to the `(−1)^i 2^i` odd head.
+  have hheadval : (∑ j ∈ Finset.range (p + 1), (1 : ℝ) / ((j : ℝ) - (p : ℝ) - 1 / 2) ^ i)
+      = (-1) ^ i * (2 : ℝ) ^ i
+          * ∑ ℓ ∈ Finset.range (p + 1), (1 : ℝ) / ((2 * ℓ + 1 : ℕ) : ℝ) ^ i := by
+    rw [Finset.mul_sum,
+      ← Finset.sum_range_reflect (fun j => (1 : ℝ) / ((j : ℝ) - (p : ℝ) - 1 / 2) ^ i) (p + 1)]
+    apply Finset.sum_congr rfl
+    intro j hj
+    rw [Finset.mem_range] at hj
+    show (1 : ℝ) / (((p + 1 - 1 - j : ℕ) : ℝ) - (p : ℝ) - 1 / 2) ^ i
+        = (-1) ^ i * (2 : ℝ) ^ i * (1 / ((2 * j + 1 : ℕ) : ℝ) ^ i)
+    have hbase : (((p + 1 - 1 - j : ℕ) : ℝ) - (p : ℝ) - 1 / 2) = -(((2 * j + 1 : ℕ) : ℝ) / 2) := by
+      rw [show (p + 1 - 1 - j : ℕ) = p - j from by omega, Nat.cast_sub (by omega : j ≤ p)]
+      push_cast; ring
+    rw [hbase]
+    rcases Nat.even_or_odd i with hev | hodd
+    · rw [hev.neg_one_pow, hev.neg_pow, div_pow, one_div_div]; ring
+    · rw [hodd.neg_one_pow, hodd.neg_pow, div_neg, div_pow, one_div_div]; ring
+  calc ∑' j : ℕ, (1 : ℝ) / ((j : ℝ) - (p : ℝ) - 1 / 2) ^ i
+      = (∑ j ∈ Finset.range (p + 1), (1 : ℝ) / ((j : ℝ) - (p : ℝ) - 1 / 2) ^ i)
+        + (∑' r : ℕ, (1 : ℝ) / (((r + (p + 1) : ℕ) : ℝ) - (p : ℝ) - 1 / 2) ^ i) := hsplit.symm
+    _ = ((2 : ℝ) ^ i - 1) * zetaVal i
+        + (-1) ^ i * (2 : ℝ) ^ i
+            * ∑ ℓ ∈ Finset.range (p + 1), (1 : ℝ) / ((2 * ℓ + 1 : ℕ) : ℝ) ^ i := by
+        rw [hheadval, htailval]; ring
+
 /-! ### Lemma 3: the ζ-representations of `r_n` and `r̂_n` (paper e07, e08)
 
 Multiplying the paper's e07/e08 through by `d_n^{33}` and using

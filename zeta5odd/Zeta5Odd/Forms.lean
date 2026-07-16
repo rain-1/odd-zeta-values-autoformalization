@@ -28,13 +28,17 @@ STATUS (this pass):
       (paper tex 165–176); only decomposition/integrality remain as `pf_decomp`.
   * `Rn`, `repr_combined` — the `r_n` (e07) representation is PROVED (Lemma 3 assembly:
       reindexing, `S 1 = 0` via harmonic divergence, even-column vanishing, tail-to-ζ,
-      interchange, integer constant).  The `r̂_n` (e08) representation is factored into
-      `repr_rhat_e08`, whose analytic ingredients are all PROVED sorry-free — the summation
-      shift `rhat = Σ'_j R_n(j−m−½)` (`rhat_shift`), the shifted half-integer tail evaluations
+      interchange, integer constant).  The `r̂_n` (e08) representation `repr_rhat_e08` is now
+      also PROVED sorry-free.  Its analytic ingredients are the summation shift
+      `rhat = Σ'_j R_n(j−m−½)` (`rhat_shift`), the shifted half-integer tail evaluations
       `tail_val_pos`/`tail_val_neg` (each `= (2^i−1)ζ(i) + small head`), the odd ζ-sum
-      `tsum_odd_eq`, and the half-integer head integrality `odd_harmonic_integrality`.  Only the
-      final assembly of `repr_rhat_e08` remains `sorry` (the interchange/collection plus the
-      `i=1` negative-base telescoping; see the residual note there).
+      `tsum_odd_eq`, and the head integralities `odd_harmonic_integrality` (`i ≥ 2`) and
+      `signed_harmonic_integrality` (`i = 1`).  The final assembly mirrors the e07 half:
+      it decomposes each `R_n(j−m−½)` via `hdec`, interchanges `Σ'_j` with the finite `i,k`
+      sums, splits `k ≤ m` / `k ≥ m+1`, collects the `(2^i−1)ζ(i)` coefficients onto `oddIdx3`
+      (even columns drop by `column_even_zero`, `i=1` by `column1_sum_zero`), and evaluates the
+      `i=1` block by the negative-base telescoping `tsum_neg_harmonic`; the `n = 0` base case is
+      handled directly.  All finite heads times `d^33` are integers, collected into `Bhat0`.
 -/
 import Mathlib
 import Zeta5Odd.Basic
@@ -1117,6 +1121,244 @@ theorem rhat_shift (n : ℕ) (hn1 : 1 ≤ n) :
   rw [hhead, zero_add] at key
   rw [← key]; exact htail
 
+/-! ### Extra helpers for the `r̂_n` (e08) assembly -/
+
+/-- **General telescoping value**: for a sequence `w → 0` whose consecutive differences are
+summable, `Σ'_M (w (M+1) − w M) = −w 0`.  (No sign/antitone hypothesis, unlike
+`tsum_telescope_nonneg`.) -/
+private lemma tsum_telescope_value (w : ℕ → ℝ)
+    (hsum : Summable (fun M : ℕ => w (M + 1) - w M))
+    (hlim : Filter.Tendsto w Filter.atTop (nhds 0)) :
+    ∑' M : ℕ, (w (M + 1) - w M) = - w 0 := by
+  have h1 := hsum.hasSum.tendsto_sum_nat
+  have hpart : ∀ N : ℕ, ∑ M ∈ Finset.range N, (w (M + 1) - w M) = w N - w 0 :=
+    fun N => Finset.sum_range_sub w N
+  have h2 : Filter.Tendsto (fun N : ℕ => ∑ M ∈ Finset.range N, (w (M + 1) - w M))
+      Filter.atTop (nhds (0 - w 0)) := by
+    simp_rw [hpart]; exact hlim.sub_const (w 0)
+  have huniq := tendsto_nhds_unique h1 h2
+  rw [huniq]; ring
+
+/-- Summability of the negative-base telescoping column
+`1/(M + (ℓ−m−½) + 1) − 1/(M + (ℓ−m−½))` (shift by `m+1` to a positive base). -/
+private lemma summable_neg_telescope (m ℓ : ℕ) :
+    Summable (fun M : ℕ =>
+      (1 : ℝ) / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2) + 1)
+        - 1 / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2))) := by
+  obtain ⟨hanti, htend⟩ := antitone_tendsto_one_div ((ℓ : ℝ) + 1 / 2) (by positivity)
+  obtain ⟨hs, _⟩ := tsum_telescope_nonneg (fun M => (1 : ℝ) / ((M : ℝ) + ((ℓ : ℝ) + 1 / 2)))
+    hanti htend
+  have hshift : Summable (fun M : ℕ =>
+      (fun j : ℕ => (1 : ℝ) / ((j : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2) + 1)
+        - 1 / ((j : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2))) (M + (m + 1))) := by
+    refine (hs.neg).congr (fun M => ?_)
+    push_cast; ring
+  exact (summable_nat_add_iff (m + 1)).1 hshift
+
+/-- **Negative-base harmonic telescoping** (paper e08, `i = 1` column): the divergent tails
+cancel to a finite signed-half-integer harmonic number. -/
+private lemma tsum_neg_harmonic (m k : ℕ) :
+    ∑' M : ℕ, ((1 : ℝ) / ((M : ℝ) - (m : ℝ) - 1 / 2 + (k : ℝ)) - 1 / ((M : ℝ) - (m : ℝ) - 1 / 2))
+      = -∑ ℓ ∈ Finset.range k, (1 : ℝ) / ((ℓ : ℝ) - (m : ℝ) - 1 / 2) := by
+  -- Per-column summability and value `−1/(ℓ−m−½)`.
+  have hej : ∀ ℓ : ℕ,
+      Summable (fun M : ℕ => (1 : ℝ) / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2) + 1)
+          - 1 / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2)))
+      ∧ (∑' M : ℕ, ((1 : ℝ) / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2) + 1)
+          - 1 / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2))))
+          = -((1 : ℝ) / ((ℓ : ℝ) - (m : ℝ) - 1 / 2)) := by
+    intro ℓ
+    refine ⟨summable_neg_telescope m ℓ, ?_⟩
+    set w : ℕ → ℝ := fun M => (1 : ℝ) / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2)) with hw
+    have hCw : ∀ M : ℕ,
+        (1 : ℝ) / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2) + 1)
+            - 1 / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2)) = w (M + 1) - w M := by
+      intro M; simp only [hw]; push_cast; ring
+    have hlim : Filter.Tendsto w Filter.atTop (nhds 0) := by
+      have hd : Filter.Tendsto (fun M : ℕ => (M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2))
+          Filter.atTop Filter.atTop :=
+        Filter.tendsto_atTop_add_const_right _ _ tendsto_natCast_atTop_atTop
+      have h0 : Filter.Tendsto (fun M : ℕ => ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2))⁻¹)
+          Filter.atTop (nhds 0) := tendsto_inv_atTop_zero.comp hd
+      simpa only [hw, one_div] using h0
+    have hsw : Summable (fun M => w (M + 1) - w M) := (summable_neg_telescope m ℓ).congr hCw
+    rw [tsum_congr hCw, tsum_telescope_value w hsw hlim]
+    simp only [hw, Nat.cast_zero, zero_add]
+  -- Finite telescoping identity over `ℓ ∈ range k`.
+  have hpt : ∀ M : ℕ,
+      (1 : ℝ) / ((M : ℝ) - (m : ℝ) - 1 / 2 + (k : ℝ)) - 1 / ((M : ℝ) - (m : ℝ) - 1 / 2)
+        = ∑ ℓ ∈ Finset.range k,
+            ((1 : ℝ) / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2) + 1)
+              - 1 / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2))) := by
+    intro M
+    have hstep : ∀ K : ℕ,
+        (∑ ℓ ∈ Finset.range K,
+          ((1 : ℝ) / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2) + 1)
+            - 1 / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2))))
+          = (1 : ℝ) / ((M : ℝ) + ((K : ℝ) - (m : ℝ) - 1 / 2)) - 1 / ((M : ℝ) - (m : ℝ) - 1 / 2) := by
+      intro K
+      induction K with
+      | zero => simp only [Finset.sum_range_zero, Nat.cast_zero]; ring
+      | succ K ih => rw [Finset.sum_range_succ, ih]; push_cast; ring
+    rw [hstep k]; push_cast; ring
+  rw [tsum_congr hpt, Summable.tsum_finsetSum (fun ℓ _ => (hej ℓ).1),
+    Finset.sum_congr rfl (fun ℓ _ => (hej ℓ).2), Finset.sum_neg_distrib]
+
+/-- Summability of the `i = 1` negative-base harmonic difference `1/(M−m−½+k) − 1/(M−m−½)`. -/
+private lemma summable_neg_harmonic_diff (m k : ℕ) :
+    Summable (fun M : ℕ =>
+      (1 : ℝ) / ((M : ℝ) - (m : ℝ) - 1 / 2 + (k : ℝ)) - 1 / ((M : ℝ) - (m : ℝ) - 1 / 2)) := by
+  have hpt : (fun M : ℕ =>
+        (1 : ℝ) / ((M : ℝ) - (m : ℝ) - 1 / 2 + (k : ℝ)) - 1 / ((M : ℝ) - (m : ℝ) - 1 / 2))
+      = (fun M : ℕ => ∑ ℓ ∈ Finset.range k,
+          ((1 : ℝ) / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2) + 1)
+            - 1 / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2)))) := by
+    funext M
+    have hstep : ∀ K : ℕ,
+        (∑ ℓ ∈ Finset.range K,
+          ((1 : ℝ) / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2) + 1)
+            - 1 / ((M : ℝ) + ((ℓ : ℝ) - (m : ℝ) - 1 / 2))))
+          = (1 : ℝ) / ((M : ℝ) + ((K : ℝ) - (m : ℝ) - 1 / 2)) - 1 / ((M : ℝ) - (m : ℝ) - 1 / 2) := by
+      intro K
+      induction K with
+      | zero => simp only [Finset.sum_range_zero, Nat.cast_zero]; ring
+      | succ K ih => rw [Finset.sum_range_succ, ih]; push_cast; ring
+    rw [hstep k]; push_cast; ring
+  rw [hpt]
+  exact summable_finset_sum (Finset.range k) _ (fun ℓ _ => summable_neg_telescope m ℓ)
+
+/-- Summability of the shifted half-integer power series `1/(j−m−½+k)^i` (`i ≥ 2`), for either
+sign of `k−m`. -/
+private lemma summable_half_shift (m k i : ℕ) (hi : 2 ≤ i) :
+    Summable (fun j : ℕ => (1 : ℝ) / ((j : ℝ) - (m : ℝ) - 1 / 2 + (k : ℝ)) ^ i) := by
+  by_cases hkm : k ≤ m
+  · refine (summable_half_neg (m - k) i hi).congr (fun j => ?_)
+    have hb : (j : ℝ) - ((m - k : ℕ) : ℝ) - 1 / 2 = (j : ℝ) - (m : ℝ) - 1 / 2 + (k : ℝ) := by
+      rw [Nat.cast_sub hkm]; ring
+    rw [hb]
+  · refine (summable_half_pos (k - m) i (by omega) hi).congr (fun j => ?_)
+    have hb : (j : ℝ) + ((k - m : ℕ) : ℝ) - 1 / 2 = (j : ℝ) - (m : ℝ) - 1 / 2 + (k : ℝ) := by
+      rw [Nat.cast_sub (le_of_lt (not_le.mp hkm))]; ring
+    rw [hb]
+
+/-- **Signed-denominator harmonic integrality** (paper e08, `i = 1` head): the finite head
+`Σ_{ℓ<k} 1/(ℓ−m−½)` has denominators `|2ℓ−2m−1| ≤ n` (since `m = ⌊(n−1)/2⌋`), so `d_n` clears
+it: `d_n · Σ_{ℓ<k} 1/(ℓ−m−½) ∈ ℤ`. -/
+private lemma signed_harmonic_integrality (n m k : ℕ) (hn : 1 ≤ n) (hm : m = (n - 1) / 2)
+    (hk : k ≤ n) :
+    ∃ z : ℤ, (Nat.lcmUpto n : ℝ)
+        * (∑ ℓ ∈ Finset.range k, (1 : ℝ) / ((ℓ : ℝ) - (m : ℝ) - 1 / 2)) = z := by
+  refine ⟨∑ ℓ ∈ Finset.range k,
+      (if m < ℓ then ((2 * (Nat.lcmUpto n / (2 * ℓ - 2 * m - 1)) : ℕ) : ℤ)
+       else -((2 * (Nat.lcmUpto n / (2 * m + 1 - 2 * ℓ)) : ℕ) : ℤ)), ?_⟩
+  rw [Finset.mul_sum, Int.cast_sum]
+  apply Finset.sum_congr rfl
+  intro ℓ hℓ
+  rw [Finset.mem_range] at hℓ
+  by_cases hcase : m < ℓ
+  · rw [if_pos hcase]
+    set w : ℕ := 2 * ℓ - 2 * m - 1 with hwdef
+    have hw1 : 1 ≤ w := by omega
+    have hwn : w ≤ n := by omega
+    have hdvd : w ∣ Nat.lcmUpto n := dvd_lcmUpto hw1 hwn
+    have hwne : (w : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+    have hwval : w + (2 * m + 1) = 2 * ℓ := by omega
+    have hwcast : (w : ℝ) = 2 * (ℓ : ℝ) - 2 * (m : ℝ) - 1 := by
+      have := congrArg (Nat.cast : ℕ → ℝ) hwval; push_cast at this; linarith
+    have hbase : (ℓ : ℝ) - (m : ℝ) - 1 / 2 = (w : ℝ) / 2 := by rw [hwcast]; ring
+    rw [hbase, Int.cast_natCast, Nat.cast_mul, Nat.cast_ofNat, Nat.cast_div hdvd hwne]
+    field_simp
+  · rw [if_neg hcase]
+    set w : ℕ := 2 * m + 1 - 2 * ℓ with hwdef
+    have hw1 : 1 ≤ w := by omega
+    have hwn : w ≤ n := by omega
+    have hdvd : w ∣ Nat.lcmUpto n := dvd_lcmUpto hw1 hwn
+    have hwne : (w : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+    have hwval : w + 2 * ℓ = 2 * m + 1 := by omega
+    have hwcast : (w : ℝ) = 2 * (m : ℝ) + 1 - 2 * (ℓ : ℝ) := by
+      have := congrArg (Nat.cast : ℕ → ℝ) hwval; push_cast at this; linarith
+    have hbase : (ℓ : ℝ) - (m : ℝ) - 1 / 2 = -((w : ℝ) / 2) := by rw [hwcast]; ring
+    rw [hbase, Int.cast_neg, Int.cast_natCast, Nat.cast_mul, Nat.cast_ofNat,
+      Nat.cast_div hdvd hwne]
+    field_simp
+
+/-- **`Σ_k a_{1,k} = 0`** (paper e07/e08, `i = 1` column): from the decomposition alone, the
+`i = 1` column total vanishes (otherwise `Σ 1/(m+1)` would be summable).  Extracted from the
+`r_n` half so it can be reused in the `r̂_n` assembly. -/
+private lemma column1_sum_zero (n : ℕ) (a : ℕ → ℕ → ℝ)
+    (hdec : ∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
+        Rn 17 n t = ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1),
+            a i k / (t + (k : ℝ)) ^ i) :
+    ∑ k ∈ Finset.range (n + 1), a 1 k = 0 := by
+  have hpole : ∀ m : ℕ, ∀ k ∈ Finset.range (n + 1), ((m : ℝ) + 1) + (k : ℝ) ≠ 0 :=
+    fun m k _ => by positivity
+  have hRn_dec : ∀ m : ℕ, Rn 17 n ((m : ℝ) + 1)
+      = ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1),
+          a i k / (((m : ℝ) + 1) + (k : ℝ)) ^ i :=
+    fun m => hdec ((m : ℝ) + 1) (hpole m)
+  have hRnsum : Summable (fun m : ℕ => Rn 17 n ((m : ℝ) + 1)) := by
+    apply (summable_nat_add_iff n).1
+    refine (summable_c 17 n (by norm_num)).congr (fun m => ?_)
+    rw [← Rn_eq_c 17 n m (by norm_num)]; congr 1; push_cast; ring
+  have hcol2_sum : ∀ i, 2 ≤ i → ∀ k : ℕ,
+      Summable (fun m : ℕ => a i k / ((m : ℝ) + 1 + (k : ℝ)) ^ i) := by
+    intro i hi k
+    refine ((summable_shift_pow (k + 1) i (by omega) hi).mul_left (a i k)).congr (fun m => ?_)
+    rw [mul_one_div, show ((m : ℝ) + ((k + 1 : ℕ) : ℝ)) = (m : ℝ) + 1 + (k : ℝ) from by
+      push_cast; ring]
+  have hcol1_sum : ∀ k : ℕ,
+      Summable (fun m : ℕ => a 1 k * (1 / ((m : ℝ) + 1 + (k : ℝ)) - 1 / ((m : ℝ) + 1))) :=
+    fun k => (summable_harmonic_diff k).mul_left (a 1 k)
+  have hQsum : Summable (fun m : ℕ =>
+      ∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1),
+        a i k / ((m : ℝ) + 1 + (k : ℝ)) ^ i) := by
+    apply summable_finset_sum; intro i hi; apply summable_finset_sum; intro k _
+    exact hcol2_sum i (Finset.mem_Icc.mp hi).1 k
+  have hRn_split : ∀ m : ℕ, Rn 17 n ((m : ℝ) + 1)
+      = (∑ k ∈ Finset.range (n + 1), a 1 k / ((m : ℝ) + 1 + (k : ℝ)))
+        + (∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1),
+            a i k / ((m : ℝ) + 1 + (k : ℝ)) ^ i) := by
+    intro m
+    rw [hRn_dec m, show Finset.Icc 1 33 = insert 1 (Finset.Icc 2 33) from by
+      ext x; simp only [Finset.mem_insert, Finset.mem_Icc]; omega,
+      Finset.sum_insert (by simp)]
+    congr 1
+    apply Finset.sum_congr rfl
+    intro k _; rw [pow_one]
+  have hPsum : Summable (fun m : ℕ =>
+      ∑ k ∈ Finset.range (n + 1), a 1 k / ((m : ℝ) + 1 + (k : ℝ))) := by
+    refine (hRnsum.sub hQsum).congr (fun m => ?_)
+    rw [hRn_split m]; ring
+  have hcorrsum : Summable (fun m : ℕ =>
+      ∑ k ∈ Finset.range (n + 1),
+        a 1 k * (1 / ((m : ℝ) + 1 + (k : ℝ)) - 1 / ((m : ℝ) + 1))) :=
+    summable_finset_sum _ _ (fun k _ => hcol1_sum k)
+  have hSsum : Summable (fun m : ℕ =>
+      (∑ k ∈ Finset.range (n + 1), a 1 k) * (1 / ((m : ℝ) + 1))) := by
+    refine (hPsum.sub hcorrsum).congr (fun m => ?_)
+    rw [Finset.sum_mul, ← Finset.sum_sub_distrib]
+    apply Finset.sum_congr rfl; intro k _; ring
+  by_contra hne
+  have hdiv : Summable (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1)) := by
+    refine (hSsum.mul_left (∑ k ∈ Finset.range (n + 1), a 1 k)⁻¹).congr (fun m => ?_)
+    field_simp
+  have hnot : ¬ Summable (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1)) := by
+    intro hc
+    apply Real.not_summable_one_div_natCast
+    refine ((summable_nat_add_iff (f := fun m : ℕ => (1 : ℝ) / (m : ℝ)) 1).1 ?_)
+    refine hc.congr (fun m => ?_)
+    push_cast; ring
+  exact hnot hdiv
+
+/-- The finite half-integer head attached to column `(i,k)` in the e08 tail evaluation:
+`−2^i Σ_{ℓ<k−m−1} 1/(2ℓ+1)^i` when `k > m` (positive base, `tail_val_pos`), and
+`(−1)^i 2^i Σ_{ℓ<m−k+1} 1/(2ℓ+1)^i` when `k ≤ m` (negative base, `tail_val_neg`). -/
+private noncomputable def e08Head (m i k : ℕ) : ℝ :=
+  if m < k then
+    -((2 : ℝ) ^ i * ∑ ℓ ∈ Finset.range (k - m - 1), (1 : ℝ) / ((2 * ℓ + 1 : ℕ) : ℝ) ^ i)
+  else
+    (-1) ^ i * (2 : ℝ) ^ i * ∑ ℓ ∈ Finset.range (m - k + 1), (1 : ℝ) / ((2 * ℓ + 1 : ℕ) : ℝ) ^ i
+
 /-- **The `r̂_n` (e08) ζ-representation** (paper tex 220–239).  Given the partial-fraction data
 for `R_n` (decomposition `hdec`, Lemma-1 integrality `hint`, Lemma-2 symmetry `hsym`) and the
 column totals `S i = Σ_k a_{i,k}`, there is an integer constant `Bhat0` with
@@ -1139,23 +1381,260 @@ theorem repr_rhat_e08 (n : ℕ) (a : ℕ → ℕ → ℝ)
       (Nat.lcmUpto n : ℝ) ^ 33 * rhat 17 n
         = (∑ i ∈ oddIdx3, (Nat.lcmUpto n : ℝ) ^ 33 * S i * ((2 : ℝ) ^ i - 1) * zetaVal i)
             + (Bhat0 : ℝ) := by
-  -- RESIDUAL (the final e08 assembly).  All the analytic ingredients are proved sorry-free:
-  --   * summation shift  `rhat 17 n = Σ'_j Rn 17 n (j−m−½)`         — `rhat_shift` (n ≥ 1);
-  --   * column tails     `Σ'_j 1/(j−m−½+k)^i = (2^i−1)ζ(i) + head`  — `tail_val_pos`/`neg`;
-  --   * odd ζ-sum        `2^i Σ' 1/(2r+1)^i = (2^i−1)ζ(i)`          — `tsum_odd_eq`;
-  --   * head integrality `d^i·2^i·Σ 1/(2ℓ+1)^i ∈ ℤ`                 — `odd_harmonic_integrality`;
-  --   * even/`i=1` drop   `Σ_k a_{i,k}=0`                            — `column_even_zero`, `S 1 = 0`.
-  -- What remains is to (1) decompose each `Rn 17 n (j−m−½)` via `hdec` (poles avoided: the
-  -- arguments are nonzero half-integers), interchange the `Σ'_j` with the finite `i,k` sums
-  -- (each column summable via `summable_half_pos`/`summable_half_neg`), split `k ≤ m` vs
-  -- `k ≥ m+1`, and collect the `(2^i−1)ζ(i)` coefficients into `Σ_{oddIdx3}` (even columns and
-  -- `i=1` vanish); and (2) handle the `i=1` block: since `S 1 = 0` its divergent part cancels,
-  -- leaving `−Σ_k a_{1,k} Σ_{ℓ<k} 1/(ℓ−m−½)` — this needs a negative-base telescoping value
-  -- lemma (analogue of `tsum_harmonic`) and a signed-denominator integrality lemma
-  -- (`|2ℓ−2m−1| ≤ n` cleared by `d_n`), neither of which is yet formalized.  Every finite head
-  -- times `d^{33}` is an integer, so they are absorbed into `Bhat0`.  This mirrors the fully
-  -- proved e07 (`r_n`) assembly in `repr_combined`, adapted to the shifted half-integer nodes.
-  sorry
+  classical
+  subst hSdef
+  set d : ℝ := (Nat.lcmUpto n : ℝ) with hd_def
+  have hS1 : (∑ k ∈ Finset.range (n + 1), a 1 k) = 0 := column1_sum_zero n a hdec
+  -- The ζ-part collapses from `Icc 2 33` to `oddIdx3` (even columns vanish).
+  have hoddsub : oddIdx3 ⊆ Finset.Icc 2 33 := by
+    intro i hi
+    rw [oddIdx3, Finset.mem_filter, Finset.mem_Icc] at hi
+    rw [Finset.mem_Icc]; omega
+  have hSeven : ∀ i ∈ Finset.Icc 2 33, i ∉ oddIdx3 →
+      (∑ k ∈ Finset.range (n + 1), a i k) = 0 := by
+    intro i hi hni
+    have hi' : i ∈ Finset.Icc 1 33 := by rw [Finset.mem_Icc] at hi ⊢; omega
+    have hev : Even i := by
+      rcases Nat.even_or_odd i with he | ho
+      · exact he
+      · exfalso; apply hni
+        rw [oddIdx3, Finset.mem_filter, Finset.mem_Icc]
+        rw [Finset.mem_Icc] at hi
+        refine ⟨⟨?_, hi.2⟩, ho⟩
+        rcases ho with ⟨t, ht⟩; omega
+    exact column_even_zero n i a hsym hi' hev
+  suffices hmain : ∃ Bhat0 : ℤ,
+      d ^ 33 * rhat 17 n
+        = (∑ i ∈ Finset.Icc 2 33,
+            d ^ 33 * (∑ k ∈ Finset.range (n + 1), a i k) * ((2 : ℝ) ^ i - 1) * zetaVal i)
+          + (Bhat0 : ℝ) by
+    obtain ⟨B, hB⟩ := hmain
+    refine ⟨B, ?_⟩
+    have hcollapse : (∑ i ∈ oddIdx3,
+          d ^ 33 * (∑ k ∈ Finset.range (n + 1), a i k) * ((2 : ℝ) ^ i - 1) * zetaVal i)
+        = ∑ i ∈ Finset.Icc 2 33,
+            d ^ 33 * (∑ k ∈ Finset.range (n + 1), a i k) * ((2 : ℝ) ^ i - 1) * zetaVal i :=
+      Finset.sum_subset hoddsub (fun i hi hni => by rw [hSeven i hi hni]; ring)
+    rw [hB, hcollapse]
+  rcases Nat.eq_zero_or_pos n with hn0 | hn1
+  · -- `n = 0`: only the `k = 0` column, all heads empty, `Bhat0 = 0`.
+    subst hn0
+    refine ⟨0, ?_⟩
+    rw [Int.cast_zero, add_zero]
+    have ha10 : a 1 0 = 0 := by have h := hS1; rwa [Finset.sum_range_one] at h
+    have hdec0 : ∀ k : ℕ, Rn 17 0 ((0 : ℝ) + 1 / 2 + (k : ℝ))
+        = ∑ i ∈ Finset.Icc 2 33, a i 0 / ((0 : ℝ) + 1 / 2 + (k : ℝ)) ^ i := by
+      intro k
+      have hpole0 : ∀ k' ∈ Finset.range (0 + 1), ((0 : ℝ) + 1 / 2 + (k : ℝ)) + (k' : ℝ) ≠ 0 := by
+        intro k' _; positivity
+      rw [hdec _ hpole0, show (0 : ℕ) + 1 = 1 from rfl]
+      simp only [Finset.sum_range_one, Nat.cast_zero, add_zero]
+      rw [show Finset.Icc 1 33 = insert 1 (Finset.Icc 2 33) from by
+        ext x; simp only [Finset.mem_insert, Finset.mem_Icc]; omega, Finset.sum_insert (by simp),
+        pow_one, ha10, zero_div, zero_add]
+    have hchat : ∀ k : ℕ, chat 17 0 k = Rn 17 0 ((0 : ℝ) + 1 / 2 + (k : ℝ)) := by
+      intro k
+      rw [← Rn_eq_chat 17 0 k (by norm_num)]; congr 1; norm_num
+    have hcolsum0 : ∀ i, 2 ≤ i → Summable (fun k : ℕ => a i 0 / ((0 : ℝ) + 1 / 2 + (k : ℝ)) ^ i) := by
+      intro i hi
+      refine ((summable_half_pos 1 i (by norm_num) hi).mul_left (a i 0)).congr (fun k => ?_)
+      have hb : (k : ℝ) + ((1 : ℕ) : ℝ) - 1 / 2 = (0 : ℝ) + 1 / 2 + (k : ℝ) := by push_cast; ring
+      rw [mul_one_div, hb]
+    have hrhat0 : rhat 17 0 = ∑ i ∈ Finset.Icc 2 33, a i 0 * ((2 : ℝ) ^ i - 1) * zetaVal i := by
+      simp only [rhat]
+      rw [tsum_congr hchat, tsum_congr hdec0,
+        Summable.tsum_finsetSum (fun i hi => hcolsum0 i (Finset.mem_Icc.mp hi).1)]
+      apply Finset.sum_congr rfl
+      intro i hi
+      have hi2 := (Finset.mem_Icc.mp hi).1
+      rw [show (fun k : ℕ => a i 0 / ((0 : ℝ) + 1 / 2 + (k : ℝ)) ^ i)
+            = (fun k : ℕ => a i 0 * (1 / ((0 : ℝ) + 1 / 2 + (k : ℝ)) ^ i)) from
+          funext (fun k => (mul_one_div _ _).symm), tsum_mul_left,
+        show (∑' k : ℕ, (1 : ℝ) / ((0 : ℝ) + 1 / 2 + (k : ℝ)) ^ i)
+            = ∑' k : ℕ, (1 : ℝ) / ((k : ℝ) + ((1 : ℕ) : ℝ) - 1 / 2) ^ i from
+          tsum_congr (fun k => by rw [show (0 : ℝ) + 1 / 2 + (k : ℝ) = (k : ℝ) + ((1 : ℕ) : ℝ) - 1 / 2
+            from by push_cast; ring]),
+        tail_val_pos 1 i (by norm_num) hi2]
+      simp only [Nat.sub_self, Finset.range_zero, Finset.sum_empty, mul_zero, sub_zero]
+      ring
+    rw [hrhat0, Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro i _
+    rw [Finset.sum_range_one]; ring
+  · -- `n ≥ 1`: the shifted half-integer assembly.
+    set m : ℕ := (n - 1) / 2 with hm
+    have hshift : ∑' j : ℕ, Rn 17 n ((j : ℝ) - (m : ℝ) - 1 / 2) = rhat 17 n := by
+      have h := rhat_shift n hn1
+      rwa [← hm] at h
+    have hpole : ∀ j : ℕ, ∀ k ∈ Finset.range (n + 1),
+        ((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ) ≠ 0 := by
+      intro j k _ h
+      have h2 : (2 * (j + k) : ℕ) = (2 * m + 1 : ℕ) := by
+        have hcast : ((2 * (j + k) : ℕ) : ℝ) = ((2 * m + 1 : ℕ) : ℝ) := by
+          push_cast; push_cast at h; linarith
+        exact_mod_cast hcast
+      omega
+    have hdecj : ∀ j : ℕ, Rn 17 n ((j : ℝ) - (m : ℝ) - 1 / 2)
+        = ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1),
+            a i k / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) ^ i :=
+      fun j => hdec _ (hpole j)
+    -- `i = 1` telescoped by `S 1 = 0`.
+    have hGj : ∀ j : ℕ, Rn 17 n ((j : ℝ) - (m : ℝ) - 1 / 2)
+        = (∑ k ∈ Finset.range (n + 1),
+              a 1 k * (1 / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) - 1 / ((j : ℝ) - (m : ℝ) - 1 / 2)))
+          + (∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1),
+              a i k / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) ^ i) := by
+      intro j
+      rw [hdecj j, show Finset.Icc 1 33 = insert 1 (Finset.Icc 2 33) from by
+        ext x; simp only [Finset.mem_insert, Finset.mem_Icc]; omega, Finset.sum_insert (by simp)]
+      congr 1
+      rw [Finset.sum_congr rfl (fun k _ => by
+        show a 1 k / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) ^ 1
+            = a 1 k * (1 / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) - 1 / ((j : ℝ) - (m : ℝ) - 1 / 2))
+              + a 1 k * (1 / ((j : ℝ) - (m : ℝ) - 1 / 2))
+        rw [pow_one]; ring)]
+      rw [Finset.sum_add_distrib, ← Finset.sum_mul, hS1, zero_mul, add_zero]
+    -- Column summabilities.
+    have hQcol_sum : ∀ i, 2 ≤ i → ∀ k : ℕ,
+        Summable (fun j : ℕ => a i k / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) ^ i) := by
+      intro i hi k
+      refine ((summable_half_shift m k i hi).mul_left (a i k)).congr (fun j => ?_)
+      rw [mul_one_div]
+    have hPcol_sum : ∀ k : ℕ,
+        Summable (fun j : ℕ =>
+          a 1 k * (1 / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) - 1 / ((j : ℝ) - (m : ℝ) - 1 / 2))) :=
+      fun k => (summable_neg_harmonic_diff m k).mul_left (a 1 k)
+    have hPsum_j : Summable (fun j : ℕ =>
+        ∑ k ∈ Finset.range (n + 1),
+          a 1 k * (1 / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) - 1 / ((j : ℝ) - (m : ℝ) - 1 / 2))) :=
+      summable_finset_sum _ _ (fun k _ => hPcol_sum k)
+    have hQsum_j : Summable (fun j : ℕ =>
+        ∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1),
+          a i k / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) ^ i) := by
+      apply summable_finset_sum; intro i hi; apply summable_finset_sum; intro k _
+      exact hQcol_sum i (Finset.mem_Icc.mp hi).1 k
+    -- Column tail values `Σ'_j 1/(j−m−½+k)^i = (2^i−1)ζ(i) + head`.
+    have hval_col : ∀ i, 2 ≤ i → ∀ k : ℕ,
+        (∑' j : ℕ, (1 : ℝ) / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) ^ i)
+          = ((2 : ℝ) ^ i - 1) * zetaVal i + e08Head m i k := by
+      intro i hi k
+      by_cases hkm : m < k
+      · rw [show (∑' j : ℕ, (1 : ℝ) / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) ^ i)
+              = ∑' j : ℕ, (1 : ℝ) / ((j : ℝ) + ((k - m : ℕ) : ℝ) - 1 / 2) ^ i from
+            tsum_congr (fun j => by
+              rw [show ((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ) = (j : ℝ) + ((k - m : ℕ) : ℝ) - 1 / 2
+                from by rw [Nat.cast_sub (le_of_lt hkm)]; ring]),
+          tail_val_pos (k - m) i (by omega) hi]
+        simp only [e08Head, if_pos hkm]
+        ring
+      · have hkm' : k ≤ m := not_lt.mp hkm
+        rw [show (∑' j : ℕ, (1 : ℝ) / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) ^ i)
+              = ∑' j : ℕ, (1 : ℝ) / ((j : ℝ) - ((m - k : ℕ) : ℝ) - 1 / 2) ^ i from
+            tsum_congr (fun j => by
+              rw [show ((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ) = (j : ℝ) - ((m - k : ℕ) : ℝ) - 1 / 2
+                from by rw [Nat.cast_sub hkm']; ring]),
+          tail_val_neg (m - k) i hi]
+        simp only [e08Head, if_neg hkm]
+    -- Value of `r̂_n`.
+    have hRV : rhat 17 n
+        = (∑ k ∈ Finset.range (n + 1),
+            a 1 k * (-∑ ℓ ∈ Finset.range k, (1 : ℝ) / ((ℓ : ℝ) - (m : ℝ) - 1 / 2)))
+          + (∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1),
+              a i k * (((2 : ℝ) ^ i - 1) * zetaVal i + e08Head m i k)) := by
+      rw [← hshift, tsum_congr hGj, hPsum_j.tsum_add hQsum_j]
+      congr 1
+      · rw [Summable.tsum_finsetSum (fun k _ => hPcol_sum k)]
+        apply Finset.sum_congr rfl; intro k _
+        rw [tsum_mul_left, tsum_neg_harmonic]
+      · rw [Summable.tsum_finsetSum (fun i hi =>
+          summable_finset_sum _ _ (fun k _ => hQcol_sum i (Finset.mem_Icc.mp hi).1 k))]
+        apply Finset.sum_congr rfl; intro i hi
+        rw [Summable.tsum_finsetSum (fun k _ => hQcol_sum i (Finset.mem_Icc.mp hi).1 k)]
+        apply Finset.sum_congr rfl; intro k _
+        rw [show (fun j : ℕ => a i k / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) ^ i)
+              = (fun j : ℕ => a i k * (1 / (((j : ℝ) - (m : ℝ) - 1 / 2) + (k : ℝ)) ^ i)) from
+            funext (fun j => (mul_one_div _ _).symm),
+          tsum_mul_left, hval_col i (Finset.mem_Icc.mp hi).1 k]
+    -- Integer certificates for the finite heads.
+    have hInt1 : ∀ k : ℕ, ∃ z : ℤ, k ∈ Finset.range (n + 1) →
+        (z : ℝ) = d ^ 33 * a 1 k
+            * (-∑ ℓ ∈ Finset.range k, (1 : ℝ) / ((ℓ : ℝ) - (m : ℝ) - 1 / 2)) := by
+      intro k
+      by_cases hk : k ∈ Finset.range (n + 1)
+      · obtain ⟨z1, hz1⟩ := hint 1 (Finset.mem_Icc.mpr (by omega)) k hk
+        obtain ⟨z2, hz2⟩ :=
+          signed_harmonic_integrality n m k hn1 hm (by rw [Finset.mem_range] at hk; omega)
+        rw [← hd_def] at hz2
+        refine ⟨-(z1 * z2), fun _ => ?_⟩
+        have hpow : d ^ 33 = d ^ (33 - 1) * d ^ 1 := by rw [← pow_add]
+        push_cast
+        rw [← hz1, ← hz2, hpow]; ring
+      · exact ⟨0, fun h => absurd h hk⟩
+    have hIntCol : ∀ i k : ℕ, ∃ z : ℤ, i ∈ Finset.Icc 2 33 → k ∈ Finset.range (n + 1) →
+        (z : ℝ) = d ^ 33 * a i k * e08Head m i k := by
+      intro i k
+      by_cases hi : i ∈ Finset.Icc 2 33
+      · by_cases hk : k ∈ Finset.range (n + 1)
+        · have hi1 : i ∈ Finset.Icc 1 33 := by rw [Finset.mem_Icc] at hi ⊢; omega
+          obtain ⟨z1, hz1⟩ := hint i hi1 k hk
+          have hpow : d ^ 33 = d ^ (33 - i) * d ^ i := by
+            rw [← pow_add]; congr 1; rw [Finset.mem_Icc] at hi; omega
+          by_cases hkm : m < k
+          · obtain ⟨z2, hz2⟩ :=
+              odd_harmonic_integrality n i (k - m - 1) (by rw [Finset.mem_range] at hk; omega)
+            rw [← hd_def] at hz2
+            refine ⟨-(z1 * z2), fun _ _ => ?_⟩
+            simp only [e08Head, if_pos hkm]
+            push_cast at hz2 ⊢
+            rw [← hz1, ← hz2, hpow]; ring
+          · have hkm' : k ≤ m := not_lt.mp hkm
+            obtain ⟨z2, hz2⟩ := odd_harmonic_integrality n i (m - k + 1) (by omega)
+            rw [← hd_def] at hz2
+            refine ⟨(-1) ^ i * (z1 * z2), fun _ _ => ?_⟩
+            simp only [e08Head, if_neg hkm]
+            push_cast at hz2 ⊢
+            rw [← hz1, ← hz2, hpow]; ring
+        · exact ⟨0, fun _ h => absurd h hk⟩
+      · exact ⟨0, fun h _ => absurd h hi⟩
+    choose z1f hz1f using hInt1
+    choose z2f hz2f using hIntCol
+    refine ⟨(∑ k ∈ Finset.range (n + 1), z1f k)
+        + (∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1), z2f i k), ?_⟩
+    -- Multiply through by `d^33` and collect.
+    have hBcast : (((∑ k ∈ Finset.range (n + 1), z1f k)
+          + (∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1), z2f i k) : ℤ) : ℝ)
+        = (∑ k ∈ Finset.range (n + 1),
+            d ^ 33 * a 1 k * (-∑ ℓ ∈ Finset.range k, (1 : ℝ) / ((ℓ : ℝ) - (m : ℝ) - 1 / 2)))
+          + (∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1),
+              d ^ 33 * a i k * e08Head m i k) := by
+      push_cast
+      congr 1
+      · apply Finset.sum_congr rfl; intro k hk; exact hz1f k hk
+      · apply Finset.sum_congr rfl; intro i hi
+        apply Finset.sum_congr rfl; intro k hk
+        exact hz2f i k hi hk
+    have hAeq : d ^ 33 * (∑ k ∈ Finset.range (n + 1),
+          a 1 k * (-∑ ℓ ∈ Finset.range k, (1 : ℝ) / ((ℓ : ℝ) - (m : ℝ) - 1 / 2)))
+        = ∑ k ∈ Finset.range (n + 1),
+            d ^ 33 * a 1 k * (-∑ ℓ ∈ Finset.range k, (1 : ℝ) / ((ℓ : ℝ) - (m : ℝ) - 1 / 2)) := by
+      rw [Finset.mul_sum]; apply Finset.sum_congr rfl; intro k _; ring
+    have hBeq : d ^ 33 * (∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1),
+          a i k * (((2 : ℝ) ^ i - 1) * zetaVal i + e08Head m i k))
+        = (∑ i ∈ Finset.Icc 2 33,
+            d ^ 33 * (∑ k ∈ Finset.range (n + 1), a i k) * ((2 : ℝ) ^ i - 1) * zetaVal i)
+          + (∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1),
+              d ^ 33 * a i k * e08Head m i k) := by
+      rw [Finset.mul_sum, ← Finset.sum_add_distrib]
+      apply Finset.sum_congr rfl; intro i _
+      rw [Finset.mul_sum,
+        show d ^ 33 * (∑ k ∈ Finset.range (n + 1), a i k) * ((2 : ℝ) ^ i - 1) * zetaVal i
+            = ∑ k ∈ Finset.range (n + 1), d ^ 33 * a i k * (((2 : ℝ) ^ i - 1) * zetaVal i) from by
+          rw [Finset.mul_sum, Finset.sum_mul, Finset.sum_mul]
+          apply Finset.sum_congr rfl; intro k _; ring,
+        ← Finset.sum_add_distrib]
+      apply Finset.sum_congr rfl; intro k _; ring
+    rw [hRV, hBcast, mul_add, hAeq, hBeq]
+    ring
 
 /-! ### Lemma 3: the ζ-representations of `r_n` and `r̂_n` (paper e07, e08)
 

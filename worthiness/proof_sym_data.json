@@ -1,0 +1,127 @@
+{
+  "1": {
+    "n": 1,
+    "Q": 21,
+    "P": [
+      87,
+      4
+    ],
+    "Phat": [
+      101,
+      4
+    ],
+    "dn": 1,
+    "d2n": 2,
+    "dn5": 1,
+    "denP": 4,
+    "denP_fac": "2^2",
+    "denPhat": 4,
+    "denPhat_fac": "2^2",
+    "ord2_denP": 2,
+    "pred_ord2": 2,
+    "ord3_denP": 0,
+    "ord3_dn5": 0,
+    "12dn5P_int": true,
+    "dn5P_int": false
+  },
+  "2": {
+    "n": 2,
+    "Q": 2989,
+    "P": [
+      1190161,
+      384
+    ],
+    "Phat": [
+      344923,
+      96
+    ],
+    "dn": 2,
+    "d2n": 12,
+    "dn5": 32,
+    "denP": 384,
+    "denP_fac": "2^7\u00b73",
+    "denPhat": 96,
+    "denPhat_fac": "2^5\u00b73",
+    "ord2_denP": 7,
+    "pred_ord2": 7,
+    "ord3_denP": 1,
+    "ord3_dn5": 0,
+    "12dn5P_int": true,
+    "dn5P_int": false
+  },
+  "3": {
+    "n": 3,
+    "Q": 714549,
+    "P": [
+      7682021239,
+      10368
+    ],
+    "Phat": [
+      3710571371,
+      4320
+    ],
+    "dn": 6,
+    "d2n": 60,
+    "dn5": 7776,
+    "denP": 10368,
+    "denP_fac": "2^7\u00b73^4",
+    "denPhat": 4320,
+    "denPhat_fac": "2^5\u00b73^3\u00b75",
+    "ord2_denP": 7,
+    "pred_ord2": 7,
+    "ord3_denP": 4,
+    "ord3_dn5": 5,
+    "12dn5P_int": true,
+    "dn5P_int": false
+  },
+  "4": {
+    "n": 4,
+    "Q": 217515501,
+    "P": [
+      24943788950905,
+      110592
+    ],
+    "Phat": [
+      602417685937,
+      2304
+    ],
+    "dn": 12,
+    "d2n": 840,
+    "dn5": 248832,
+    "denP": 110592,
+    "denP_fac": "2^12\u00b73^3",
+    "denPhat": 2304,
+    "denPhat_fac": "2^8\u00b73^2",
+    "ord2_denP": 12,
+    "pred_ord2": 12,
+    "ord3_denP": 3,
+    "ord3_dn5": 5,
+    "12dn5P_int": true,
+    "dn5P_int": false
+  },
+  "5": {
+    "n": 5,
+    "Q": 76157194521,
+    "P": [
+      81875586674776013003,
+      1036800000
+    ],
+    "Phat": [
+      553665861902579821,
+      6048000
+    ],
+    "dn": 60,
+    "d2n": 2520,
+    "dn5": 777600000,
+    "denP": 1036800000,
+    "denP_fac": "2^12\u00b73^4\u00b75^5",
+    "denPhat": 6048000,
+    "denPhat_fac": "2^8\u00b73^3\u00b75^3\u00b77",
+    "ord2_denP": 12,
+    "pred_ord2": 12,
+    "ord3_denP": 4,
+    "ord3_dn5": 5,
+    "12dn5P_int": true,
+    "dn5P_int": false
+  }
+}

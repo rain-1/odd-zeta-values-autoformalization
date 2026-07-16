@@ -148,7 +148,7 @@ theorem tendsto_ratio (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
 
 /-- Bonus (Lemma 4 nonvanishing corollary shape): from `r_n / r̂_n → 1 < 7`,
 eventually `7 r_n − r̂_n > 0`. -/
-private lemma seven_r_sub_rhat_pos_eventually (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ}
+lemma seven_r_sub_rhat_pos_eventually (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ}
     (hx₀ : 0 < x₀) (hfx₀ : f q x₀ = 1) :
     ∀ᶠ n : ℕ in atTop, 0 < 7 * r q n - rhat q n := by
   have h := tendsto_ratio q hq hx₀ hfx₀

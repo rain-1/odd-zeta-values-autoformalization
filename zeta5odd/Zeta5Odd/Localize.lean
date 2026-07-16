@@ -913,7 +913,18 @@ private lemma c_lower_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x�
       linarith [hlb, hfin, heq.le, heq.ge]
 
 /-- Upper margins for `c`: a `1 - δ` middle margin on `[(x₀+ε/2)n, (x₀+ε)n]`
-and the telescoping square-ratio majorant above `(x₀+ε/2)n`. -/
+and the telescoping square-ratio majorant above `(x₀+ε/2)n`.
+
+REMAINING.  The first conjunct (middle margin) is the mirror of `c_lower_core`:
+an *upper* combined bound `ρ(j,n) ≤ (1+4/(3n))(f(j/n)²)` (note `bridge_B` already
+gives the clean `B ≤ g₂` since `(n+j+1)/(2n+j+2) ≤ (n+j)/(2n+j)`) together with
+`f(j/n)² ≤ sup_{[x₀+ε/2,x₀+ε]} f² < 1` (f is a valley: decreasing on `(0,x₁)`,
+increasing on `(x₁,∞)`, so the max on an interval is at an endpoint — extend
+`f_shape` to also return `StrictMonoOn (f q) (Ici x₁)`).
+The second conjunct (far-tail telescoping) is the genuinely hard piece: it needs
+`f(j/n)² · (1 + O(1/n)) ≤ ((j+2n+2)/(j+2n+3))²` for ALL `j ≥ (x₀+ε/2)n`, i.e. a
+quantitative statement that `f(x)² ≤ (1 - 1/(x·-scale))²` — `f → 1⁻` at rate
+`(q-3)/x` (this is where `q ≥ 4` enters). -/
 private lemma c_upper_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :
     ∃ δ : ℝ, 0 < δ ∧ δ < 1 ∧

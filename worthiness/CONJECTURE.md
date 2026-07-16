@@ -7,10 +7,22 @@ The {2,3} ceilings hold at every cell (excess₂ ≤ +2 attained 46×, excess₃
 stated: one verified cell (a = (6,2,6,1,6,4,5,5), n = 1) has excess +1 at
 p = 7 = m₁ against the ν-sharpened prediction (den(P) = 2⁷·3⁴·5²·7,
 stable under precision changes; ν₇ = 1 claimed by the orbit bound, not
-realized). Note p = m₁ is the boundary prime of the multiset — the
-mechanism appears to be an orbit-transfer of a partner-point failure
-(under direct verification). The conjecture below should be read with
-this amendment; the original text is preserved for the record.
+realized). Note p = m₁ is the boundary prime of the multiset. The orbit-transfer
+mechanism is now CONFIRMED by direct audit: the maximizing orbit partner
+a′ = (6,2,5,2,4,6,6,5) has den(P) = 2⁶·3⁴·5²·7² — raw excess +1 at p=7
+against its own d-product, exactly as the exact identity
+I′(ga) = I′(a)·(factorial ratio) predicts from the first cell. Two
+consequences: (i) even the raw (ν-free) 12·(d-product) law fails at
+p = 7 = m₁ at some points, so the {2,3}-Bernoulli mechanism is the BULK
+story but not the whole story — there is a rarer boundary-prime effect
+(observed size +1, at p = max h); (ii) excesses are orbit-coherent, not
+per-point accidents: the right invariant is an orbit-level "anomaly
+divisor", and the ν-sharpened prediction inherits partners' anomalies —
+which is exactly how one cell's ledger betrayed its neighbor's. The
+agreement of two independent PSLQ recoveries with the exact factorial-
+ratio identity is also a strong end-to-end validation of the pipeline.
+The conjecture below should be read with this amendment; the original
+text is preserved for the record.
 
 ## Setup
 

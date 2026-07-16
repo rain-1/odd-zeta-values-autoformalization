@@ -1,0 +1,4 @@
+nu7 = 1  partner a' = [6, 2, 5, 2, 4, 6, 6, 5]  admissible: True
+den(P(ga)) = 2^6·3^4·5^2·7^2
+raw p=7: req=2 dprod=1 raw_excess=1
+raw p=2: req=6 dprod=10

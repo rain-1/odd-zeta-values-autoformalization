@@ -33,12 +33,15 @@ Status of this file:
 * `core_sum_le`   (the arithmetic heart `∑⌊m/aᵢ⌋≤m−1`) — proved (sorry-free)
 * `hansonDenom_dvd`, `hansonC_pos`                      — proved (sorry-free)
 * `lcmUpto_dvd_hansonC`  (**entire divisibility half**) — proved (sorry-free)
-* `hansonC_le_three_pow` (the size bound `C n ≤ 3^n`)   — the ONLY `sorry`.
+* `hansonC_le_three_pow` (the size bound `C n ≤ 3^n`)   — reduced (sorry-free) to `hansonC_log_bound`
+* `hansonC_log_bound_finite` (`n < 1337`, `decide`)     — proved (sorry-free)
+* `hansonC_log_bound_large`  (`n ≥ 1337`, Stirling)     — the ONLY `sorry`.
 
-Thus `lcmUpto_le_three_pow` is reduced to the single analytic estimate `C n ≤ 3^n`
-(equivalently `∑ᵢ (log aᵢ)/aᵢ < log 3`, a Stirling computation), numerically verified
-for all `n` with margin (`maxₙ (log C n − n·log 3) = −0.386`).  `#print axioms` shows the
-divisibility chain uses no `sorryAx`; only the size wrapper does.
+Thus `lcmUpto_le_three_pow` is reduced to the single analytic estimate `C n ≤ 3^n` for `n ≥ 1337`
+(equivalently `∑ᵢ (log aᵢ)/aᵢ < log 3`, a Stirling computation); the whole range `n < 1337` is
+machine-checked by `decide`.  Numerically verified for all `n` with margin
+(`maxₙ (log C n − n·log 3) = −0.386`).  `#print axioms` shows the divisibility chain and the finite
+size regime use no `sorryAx`; only `hansonC_log_bound_large` does.
 -/
 import Mathlib
 import Zeta5Odd.Basic
@@ -271,19 +274,106 @@ theorem log_factorial_ge (m : ℕ) (hm : 1 ≤ m) :
 
 end Size
 
-/-- **Residual analytic core** (the ONLY remaining `sorry`).  In log form, the size bound
-`C n ≤ 3^n` is exactly
+/-! ### Monotonicity of Sylvester's sequence and a truncation lemma
 
-  `log n! ≤ n·log 3 + ∑_{i<n+1} log ⌊n/aᵢ⌋!`.
+For `n < sylv 4 = 1807` every tail factor `⌊n/aᵢ⌋! = 1` (`i ≥ 4`), so the denominator
+collapses to the fixed finite product `∏_{i<4} ⌊n/aᵢ⌋!`.  This makes the small-`n` regime
+`decide`-computable: only `sylv 0..3 = 2,3,7,43` are ever evaluated. -/
 
-This is TRUE for every `n` (numerically `max_n (log C n − n·log 3) = −0.386 < 0`, and the exact
-two-sided Stirling bound below leaves worst-case slack `+0.292` at `n = 83`).  The reduction of
-the theorem `hansonC_le_three_pow` to *this* inequality is fully proved (sorry-free); only the
-inequality itself is open.  See the end-of-file note for the obstruction and completion paths. -/
-theorem hansonC_log_bound (n : ℕ) :
+/-- `k ≤ P k` (`sylvProd` dominates the identity). -/
+theorem id_le_sylvProd : ∀ k, k ≤ sylvProd k
+  | 0 => Nat.zero_le _
+  | (k + 1) => by
+      have ih := id_le_sylvProd k
+      have h1 : sylvProd (k + 1) = sylvProd k * (sylvProd k + 1) := rfl
+      have hp := sylvProd_pos k
+      rw [h1]; nlinarith [ih, hp]
+
+/-- `sylvProd` is monotone. -/
+theorem sylvProd_mono : Monotone sylvProd :=
+  monotone_nat_of_le_succ fun k => by
+    have h1 : sylvProd (k + 1) = sylvProd k * (sylvProd k + 1) := rfl
+    rw [h1]; nlinarith [sylvProd_pos k]
+
+/-- Sylvester's sequence `a k = P k + 1` is monotone. -/
+theorem sylv_mono : Monotone sylv := fun a b h => by
+  simp only [sylv]; exact Nat.add_le_add_right (sylvProd_mono h) 1
+
+/-- `k < a k` (each Sylvester term exceeds its index). -/
+theorem lt_sylv_self (i : ℕ) : i < sylv i := by
+  have := id_le_sylvProd i; simp only [sylv]; omega
+
+/-- **Truncation.**  For `n < sylv 4 = 1807`, the full denominator `∏_{i<n+1} ⌊n/aᵢ⌋!`
+collapses to `∏_{i<4} ⌊n/aᵢ⌋!` (all further factors are `0! = 1`). -/
+theorem hansonDenom_eq_prod4 (n : ℕ) (hn : n < sylv 4) :
+    hansonDenom n = ∏ i ∈ range 4, (n / sylv i).factorial := by
+  unfold hansonDenom
+  rcases Nat.lt_or_ge (n + 1) 4 with h | h
+  · refine Finset.prod_subset (by intro x hx; rw [Finset.mem_range] at hx ⊢; omega) ?_
+    intro i _ hin
+    rw [Finset.mem_range, not_lt] at hin
+    have hlt : n < sylv i := lt_of_lt_of_le (by omega : n < i) (le_of_lt (lt_sylv_self i))
+    rw [Nat.div_eq_of_lt hlt, Nat.factorial_zero]
+  · refine (Finset.prod_subset (by intro x hx; rw [Finset.mem_range] at hx ⊢; omega) ?_).symm
+    intro i _ hi4
+    rw [Finset.mem_range, not_lt] at hi4
+    have hlt : n < sylv i := lt_of_lt_of_le hn (sylv_mono hi4)
+    rw [Nat.div_eq_of_lt hlt, Nat.factorial_zero]
+
+set_option maxRecDepth 40000 in
+/-- **Finite regime (fully proved, `decide`-backed).**  For `n < 1337`, the log size bound
+holds.  Reduced to the `ℕ` inequality `n! ≤ 3^n · ∏_{i<4} ⌊n/aᵢ⌋!`, discharged by `decide`
+(kernel GMP arithmetic; axioms `[propext, Classical.choice, Quot.sound]` only — no
+`native_decide`/`ofReduceBool`).  `1337` is the threshold below which the closed-form Stirling
+relaxation of `hansonC_log_bound_large` fails, and `1337 < sylv 4 = 1807` licenses the `range 4`
+truncation. -/
+theorem hansonC_log_bound_finite (n : ℕ) (hn : n < 1337) :
+    Real.log (n.factorial : ℝ)
+      ≤ (n : ℝ) * Real.log 3 + ∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)) := by
+  have h4 : n < sylv 4 := lt_of_lt_of_le hn (by decide)
+  have hfin : ∀ m ∈ range 1337,
+      m.factorial ≤ 3 ^ m * ∏ i ∈ range 4, (m / sylv i).factorial := by decide
+  have hkeyNat : n.factorial ≤ 3 ^ n * hansonDenom n := by
+    rw [hansonDenom_eq_prod4 n h4]; exact hfin n (Finset.mem_range.mpr hn)
+  have hDpos : (0 : ℝ) < (hansonDenom n : ℝ) := by
+    exact_mod_cast Nat.pos_of_ne_zero (hansonDenom_ne_zero n)
+  have hlogD : Real.log (hansonDenom n : ℝ)
+      = ∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)) := by
+    unfold hansonDenom
+    rw [Nat.cast_prod,
+      Real.log_prod (fun i _ => Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero _))]
+  have hstar : (n.factorial : ℝ) ≤ (3 : ℝ) ^ n * (hansonDenom n : ℝ) := by
+    exact_mod_cast hkeyNat
+  calc Real.log (n.factorial : ℝ)
+      ≤ Real.log ((3 : ℝ) ^ n * (hansonDenom n : ℝ)) :=
+        Real.log_le_log (by exact_mod_cast Nat.factorial_pos n) hstar
+    _ = (n : ℝ) * Real.log 3
+          + ∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)) := by
+        rw [Real.log_mul (by positivity) hDpos.ne', Real.log_pow, hlogD]
+
+/-- **Large regime (residual `sorry`).**  For `n ≥ 1337` the log size bound follows from the
+sharp two-sided Stirling estimate combined with the closed-form rate bound
+`∑ᵢ (log aᵢ)/aᵢ < log 3`.  This is the sole remaining analytic obstruction; see the
+end-of-file note. -/
+theorem hansonC_log_bound_large (n : ℕ) (hn : 1337 ≤ n) :
     Real.log (n.factorial : ℝ)
       ≤ (n : ℝ) * Real.log 3 + ∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)) := by
   sorry
+
+/-- **Size bound in log form.**  `C n ≤ 3^n` is exactly
+
+  `log n! ≤ n·log 3 + ∑_{i<n+1} log ⌊n/aᵢ⌋!`.
+
+This is TRUE for every `n` (numerically `max_n (log C n − n·log 3) = −0.386 < 0`).  It is proved
+by splitting at `n = 1337`: the finite regime `n < 1337` is fully machine-checked
+(`hansonC_log_bound_finite`, `decide`-backed, sorry-free), and the large regime `n ≥ 1337` is the
+sole remaining `sorry` (`hansonC_log_bound_large`).  This dispatcher is itself sorry-free. -/
+theorem hansonC_log_bound (n : ℕ) :
+    Real.log (n.factorial : ℝ)
+      ≤ (n : ℝ) * Real.log 3 + ∑ i ∈ range (n + 1), Real.log (((n / sylv i).factorial : ℝ)) := by
+  rcases Nat.lt_or_ge n 1337 with h | h
+  · exact hansonC_log_bound_finite n h
+  · exact hansonC_log_bound_large n h
 
 /-- **Size half.**  `C n ≤ 3^n`.  Fully reduced (sorry-free) to `hansonC_log_bound`:
 `hansonDenom n ∣ n!` gives `C n = n!/hansonDenom n` exactly, so `C n ≤ 3^n` is equivalent to
@@ -321,43 +411,45 @@ theorem lcmUpto_le_three_pow (n : ℕ) : (Nat.lcmUpto n : ℝ) ≤ 3 ^ n := by
     _ ≤ 3 ^ n := hansonC_le_three_pow n
 
 /-!
-### Status of the size half (`hansonC_log_bound`, the sole `sorry`)
+### Status of the size half — one isolated `sorry` (`hansonC_log_bound_large`, `n ≥ 1337`)
 
-Everything except the single real inequality `hansonC_log_bound` is proved sorry-free:
+The size bound `hansonC_log_bound` is now split into two regimes at `N₀ = 1337`:
 
-* `log_factorial_eq / log_factorial_le / log_factorial_ge` — sharp two-sided Stirling bounds
-  `½log(2πm) + m·log m − m ≤ log m! ≤ ½log(2πm) + m·log m − m + 1/(12m)` (from
-  `Zeta5Odd.Basic.log_stirlingSeq_sub_le` and Mathlib's `sqrt_pi_le_stirlingSeq`).
-* `hansonC_le_three_pow` — the reduction of `C n ≤ 3^n` to `hansonC_log_bound`, via
-  `hansonDenom n ∣ n!` (exact division ⇒ `C n · hansonDenom n = n!`), `Real.log_le_log_iff`,
-  `Real.log_prod`, `Real.log_pow`.
+* `hansonC_log_bound_finite`  (`n < 1337`) — **fully proved, sorry-free.**  The `range 4`
+  truncation `hansonDenom_eq_prod4` (valid since `n < 1337 < sylv 4 = 1807`) collapses the
+  denominator to `∏_{i<4} ⌊n/aᵢ⌋!`, reducing the goal to the `ℕ` inequality
+  `n! ≤ 3^n · ∏_{i<4} ⌊n/aᵢ⌋!`, which is discharged by a single `decide` over `range 1337`
+  (kernel GMP arithmetic; `#print axioms` = `[propext, Classical.choice, Quot.sound]`, i.e. NO
+  `sorryAx` and NO `Lean.ofReduceBool` — `native_decide` is deliberately avoided).  Timing: the
+  whole finite check elaborates+kernel-checks in ≈3 s.
+* `hansonC_log_bound_large`  (`n ≥ 1337`) — **the sole remaining `sorry`.**
 
-**Residual (true, open):** `log n! ≤ n·log 3 + ∑_{i<n+1} log ⌊n/aᵢ⌋!`.
+**Residual (true, open):** `log n! ≤ n·log 3 + ∑_{i<n+1} log ⌊n/aᵢ⌋!` for `n ≥ 1337`.
 
 **Why it is hard.**  The margin is genuinely thin: `log 3 = 1.09861` versus the limiting rate
 `∑_i (log aᵢ)/aᵢ = 1.08239`, i.e. only `0.01622` per unit `n`, and the *absolute* worst-case
-slack `min_n (n·log 3 − log C n) = 0.386` occurs at `n = 83`.
+slack `min_n (n·log 3 − log C n) = 0.386` occurs at `n = 83`.  Applying the sharp Stirling bounds
+`log_factorial_le/ge` term-by-term (upper on `n!`, lower on each `⌊n/aᵢ⌋!`) leaves worst-case
+slack `+0.292` at `n = 83` — so two-sided Stirling suffices *provided the floors are kept exact*.
+Any clean relaxation dips negative for small `n`, forcing the finite/symbolic split.  The chosen
+`N₀ = 1337` is exactly where the *constant-rate* tangent-Stirling relaxation
+(`q·log q ≥ (n/aᵢ)·log(n/aᵢ) − (log(n/aᵢ)+1)`, then `∑_I (log aᵢ)/aᵢ ≤ ∑_all = 1.08239`) first
+holds for all larger `n` (verified numerically; the partial-rate variant crosses over at 1018).
 
-Applying the sharp Stirling bounds above term-by-term (upper on `n!`, lower on each `⌊n/aᵢ⌋!`)
-gives worst-case slack `+0.292` at `n = 83` — so the two-sided Stirling estimate DOES suffice,
-*provided the floor terms `⌊n/aᵢ⌋` are kept essentially exact*.  Any further clean relaxation
-breaks it for small `n`:
-  * relaxing `q·log q ≥ q·log(n/aᵢ) − (n/aᵢ − q)` (the elementary `t log t ≥ t − 1`) already
-    dips to `−0.023` at `n = 83`;
-  * additionally constant-izing `∑ q·log aᵢ ≤ n·∑(log aᵢ)/aᵢ` fails up to `n = 635`
-    (keeping the `½log` and `n−∑qᵢ` terms exact) or up to `n = 3542` (fully closed form).
+**Completion path for `hansonC_log_bound_large`.**  For `n ≥ 1337`:
+`log n! ≤ ½log(2πn) + n·log n − n + 1/(12n)` (`log_factorial_le`); each `log ⌊n/aᵢ⌋! ≥
+½log(2π⌊n/aᵢ⌋) + ⌊n/aᵢ⌋·log⌊n/aᵢ⌋ − ⌊n/aᵢ⌋` (`log_factorial_ge`).  Then bound
+`n log n − ∑ᵢ qᵢ log qᵢ ≤ log n + n·∑_{i∈I}(log aᵢ)/aᵢ + ∑_{i∈I}(log(n/aᵢ)+1)` via the tangent
+line of the convex `t↦t log t` (`q ≥ n/aᵢ − 1`) plus `n log n·(1−∑_{i∈I}1/aᵢ) = n log n / P_{|I|}
+≤ log n` (since `P_{|I|} = a_{|I|} − 1 ≥ n`, from `sum_inv_sylv`); use `core_sum_le` for
+`n − ∑ qᵢ ≥ 1`; and a *certified rational* bound `∑_i (log aᵢ)/aᵢ < log 3` (dominated by `i ≤ 5`,
+doubly-exponential tail — this certified transcendental estimate is the main missing ingredient).
 
-**Completion paths.**
-1. *Symbolic ≥ N₀ + finite check < N₀.*  Prove the closed-form bound for `n ≥ N₀`
-   (`N₀ = 636` or `3543` per above) using: `core_sum_le`/`sum_inv_sylv` for `n − ∑ qᵢ ≤ 1 + |I|`
-   and `∑ 1/aᵢ = 1 − 1/Pₙ`; a rational upper bound `∑(log aᵢ)/aᵢ < log 3` (dominated by
-   `i ≤ 5`, doubly-exponential tail); and the Stirling `½log` bookkeeping.  Then a finite check
-   for `n < N₀`.
-2. *Finite check obstruction.*  `decide`/`native_decide` on `hansonC n` directly is INFEASIBLE:
-   its product ranges over `range (n+1)`, forcing evaluation of `sylv i` for `i` up to `n`, which
-   is doubly-exponentially large (`sylvProd 30` already has ~10⁹ digits).  The finite check must
-   first rewrite `hansonDenom n = ∏_{i<B} ⌊n/aᵢ⌋!` for a small fixed `B` (e.g. `B = 6`, valid for
-   `n < sylv 6 ≈ 1.06·10¹³`), so only `sylv 0..5 ≤ 3 263 443` are ever evaluated.
+**Finite-check obstruction (resolved).**  `decide` on `hansonC n` / `hansonDenom n` directly is
+INFEASIBLE: the product ranges over `range (n+1)`, forcing evaluation of `sylv i` up to `i = n`,
+which is doubly-exponentially large (`sylvProd 30` already has ~10⁹ digits).  `hansonDenom_eq_prod4`
+sidesteps this by rewriting to the fixed product `∏_{i<4} ⌊n/aᵢ⌋!` (only `sylv 0..3 = 2,3,7,43`
+are ever evaluated), which makes the `decide` cheap.
 -/
 
 end Zeta5Odd

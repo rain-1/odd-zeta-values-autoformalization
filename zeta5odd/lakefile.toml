@@ -1,0 +1,10 @@
+name = "zeta5odd"
+version = "0.1.0"
+defaultTargets = ["Zeta5Odd"]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+
+[[lean_lib]]
+name = "Zeta5Odd"

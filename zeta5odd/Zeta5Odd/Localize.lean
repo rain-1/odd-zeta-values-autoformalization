@@ -711,6 +711,38 @@ private lemma bridge_B (q j n : ℕ) (hn : 1 ≤ n) :
     _ = (r * bg) ^ (2 * q) := by rw [mul_pow]
     _ = bB ^ (2 * q) := by rw [← hbBr]
 
+/-- Rational bridge for the `A`-part of the term ratio: it beats the profile
+`g₁(j/n) = ((j+3n)/j)²` up to a `1 - 4/j` factor (`j ≥ 1`). -/
+private lemma bridge_A (j n : ℕ) (hj : 1 ≤ j) :
+    (1 - 4 / (j : ℝ)) * (((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2)
+      ≤ (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)
+          / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2)) := by
+  have hjR : (0 : ℝ) < j := by exact_mod_cast hj
+  have hnR : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+  have hden : (0 : ℝ) < 2 * (j : ℝ) ^ 2 + 5 * j + 3 := by positivity
+  set g1 : ℝ := ((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2 with hg1
+  have hg1nn : 0 ≤ g1 := by rw [hg1]; positivity
+  set A : ℝ := (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)
+      / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2)) with hA
+  set D : ℝ := 2 * (j : ℝ) ^ 2 / (2 * (j : ℝ) ^ 2 + 5 * j + 3) with hD
+  have step2 : 1 - 4 / (j : ℝ) ≤ D := by
+    rw [hD, ← sub_nonneg]
+    have hEq : 2 * (j : ℝ) ^ 2 / (2 * (j : ℝ) ^ 2 + 5 * j + 3) - (1 - 4 / (j : ℝ))
+        = (3 * (j : ℝ) ^ 2 + 17 * j + 12) / ((j : ℝ) * (2 * (j : ℝ) ^ 2 + 5 * j + 3)) := by
+      field_simp; ring
+    rw [hEq]; positivity
+  have step1 : D * g1 ≤ A := by
+    rw [← sub_nonneg, hA, hD, hg1]
+    have hEq : (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)
+            / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2))
+          - 2 * (j : ℝ) ^ 2 / (2 * (j : ℝ) ^ 2 + 5 * j + 3)
+              * (((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2)
+        = (42 * (n : ℝ) + 14 * j + 12) / (2 * (2 * (j : ℝ) ^ 2 + 5 * j + 3)) := by
+      field_simp; ring
+    rw [hEq]; positivity
+  calc (1 - 4 / (j : ℝ)) * g1 ≤ D * g1 := mul_le_mul_of_nonneg_right step2 hg1nn
+    _ ≤ A := step1
+
 /-- Lower geometric margin for `c`: below `(x₀ - ε/2)·n` the term ratio
 `c(j+1)/c(j)` (given exactly by `c_ratio`) exceeds `1 + δ`, because
 `f(j/n)² ≥ f(x₀-ε/2)² > 1` on `(0, x₀)` and `ρ → f²`. -/

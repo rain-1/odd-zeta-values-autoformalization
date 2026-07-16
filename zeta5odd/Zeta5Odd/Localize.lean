@@ -912,6 +912,32 @@ private lemma c_lower_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x�
       rw [← le_div_iff₀ (c_pos q n j), hδeq]
       linarith [hlb, hfin, heq.le, heq.ge]
 
+/-- Reciprocal Bernoulli: `(1-t)^m ≤ 1/(1+m·t)` for `t ∈ [0,1)`.  This linearizes
+the `2q`-th power so the far-tail bound becomes a rational inequality. -/
+private lemma bernoulli_recip {t : ℝ} (ht0 : 0 ≤ t) (ht1 : t < 1) (m : ℕ) :
+    (1 - t) ^ m ≤ 1 / (1 + m * t) := by
+  have h1t : (0 : ℝ) < 1 - t := by linarith
+  have hpm : (0 : ℝ) < (1 - t) ^ m := by positivity
+  have hmt : (0 : ℝ) < 1 + m * t := by positivity
+  have ha : (0 : ℝ) ≤ t / (1 - t) := by positivity
+  have hbern : 1 + (m : ℝ) * (t / (1 - t)) ≤ (1 + t / (1 - t)) ^ m :=
+    one_add_mul_le_pow (by linarith : (-2 : ℝ) ≤ t / (1 - t)) m
+  have h1tne : (1 : ℝ) - t ≠ 0 := ne_of_gt h1t
+  have heq1 : (1 : ℝ) + t / (1 - t) = 1 / (1 - t) := by
+    rw [eq_div_iff h1tne, add_mul, div_mul_cancel₀ _ h1tne]; ring
+  rw [heq1, one_div, inv_pow] at hbern
+  have htt : t ≤ t / (1 - t) := by
+    rw [le_div_iff₀ h1t]
+    have he : t * (1 - t) = t - t * t := by ring
+    rw [he]; linarith [mul_nonneg ht0 ht0]
+  have hge : 1 + (m : ℝ) * t ≤ 1 + (m : ℝ) * (t / (1 - t)) := by
+    have := mul_le_mul_of_nonneg_left htt (Nat.cast_nonneg m); linarith
+  have hchain : 1 + (m : ℝ) * t ≤ ((1 - t) ^ m)⁻¹ := le_trans hge hbern
+  rw [le_div_iff₀ hmt]
+  calc (1 - t) ^ m * (1 + (m : ℝ) * t) ≤ (1 - t) ^ m * ((1 - t) ^ m)⁻¹ :=
+        mul_le_mul_of_nonneg_left hchain hpm.le
+    _ = 1 := by field_simp
+
 /-- Upper margins for `c`: a `1 - δ` middle margin on `[(x₀+ε/2)n, (x₀+ε)n]`
 and the telescoping square-ratio majorant above `(x₀+ε/2)n`.
 

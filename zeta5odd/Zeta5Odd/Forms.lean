@@ -28,8 +28,13 @@ STATUS (this pass):
       (paper tex 165–176); only decomposition/integrality remain as `pf_decomp`.
   * `Rn`, `repr_combined` — the `r_n` (e07) representation is PROVED (Lemma 3 assembly:
       reindexing, `S 1 = 0` via harmonic divergence, even-column vanishing, tail-to-ζ,
-      interchange, integer constant).  Only the `r̂_n` (e08) representation remains `sorry`
-      (its half-integer harmonic heads exceed `n`, requiring the e08 symmetry cancellation).
+      interchange, integer constant).  The `r̂_n` (e08) representation is factored into
+      `repr_rhat_e08`, whose analytic ingredients are all PROVED sorry-free — the summation
+      shift `rhat = Σ'_j R_n(j−m−½)` (`rhat_shift`), the shifted half-integer tail evaluations
+      `tail_val_pos`/`tail_val_neg` (each `= (2^i−1)ζ(i) + small head`), the odd ζ-sum
+      `tsum_odd_eq`, and the half-integer head integrality `odd_harmonic_integrality`.  Only the
+      final assembly of `repr_rhat_e08` remains `sorry` (the interchange/collection plus the
+      `i=1` negative-base telescoping; see the residual note there).
 -/
 import Mathlib
 import Zeta5Odd.Basic
@@ -1080,6 +1085,38 @@ private lemma tail_val_neg (p i : ℕ) (hi : 2 ≤ i) :
             * ∑ ℓ ∈ Finset.range (p + 1), (1 : ℝ) / ((2 * ℓ + 1 : ℕ) : ℝ) ^ i := by
         rw [hheadval, htailval]; ring
 
+/-- **Summation shift for `r̂_n`** (paper tex 220).  Since `R_n` vanishes at the half-integer
+nodes `t = −½,−3/2,…,−(n−½)` (zeros of the `∏_{j=1}^{3n}(t−n−½+j)` factor), for `n ≥ 1` and
+`m = ⌊(n−1)/2⌋` the twisted sum `r̂_n = Σ'_k R_n(n+½+k)` can be re-started at `t = −m−½`:
+`r̂_n = Σ'_j R_n(j − m − ½)`.  The prepended `n+m+1` terms (`j = 0,…,n+m`) all vanish. -/
+theorem rhat_shift (n : ℕ) (hn1 : 1 ≤ n) :
+    ∑' j : ℕ, Rn 17 n ((j : ℝ) - (((n - 1) / 2 : ℕ) : ℝ) - 1 / 2) = rhat 17 n := by
+  set m : ℕ := (n - 1) / 2 with hm_def
+  -- `R_n` vanishes at `t = j − m − ½` for `j ≤ n + m` (a zero of the middle `3n`-product).
+  have hvanish_half : ∀ j : ℕ, j ≤ n + m → Rn 17 n ((j : ℝ) - (m : ℝ) - 1 / 2) = 0 := by
+    intro j hj
+    have hP3 : ∏ j' ∈ Finset.Icc 1 (3 * n),
+        ((j : ℝ) - (m : ℝ) - 1 / 2 - (n : ℝ) - 1 / 2 + (j' : ℝ)) = 0 := by
+      apply Finset.prod_eq_zero (i := n + m + 1 - j) (Finset.mem_Icc.mpr ⟨by omega, by omega⟩)
+      rw [Nat.cast_sub (by omega : j ≤ n + m + 1)]; push_cast; ring
+    simp only [Rn]
+    rw [hP3]; ring
+  -- Summability of the shifted series (it is the `chat` series after dropping `n+m+1` zeros).
+  have hRnhalf_sum : Summable (fun j : ℕ => Rn 17 n ((j : ℝ) - (m : ℝ) - 1 / 2)) := by
+    apply (summable_nat_add_iff (n + m + 1)).1
+    refine (summable_chat 17 n (by norm_num)).congr (fun k => ?_)
+    rw [← Rn_eq_chat 17 n k (by norm_num)]; congr 1; push_cast; ring
+  -- Prepended terms vanish; the tail reindexes to `r̂_n`.
+  have hhead : (∑ j ∈ Finset.range (n + m + 1), Rn 17 n ((j : ℝ) - (m : ℝ) - 1 / 2)) = 0 :=
+    Finset.sum_eq_zero (fun j hj => hvanish_half j (by rw [Finset.mem_range] at hj; omega))
+  have htail : (∑' k : ℕ, Rn 17 n (((k + (n + m + 1) : ℕ) : ℝ) - (m : ℝ) - 1 / 2)) = rhat 17 n := by
+    show _ = ∑' k, chat 17 n k
+    refine tsum_congr (fun k => ?_)
+    rw [← Rn_eq_chat 17 n k (by norm_num)]; congr 1; push_cast; ring
+  have key := hRnhalf_sum.sum_add_tsum_nat_add (n + m + 1)
+  rw [hhead, zero_add] at key
+  rw [← key]; exact htail
+
 /-- **The `r̂_n` (e08) ζ-representation** (paper tex 220–239).  Given the partial-fraction data
 for `R_n` (decomposition `hdec`, Lemma-1 integrality `hint`, Lemma-2 symmetry `hsym`) and the
 column totals `S i = Σ_k a_{i,k}`, there is an integer constant `Bhat0` with
@@ -1102,6 +1139,22 @@ theorem repr_rhat_e08 (n : ℕ) (a : ℕ → ℕ → ℝ)
       (Nat.lcmUpto n : ℝ) ^ 33 * rhat 17 n
         = (∑ i ∈ oddIdx3, (Nat.lcmUpto n : ℝ) ^ 33 * S i * ((2 : ℝ) ^ i - 1) * zetaVal i)
             + (Bhat0 : ℝ) := by
+  -- RESIDUAL (the final e08 assembly).  All the analytic ingredients are proved sorry-free:
+  --   * summation shift  `rhat 17 n = Σ'_j Rn 17 n (j−m−½)`         — `rhat_shift` (n ≥ 1);
+  --   * column tails     `Σ'_j 1/(j−m−½+k)^i = (2^i−1)ζ(i) + head`  — `tail_val_pos`/`neg`;
+  --   * odd ζ-sum        `2^i Σ' 1/(2r+1)^i = (2^i−1)ζ(i)`          — `tsum_odd_eq`;
+  --   * head integrality `d^i·2^i·Σ 1/(2ℓ+1)^i ∈ ℤ`                 — `odd_harmonic_integrality`;
+  --   * even/`i=1` drop   `Σ_k a_{i,k}=0`                            — `column_even_zero`, `S 1 = 0`.
+  -- What remains is to (1) decompose each `Rn 17 n (j−m−½)` via `hdec` (poles avoided: the
+  -- arguments are nonzero half-integers), interchange the `Σ'_j` with the finite `i,k` sums
+  -- (each column summable via `summable_half_pos`/`summable_half_neg`), split `k ≤ m` vs
+  -- `k ≥ m+1`, and collect the `(2^i−1)ζ(i)` coefficients into `Σ_{oddIdx3}` (even columns and
+  -- `i=1` vanish); and (2) handle the `i=1` block: since `S 1 = 0` its divergent part cancels,
+  -- leaving `−Σ_k a_{1,k} Σ_{ℓ<k} 1/(ℓ−m−½)` — this needs a negative-base telescoping value
+  -- lemma (analogue of `tsum_harmonic`) and a signed-denominator integrality lemma
+  -- (`|2ℓ−2m−1| ≤ n` cleared by `d_n`), neither of which is yet formalized.  Every finite head
+  -- times `d^{33}` is an integer, so they are absorbed into `Bhat0`.  This mirrors the fully
+  -- proved e07 (`r_n`) assembly in `repr_combined`, adapted to the shifted half-integer nodes.
   sorry
 
 /-! ### Lemma 3: the ζ-representations of `r_n` and `r̂_n` (paper e07, e08)

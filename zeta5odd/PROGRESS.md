@@ -32,8 +32,18 @@ Public API (all in `namespace Zeta5Odd`, parametrized by `q`, with `s = 2q-1`, `
 | `DnBound.lean` | `lcmUpto_le_three_pow n : (lcmUpto n : ℝ) ≤ 3^n` (Hanson) | sorry — worker running |
 | `Numeric.lean` | `g_small : ∀ x, 0<x → f 17 x = 1 → 3^33·g 17 x < 1` | sorry — worker running |
 
-Full build GREEN. Exactly 3 sorries remain, all at clean interface targets, each assigned to an Opus worker.
-Glue lemmas `tendsto_seven_root` (Main) and `exists_common_denom` (ZetaValues) proven & verified.
+Full build GREEN. Glue lemmas `tendsto_seven_root` (Main) and `exists_common_denom` (ZetaValues) proven.
+
+### Detailed sub-lemma status (6 real sorries)
+**Forms.lean** — `elim_integer` PROVED from `repr_combined`; `dvd_lcmUpto`, `harmonic_integrality`, `oddIdx3` bookkeeping PROVED. Remaining:
+  - `Rn_eq_c`, `Rn_eq_chat` (bridge R_n↔c/chat, factorial algebra) — **worker running (round 2)**
+  - `partialFraction_exists` (e04 + Lemma 1 integrality + Lemma 2 symmetry) — NOT yet assigned (hardest)
+  - `repr_combined` (e07/e08 Lemma-3 assembly; consumes the two above) — NOT yet assigned
+**DnBound.lean** — Hanson divisibility half FULLY PROVED sorry-free (`lcmUpto_dvd_hansonC` via Sylvester seq + `core_sum_le` + Legendre). Remaining:
+  - `hansonC_le_three_pow` (size bound `C n ≤ 3^n`, `Σ(log aᵢ)/aᵢ=1.083<log3`) — **worker running (round 2)**
+**Numeric.lean** — `g_small` (`3^33·g(x₀)<1`) — **worker running**
+
+Workers auto-merge to master on completion (harness handles worktree→master).
 
 ## Key interface identity (why `elim_integer` is exactly right)
 ζ(j)-coeff of `r` is `a_j`; of `rhat` is `a_j(2^j−1)`. So `7r−r̂` has ζ(j)-coeff `a_j(8−2^j)`.

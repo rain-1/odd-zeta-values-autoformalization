@@ -1,5 +1,34 @@
 # Zudilin ζ(5)…ζ(s) irrationality — formalization progress
 
+## ✅ COMPLETE (2026-07-16) — sorry-free, standard axioms only
+
+The full theorem of W. Zudilin, arXiv:1801.09895 (s = 33 variant), is formalized end to end.
+
+**Final theorem** (`Zeta5Odd/Main.lean`):
+```
+theorem zeta_odd_irrational : ∃ j ∈ oddIdx, Irrational (zetaVal j)
+```
+where `oddIdx = (Finset.Icc 5 33).filter Odd = {5,7,9,…,33}` and
+`zetaVal j = ∑' n:ℕ, (1:ℝ)/(n+1)^j`.  I.e. **at least one of ζ(5), ζ(7), …, ζ(33) is irrational.**
+
+**Axiom check** (`#print axioms zeta_odd_irrational`), verbatim:
+```
+'Zeta5Odd.zeta_odd_irrational' depends on axioms: [propext, Classical.choice, Quot.sound]
+```
+No `sorryAx`, no `native_decide`/`ofReduceBool`. `lake build` green (8671 jobs); `grep sorry` = none.
+
+Deviation from the paper's headline s=25: this Mathlib has no PNT, so we use Hanson's elementary
+`d_n ≤ 3^n` (proved here in full) and s=33 — exactly the paper's own §4 fallback. Flagged, approved.
+
+What was hardest (all now sorry-free): Hanson's `d_n ≤ 3^n` (Sylvester construction + Legendre
+divisibility + `decide` finite regime to n<1600 + certified `Σ(log aᵢ)/aᵢ<log3` large-n Stirling);
+the partial-fraction decomposition `pf_decomp` (six explicit integer-coefficient simple functions,
+two-pole expansion, product induction, polynomial-interpolation identities); and the Lemma-3 series
+identities `repr_combined` (e07 r_n + e08 r̂_n with the half-integer summation shift).
+
+---
+
+
 Paper: W. Zudilin, arXiv:1801.09895. Lean/Mathlib: `v4.33.0-rc1`, Mathlib master `cd580e54`.
 
 ## DONE (pre-existing, committed on master)

@@ -17,8 +17,13 @@ is trivial (difference-word invariant, §5b), and the full 20-orientation scan
 finds **no** symmetric (both-ends-leaf) orientation (§5b); the factor-reducing
 "merge" of the stray P5 provably *increases* the coupled count 4→5 (§5c). The
 weight-7 cell is dihedrally rigid: BZ's M₀,₈ two-sided leaf-collapse does not
-extend. **Recommended path to I′₃:** numeric evaluation of the 4-fold Barnes +
-PSLQ (§5d), which sidesteps the rigidity. Every identity/table below is
+extend. The numeric route (§5f) was then executed: an exact all-positive 4-fold
+series was derived and verified (reproduces I₀,I₁,I₂), but it converges only
+**algebraically** (needs 10^{72–100} terms for PSLQ-grade precision; ε-acceleration
+gains ~1.5 digits) — a hard **precision wall** that is the analytic shadow of the
+same rigidity. **I′₃ is not reached**: the exact route needs HyperInt or creative
+telescoping on the (now machine-verified) J-form, tooling absent here — exactly
+BZ's stated limitation at this weight. Every identity/table below is
 machine-verified.
 
 Scripts: `zeta7_barnes_stage1.py`, `zeta7_barnes_stage2.py`,
@@ -393,6 +398,91 @@ P5 = 1−y₄y₅(1−y₇) against the contour/other factors:
   form is a one-step residue extension of the controlled weight-5 object, giving
   an independent handle on I′ₙ. [DIRECTION logged, not executed.]
 
+## 5f. NUMERIC ENDGAME: exact representation, convergence, and the precision wall
+
+Executing the coordinator's numeric route. Two findings: a clean exactly-computable
+representation (verified), and a hard **precision wall** that blocks PSLQ at the
+required height.
+
+**A single-centre structural identity [VERIFIED].** In the J-form *all four*
+coupled factors share the centre y₄:
+
+    P2 = 1 − y₄·L,      P4 = 1 − y₄·R,
+    P5 = 1 − y₄·R',     P3 = 1 − y₄·L·R,
+    with  L = y₃(1−y₁y₂),  R = y₅(1−y₆y₇),  R' = y₅(1−y₇).
+
+So I_n = ∫ y₄^{2n+1}(1−y₄)^n ∏_{i≠4}y_i^n(1−y_i)^n /
+[(1−y₄L)(1−y₄LR)(1−y₄R)(1−y₄R')]^{n+1} dy — the exact analogue of BZ's
+single-centre M₀,₈ J-form (there every factor was 1−y₃·(1−y_ay_b)).
+
+**All-positive 4-fold series [DERIVED, VERIFIED — `zeta7_barnes_num1.py`].**
+Expanding each 1/P_k^{n+1}=Σ C(n+m,m)(y₄X_k)^m and integrating monomials gives an
+**all-positive** (no cancellation) exact rational series:
+
+    I_n = Σ_{a,b,c,d≥0} C(n+a,a)C(n+b,b)C(n+c,c)C(n+d,d) · G₂(a+b) · H₂(b+c,d)
+          · B(n+a+b+1,n+1) · B(2n+2+a+b+c+d,n+1) · B(n+b+c+d+1,n+1),
+    G₂(p)=∫∫ y₁^n(1−y₁)^n y₂^n(1−y₂)^n(1−y₁y₂)^p = Σ_k(−1)^k C(p,k)B(n+1+k,n+1)²,
+    H₂(q,r)=Σ_j(−1)^j C(q,j)B(n+j+1,n+1)B(n+j+1,n+r+1),  B = Euler Beta.
+
+Verified: the partial sums climb monotonically to I₀=3.55544…, I₁=3.2070…e−5,
+I₂=1.10…e−9 (matching BZ's exact anchors). **The representation is correct.**
+
+**The precision wall [VERIFIED — `zeta7_barnes_num_accel.py`, `rate.py`].** The
+series converges **algebraically**, error ~ C·N^{−p} with the measured exponents
+
+    n=1: p ≈ 1.16,   n=2: p ≈ 1.56
+
+(the ∏(1−y_i)^n numerator does *not* geometrise it — the corner divisors
+y₃y₄→1, y₄y₅→1 dominate). Consequences:
+
+* To reach the ~120 digits PSLQ needs at n=3 (6-term basis, ~11-digit
+  coefficients) requires **N ~ 10^{100} (n=1), 10^{72} (n=2)** terms *per
+  dimension* — total ~N⁴. Infeasible on any hardware, overnight or otherwise.
+* **Convergence acceleration fails.** Wynn's ε-algorithm on 45 partial sums
+  (n=1) improves the error only from 2.2·10⁻⁶ to 7·10⁻⁸ — **~1.5 digits gained**.
+  The multi-scale corner singularity (several non-integer powers, in 4 coupled
+  directions) has no clean asymptotic expansion for Richardson/ε to exploit.
+
+So the all-positive series certifies the *value* to a few digits but is
+**structurally incapable** of PSLQ-grade precision. This is a genuine wall, not a
+tuning issue.
+
+**Why the exponentially-convergent Barnes is blocked.** BZ's M₀,₈ intJ converges
+exponentially because each inner pair-integral is a **₃F₂** — which requires
+1−(centre)·X with **X a "1−monomial" so that 1−X is a monomial** (their
+X=1−y₁y₂, 1−X=y₁y₂). Here the single-centre factors are 1−y₄·L with
+L=y₃(1−y₁y₂), so **1−L = 1−y₃(1−y₁y₂) is not a monomial** — the extra central
+variable y₃ (and y₅ on the right, and the L·R cross-term in P3) is exactly the
+weight-7 excess. The pair-integrals are therefore Appell/Kampé-de-Fériet, not
+₃F₂, and the Eulerian ∫₀^∞ dz step that produces BZ's convergent Gamma-only
+integrand does not close in a single central variable. This is the *same*
+obstruction seen in §5 (the stray P5 / central P3), now in the analytic register:
+**there is no exponentially-convergent single-/double-Barnes for this cell.** A
+convergent representation exists only as a genuine multi-variable
+(Appell-Barnes) contour integral — the multi-day derivation BZ flag as
+impractical at this weight.
+
+**Cost analysis / honest status for n=3 (coordinator directive 4).**
+- *Series + acceleration:* ruled out (10^{72–100} terms; ε gains ~1.5 digits).
+- *Direct 7-dim / reduced 3-dim tanh-sinh:* the corner singularities are
+  integrable and tanh-sinh-friendly per dimension, but the ≥3-dim outer integral
+  with a nested Appell inner (no closed form cheap near the corner) is ≳10^{12}
+  arbitrary-precision evaluations for ~120 digits — not feasible in this
+  environment even overnight on 6 threads.
+- *The two routes that would work are exactly the ones BZ used and that are
+  unavailable here:* (i) **HyperInt** (Panzer, Maple) — symbolic hyperlogarithm
+  integration of the J-form, which produced BZ's n=0,1,2; (ii) **creative
+  telescoping** (Koutschan's HolonomicFunctions, Mathematica) to get the
+  Apéry-type recurrence and propagate exact I₃ from I₀,I₁,I₂. Neither toolchain
+  is in this environment (confirmed in `ZETA7_FAMILY.md` §2c).
+
+**Net:** the numeric pipeline is *built and validated* (exact all-positive series,
+matches I₀,I₁,I₂), but I′₃ to certified PSLQ precision is **not reachable** with
+the available representations and tooling — the precision wall is the analytic
+shadow of the dihedral rigidity (§5). The decisive next step is a HyperInt or
+creative-telescoping run on the verified J-form (Stage 2), for which the exact
+integrand is now in hand and machine-checked.
+
 ## 6. Reproduction / honesty ledger
 
 * Stage 1 identity, general n: **[VERIFIED exact]** `zeta7_barnes_stage1.py`
@@ -419,10 +509,17 @@ P5 = 1−y₄y₅(1−y₇) against the contour/other factors:
 * §5d/5e assessment and residue directions: **[ANALYSIS / DIRECTION]** — the
   quadruple-Barnes contour count and the numeric-PSLQ recommendation are reasoned,
   not executed; the P5-residue→M₀,₈ cross-check is logged, not run.
-* Stages 4 (residue decomposition, reproduce I₀,I₁,I₂ from the Barnes form) and 5
-  (I′₃, denominator audit): **[NOT REACHED]** — the clean symbolic route is gated
-  on a symmetric orientation that §5b **proves does not exist**; the recommended
-  route is now numeric 4-fold Barnes + PSLQ (§5d).
+* §5f single-centre identity P_k=1−y₄X_k: **[VERIFIED by inspection]** (L,R,R' as
+  stated). All-positive series: **[DERIVED, VERIFIED numerically]**
+  `zeta7_barnes_num1.py` (matches I₀,I₁,I₂). Convergence exponents and the
+  10^{72–100}-term / ε-acceleration cost: **[VERIFIED]** `zeta7_barnes_num_accel.py`,
+  `rate.py`.
+* Stages 4 (residue decomposition, reproduce I₀,I₁,I₂ from a Barnes form) and 5
+  (I′₃, denominator audit): **[NOT REACHED — precision wall, §5f]**. The clean
+  symbolic route is gated on a symmetric orientation that §5b proves does not
+  exist; the numeric route is blocked by algebraic convergence (§5f); the exact
+  route needs HyperInt or creative telescoping on the (verified) J-form — tooling
+  not in this environment. I′₃ remains open, as BZ anticipated for this weight.
 
 **Deliverable status:** the change-of-variables half of route (a) is *done and
 exact* (a new, clean 4-coupled-factor J-form for the M₀,₁₀ ζ(7) integral,

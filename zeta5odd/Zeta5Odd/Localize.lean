@@ -1237,11 +1237,231 @@ private lemma chat_ratio (q n k : ℕ) :
   push_cast
   field_simp
 
+/-- `A`-part bridge for `chat` (lower): `(1-2/j)·g₁ ≤ Â`. -/
+private lemma chat_bridge_A (j n : ℕ) (hj : 1 ≤ j) :
+    (1 - 2 / (j : ℝ)) * (((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2)
+      ≤ (6 * (n : ℝ) + 2 * j + 3) * (6 * (n : ℝ) + 2 * j + 2)
+          / ((2 * (j : ℝ) + 2) * (2 * (j : ℝ) + 1)) := by
+  have hjR : (0 : ℝ) < j := by exact_mod_cast hj
+  have hnR : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+  have hden : (0 : ℝ) < 2 * (j : ℝ) ^ 2 + 3 * j + 1 := by positivity
+  set g1 : ℝ := ((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2 with hg1
+  have hg1nn : 0 ≤ g1 := by rw [hg1]; positivity
+  set A : ℝ := (6 * (n : ℝ) + 2 * j + 3) * (6 * (n : ℝ) + 2 * j + 2)
+      / ((2 * (j : ℝ) + 2) * (2 * (j : ℝ) + 1)) with hA
+  set D : ℝ := 2 * (j : ℝ) ^ 2 / (2 * (j : ℝ) ^ 2 + 3 * j + 1) with hD
+  have step2 : 1 - 2 / (j : ℝ) ≤ D := by
+    rw [hD, ← sub_nonneg]
+    have hEq : 2 * (j : ℝ) ^ 2 / (2 * (j : ℝ) ^ 2 + 3 * j + 1) - (1 - 2 / (j : ℝ))
+        = ((j : ℝ) ^ 2 + 5 * j + 2) / ((j : ℝ) * (2 * (j : ℝ) ^ 2 + 3 * j + 1)) := by
+      field_simp; ring
+    rw [hEq]; positivity
+  have step1 : D * g1 ≤ A := by
+    rw [← sub_nonneg, hA, hD, hg1]
+    have hEq : (6 * (n : ℝ) + 2 * j + 3) * (6 * (n : ℝ) + 2 * j + 2)
+            / ((2 * (j : ℝ) + 2) * (2 * (j : ℝ) + 1))
+          - 2 * (j : ℝ) ^ 2 / (2 * (j : ℝ) ^ 2 + 3 * j + 1)
+              * (((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2)
+        = (30 * (n : ℝ) + 10 * j + 6) / (2 * (2 * (j : ℝ) ^ 2 + 3 * j + 1)) := by
+      field_simp; ring
+    rw [hEq]; positivity
+  calc (1 - 2 / (j : ℝ)) * g1 ≤ D * g1 := mul_le_mul_of_nonneg_right step2 hg1nn
+    _ ≤ A := step1
+
+/-- `B`-part Bernoulli bridge for `chat` (lower). -/
+private lemma chat_bridge_B (q j n : ℕ) (hn : 1 ≤ n) :
+    (1 - 2 * (q : ℝ) / n) * (((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ)) ^ (2 * q)
+      ≤ (((2 * n + 2 * j + 1 : ℕ) : ℝ) / ((4 * n + 2 * j + 3 : ℕ) : ℝ)) ^ (2 * q) := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hnj1 : (0 : ℝ) < ((2 * n + 2 * j + 1 : ℕ) : ℝ) := by positivity
+  have hd1 : (0 : ℝ) < ((4 * n + 2 * j + 3 : ℕ) : ℝ) := by positivity
+  have hg1 : (0 : ℝ) < ((n + j : ℕ) : ℝ) := by exact_mod_cast (by omega : 0 < n + j)
+  have hg2 : (0 : ℝ) < ((2 * n + j : ℕ) : ℝ) := by exact_mod_cast (by omega : 0 < 2 * n + j)
+  set bB : ℝ := ((2 * n + 2 * j + 1 : ℕ) : ℝ) / ((4 * n + 2 * j + 3 : ℕ) : ℝ) with hbB
+  set bg : ℝ := ((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ) with hbg
+  have hbg_pos : 0 < bg := by rw [hbg]; exact div_pos hg1 hg2
+  set r : ℝ := bB / bg with hr
+  have hbBr : bB = r * bg := by rw [hr]; field_simp
+  have hkey : (1 - 1 / (n : ℝ)) * bg ≤ bB := by
+    rw [← sub_nonneg, hbB, hbg]
+    have expand : ((2 * n + 2 * j + 1 : ℕ) : ℝ) / ((4 * n + 2 * j + 3 : ℕ) : ℝ)
+          - (1 - 1 / (n : ℝ)) * (((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ))
+        = (2 * (j : ℝ) ^ 2 + 4 * j * n + 3 * j + 3 * (n : ℝ) ^ 2 + 3 * n)
+          / ((n : ℝ) * ((4 * n + 2 * j + 3 : ℕ) : ℝ) * ((2 * n + j : ℕ) : ℝ)) := by
+      rw [eq_div_iff (by positivity)]; field_simp; push_cast; ring
+    rw [expand]; positivity
+  have hr_lb : 1 - 1 / (n : ℝ) ≤ r := by rw [hr]; exact (le_div_iff₀ hbg_pos).mpr hkey
+  have h1n : (0 : ℝ) ≤ 1 - 1 / (n : ℝ) := by
+    rw [sub_nonneg, div_le_one hnR]; exact_mod_cast hn
+  have hpow1 : (1 - 1 / (n : ℝ)) ^ (2 * q) ≤ r ^ (2 * q) :=
+    pow_le_pow_left₀ h1n hr_lb (2 * q)
+  have hbern : 1 - 2 * (q : ℝ) / n ≤ (1 - 1 / (n : ℝ)) ^ (2 * q) := by
+    have hH : (-2 : ℝ) ≤ -(1 / (n : ℝ)) := by
+      have : (1 : ℝ) / n ≤ 1 := by rw [div_le_one hnR]; exact_mod_cast hn
+      linarith
+    have := one_add_mul_le_pow hH (2 * q)
+    have hrw : (1 : ℝ) + (2 * q : ℕ) * (-(1 / (n : ℝ))) = 1 - 2 * (q : ℝ) / n := by
+      push_cast; ring
+    have hrw2 : (1 : ℝ) + -(1 / (n : ℝ)) = 1 - 1 / (n : ℝ) := by ring
+    rw [hrw, hrw2] at this; exact this
+  have hr2q : 1 - 2 * (q : ℝ) / n ≤ r ^ (2 * q) := le_trans hbern hpow1
+  calc (1 - 2 * (q : ℝ) / n) * bg ^ (2 * q)
+      ≤ r ^ (2 * q) * bg ^ (2 * q) := mul_le_mul_of_nonneg_right hr2q (by positivity)
+    _ = (r * bg) ^ (2 * q) := by rw [mul_pow]
+    _ = bB ^ (2 * q) := by rw [← hbBr]
+
+/-- Combined lower bound for the `chat` term ratio. -/
+private lemma chat_ratio_lb (q j n : ℕ) (hj : 1 ≤ j) (hn : 1 ≤ n) (hn2q : 2 * q ≤ n) :
+    (1 - 2 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * f q ((j : ℝ) / n) ^ 2
+      ≤ chat q n (j + 1) / chat q n j := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hjR : (0 : ℝ) < j := by exact_mod_cast hj
+  set g1 : ℝ := ((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2 with hg1
+  set g2 : ℝ := (((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ)) ^ (2 * q) with hg2
+  have hg1nn : 0 ≤ g1 := by rw [hg1]; positivity
+  have hg2nn : 0 ≤ g2 := by rw [hg2]; positivity
+  have e1 : ((j : ℝ) / n + 3) / ((j : ℝ) / n) = ((j : ℝ) + 3 * n) / (j : ℝ) := by field_simp
+  have e2 : ((j : ℝ) / n + 1) / ((j : ℝ) / n + 2) = ((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ) := by
+    push_cast; field_simp; ring
+  have hfeval : f q ((j : ℝ) / n) ^ 2 = g1 * g2 := by
+    unfold f
+    rw [e1, e2, mul_pow, ← pow_mul, mul_comm q 2, div_pow, hg1, hg2]
+  rw [hfeval, chat_ratio]
+  have h2qn : 0 ≤ 1 - 2 * (q : ℝ) / n := by
+    rw [sub_nonneg, div_le_one hnR]; exact_mod_cast hn2q
+  rcases le_or_gt 0 (1 - 2 / (j : ℝ)) with h4 | h4
+  · calc (1 - 2 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * (g1 * g2)
+        = ((1 - 2 / (j : ℝ)) * g1) * ((1 - 2 * (q : ℝ) / n) * g2) := by ring
+      _ ≤ _ := mul_le_mul (chat_bridge_A j n hj) (chat_bridge_B q j n hn)
+                (mul_nonneg h2qn hg2nn) (le_trans (by positivity) (chat_bridge_A j n hj))
+  · have hLneg : (1 - 2 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * (g1 * g2) ≤ 0 := by
+      have : (1 - 2 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) ≤ 0 :=
+        mul_nonpos_of_nonpos_of_nonneg (le_of_lt h4) h2qn
+      exact mul_nonpos_of_nonpos_of_nonneg this (mul_nonneg hg1nn hg2nn)
+    exact le_trans hLneg (by positivity)
+
+/-- Small-index regime for `chat`. -/
+private lemma chat_ratio_smallj (q J₀ : ℕ) (M : ℝ) :
+    ∀ᶠ n : ℕ in atTop, ∀ j : ℕ, j ≤ J₀ → M ≤ chat q n (j + 1) / chat q n j := by
+  have hCbound : ∀ n : ℕ, 1 ≤ n → ∀ j : ℕ, j ≤ J₀ →
+      36 * (n : ℝ) ^ 2 / (((2 * (J₀ : ℝ) + 2) * (2 * J₀ + 1)) * 9 ^ q)
+        ≤ chat q n (j + 1) / chat q n j := by
+    intro n hn j hj
+    rw [chat_ratio]
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+    have hjR : (0 : ℝ) ≤ j := Nat.cast_nonneg j
+    have hjJ : (j : ℝ) ≤ J₀ := by exact_mod_cast hj
+    have hAp : 36 * (n : ℝ) ^ 2 / ((2 * (J₀ : ℝ) + 2) * (2 * J₀ + 1))
+        ≤ (6 * (n : ℝ) + 2 * j + 3) * (6 * (n : ℝ) + 2 * j + 2)
+            / ((2 * (j : ℝ) + 2) * (2 * (j : ℝ) + 1)) := by
+      have hnum : 36 * (n : ℝ) ^ 2
+          ≤ (6 * (n : ℝ) + 2 * j + 3) * (6 * (n : ℝ) + 2 * j + 2) := by
+        have : (6 * (n : ℝ) + 2 * j + 3) * (6 * (n : ℝ) + 2 * j + 2) - 36 * (n : ℝ) ^ 2
+            = 30 * n + 24 * n * j + 4 * (j : ℝ) ^ 2 + 10 * j + 6 := by ring
+        nlinarith [this, hjR, hnR.le, sq_nonneg (j : ℝ), mul_nonneg hnR.le hjR]
+      calc 36 * (n : ℝ) ^ 2 / ((2 * (J₀ : ℝ) + 2) * (2 * J₀ + 1))
+          ≤ 36 * (n : ℝ) ^ 2 / ((2 * (j : ℝ) + 2) * (2 * (j : ℝ) + 1)) := by gcongr <;> linarith
+        _ ≤ _ := by gcongr
+    have hBp : (1 : ℝ) / 9 ^ q
+        ≤ (((2 * n + 2 * j + 1 : ℕ) : ℝ) / ((4 * n + 2 * j + 3 : ℕ) : ℝ)) ^ (2 * q) := by
+      have hbase : (1 : ℝ) / 3
+          ≤ ((2 * n + 2 * j + 1 : ℕ) : ℝ) / ((4 * n + 2 * j + 3 : ℕ) : ℝ) := by
+        rw [le_div_iff₀ (by positivity)]; push_cast; linarith [hjR, hnR.le]
+      have hp := pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 1/3) hbase (2 * q)
+      rwa [show ((1:ℝ)/3)^(2*q) = 1/9^q from by
+        rw [div_pow, one_pow, pow_mul]; norm_num] at hp
+    calc 36 * (n : ℝ) ^ 2 / (((2 * (J₀ : ℝ) + 2) * (2 * J₀ + 1)) * 9 ^ q)
+        = (36 * (n : ℝ) ^ 2 / ((2 * (J₀ : ℝ) + 2) * (2 * J₀ + 1))) * (1 / 9 ^ q) := by
+          rw [mul_comm ((2 * (J₀ : ℝ) + 2) * (2 * J₀ + 1)) (9 ^ q), ← div_div]; ring
+      _ ≤ _ := mul_le_mul hAp hBp (by positivity) (le_trans (by positivity) hAp)
+  have htend : Tendsto
+      (fun n : ℕ => 36 * (n : ℝ) ^ 2 / (((2 * (J₀ : ℝ) + 2) * (2 * J₀ + 1)) * 9 ^ q))
+      atTop atTop := by
+    apply Filter.Tendsto.atTop_div_const (by positivity)
+    exact Filter.Tendsto.const_mul_atTop (by norm_num : (0:ℝ) < 36)
+      ((tendsto_pow_atTop (n := 2) (by norm_num)).comp (tendsto_natCast_atTop_atTop (R := ℝ)))
+  filter_upwards [htend.eventually_ge_atTop M, eventually_ge_atTop 1] with n hM hn j hj
+  exact le_trans hM (hCbound n hn j hj)
+
 private lemma chat_lower_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :
     ∃ δ : ℝ, 0 < δ ∧ ∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
       (j : ℝ) ≤ (x₀ - ε / 2) * n → (1 + δ) * chat q n j ≤ chat q n (j + 1) := by
-  sorry
+  obtain ⟨x₁, hx₀x₁, hanti, _hflt⟩ := f_shape q hq hx₀ hfx₀
+  rcases le_or_gt (x₀ - ε / 2) 0 with hxle | hxpos
+  · refine ⟨1, one_pos, ?_⟩
+    filter_upwards [chat_ratio_smallj q 0 2, eventually_ge_atTop 1] with n hsmall hn1 j hj
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn1
+    have hj0 : j = 0 := by
+      by_contra h
+      have hj1 : (1 : ℝ) ≤ (j : ℝ) := by exact_mod_cast Nat.one_le_iff_ne_zero.mpr h
+      have hxn : (x₀ - ε / 2) * (n : ℝ) ≤ 0 := mul_nonpos_of_nonpos_of_nonneg hxle hnR.le
+      linarith [hj]
+    subst hj0
+    rw [← le_div_iff₀ (chat_pos q n 0)]
+    have := hsmall 0 (le_refl 0); linarith
+  · set x_ : ℝ := x₀ - ε / 2 with hx_
+    have hx_lt : x_ < x₀ := by rw [hx_]; linarith
+    have hx_x1 : x_ < x₁ := lt_trans hx_lt hx₀x₁
+    have hx_mem : x_ ∈ Set.Ioo 0 x₁ := ⟨hxpos, hx_x1⟩
+    have hx0_mem : x₀ ∈ Set.Ioo 0 x₁ := ⟨hx₀, hx₀x₁⟩
+    set M : ℝ := f q x_ with hM
+    have hM1 : 1 < M := by rw [hM]; have := hanti hx_mem hx0_mem hx_lt; rwa [hfx₀] at this
+    have hMpos : 0 < M := by linarith
+    have hM2 : 1 < M ^ 2 := by nlinarith
+    have hM2pos : 0 < M ^ 2 := pow_pos hMpos 2
+    have hM2m1 : 0 < M ^ 2 - 1 := by linarith
+    set δ : ℝ := (M ^ 2 - 1) / 4 with hδ
+    have hδpos : 0 < δ := by rw [hδ]; linarith
+    refine ⟨δ, hδpos, ?_⟩
+    set J₀ : ℕ := ⌈4 * M ^ 2 / (M ^ 2 - 1)⌉₊ with hJ0
+    have hev_n2 : ∀ᶠ n : ℕ in atTop, (M ^ 2 + 3) / (2 * (M ^ 2 + 1)) ≤ 1 - 2 * (q : ℝ) / n := by
+      have htz : Tendsto (fun n : ℕ => 2 * (q : ℝ) / n) atTop (𝓝 0) :=
+        tendsto_const_div_atTop_nhds_zero_nat (2 * (q : ℝ))
+      have ht1 : Tendsto (fun n : ℕ => 1 - 2 * (q : ℝ) / n) atTop (𝓝 1) := by
+        have := (tendsto_const_nhds (x := (1 : ℝ))).sub htz; simpa using this
+      have hclt : (M ^ 2 + 3) / (2 * (M ^ 2 + 1)) < 1 := by
+        rw [div_lt_one (by positivity)]; nlinarith
+      exact ht1.eventually (eventually_ge_nhds hclt)
+    filter_upwards [chat_ratio_smallj q J₀ (1 + δ), hev_n2, eventually_ge_atTop (2 * q),
+      eventually_ge_atTop 1] with n hsmall hn2thr hn2q hn1 j hj
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn1
+    rcases le_or_gt j J₀ with hjle | hjgt
+    · rw [← le_div_iff₀ (chat_pos q n j)]; exact hsmall j hjle
+    · have hj1 : 1 ≤ j := by omega
+      have hjRpos : (0 : ℝ) < (j : ℝ) :=
+        lt_of_lt_of_le one_pos (by exact_mod_cast hj1 : (1 : ℝ) ≤ (j : ℝ))
+      have hlb := chat_ratio_lb q j n hj1 hn1 hn2q
+      have hjge : 4 * M ^ 2 / (M ^ 2 - 1) ≤ (j : ℝ) :=
+        le_trans (Nat.le_ceil _) (by exact_mod_cast hjgt.le)
+      have h8 : 4 * M ^ 2 ≤ (M ^ 2 - 1) * (j : ℝ) := by
+        rw [div_le_iff₀ hM2m1] at hjge; linarith
+      have hj4 : (M ^ 2 + 1) / (2 * M ^ 2) ≤ 1 - 2 / (j : ℝ) := by
+        rw [← sub_nonneg]
+        have heq : 1 - 2 / (j : ℝ) - (M ^ 2 + 1) / (2 * M ^ 2)
+            = ((M ^ 2 - 1) * (j : ℝ) - 4 * M ^ 2) / (2 * M ^ 2 * (j : ℝ)) := by
+          field_simp; ring
+        rw [heq]; exact div_nonneg (by linarith) (by positivity)
+      have hjnpos : (0 : ℝ) < (j : ℝ) / n := div_pos hjRpos hnR
+      have hjnle : (j : ℝ) / n ≤ x_ := by rw [div_le_iff₀ hnR, hx_]; exact hj
+      have hjnlt1 : (j : ℝ) / n < x₁ := lt_of_le_of_lt hjnle hx_x1
+      have hfge : M ≤ f q ((j : ℝ) / n) := by
+        rw [hM]; exact hanti.antitoneOn ⟨hjnpos, hjnlt1⟩ hx_mem hjnle
+      have hf2 : M ^ 2 ≤ f q ((j : ℝ) / n) ^ 2 := pow_le_pow_left₀ hMpos.le hfge 2
+      have hlb1pos : 0 < (M ^ 2 + 1) / (2 * M ^ 2) := div_pos (by positivity) (by positivity)
+      have hbpos : 0 < 1 - 2 / (j : ℝ) := lt_of_lt_of_le hlb1pos hj4
+      have hlb2pos : 0 < (M ^ 2 + 3) / (2 * (M ^ 2 + 1)) := div_pos (by positivity) (by positivity)
+      have hab : (M ^ 2 + 1) / (2 * M ^ 2) * ((M ^ 2 + 3) / (2 * (M ^ 2 + 1)))
+          ≤ (1 - 2 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) :=
+        mul_le_mul hj4 hn2thr hlb2pos.le hbpos.le
+      have hfin : (M ^ 2 + 1) / (2 * M ^ 2) * ((M ^ 2 + 3) / (2 * (M ^ 2 + 1))) * M ^ 2
+          ≤ (1 - 2 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * f q ((j : ℝ) / n) ^ 2 :=
+        mul_le_mul hab hf2 hM2pos.le (mul_nonneg hbpos.le (by linarith [hn2thr, hlb2pos]))
+      have heq : (M ^ 2 + 1) / (2 * M ^ 2) * ((M ^ 2 + 3) / (2 * (M ^ 2 + 1))) * M ^ 2
+          = (M ^ 2 + 3) / 4 := by field_simp; ring
+      have hδeq : 1 + δ = (M ^ 2 + 3) / 4 := by rw [hδ]; ring
+      rw [← le_div_iff₀ (chat_pos q n j), hδeq]
+      linarith [hlb, hfin, heq.le, heq.ge]
 
 private lemma chat_upper_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :

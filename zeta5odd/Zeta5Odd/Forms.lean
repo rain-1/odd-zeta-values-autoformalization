@@ -524,7 +524,330 @@ private theorem pf_mul_simple (n L : ℕ) (hL : 1 ≤ L) (c : ℕ → ℤ) (G : 
             = ∑ i ∈ Finset.Icc 1 (L + 1), ∑ k ∈ Finset.range (n + 1), a' i k / (t + (k : ℝ)) ^ i)
       ∧ (∀ i ∈ Finset.Icc 1 (L + 1), ∀ k ∈ Finset.range (n + 1),
           ∃ z : ℤ, (Nat.lcmUpto n : ℝ) ^ (L + 1 - i) * a' i k = z) := by
-  sorry
+  classical
+  refine ⟨fun j m =>
+      (if 2 ≤ j then (c m : ℝ) * a (j - 1) m else 0)
+      + (∑ kp ∈ Finset.range (n + 1), ∑ i ∈ Finset.Icc j L,
+          (c kp : ℝ) * a i m * (-1) ^ (i - j) / ((kp : ℝ) - (m : ℝ)) ^ (i - j + 1))
+      + (if j = 1 then
+          ∑ k ∈ Finset.range (n + 1), ∑ i ∈ Finset.Icc 1 L,
+            (c m : ℝ) * a i k * (-1) ^ i / ((m : ℝ) - (k : ℝ)) ^ i
+         else 0), ?_, ?_⟩
+  · -- ============ DECOMPOSITION ============
+    intro t ht
+    -- Per-source expansion (proved as hexp above; inline).
+    have hexp : ∀ (i : ℕ), 1 ≤ i → ∀ k ∈ Finset.range (n + 1),
+        simpleFn n c t * (a i k / (t + (k : ℝ)) ^ i)
+        = (c k : ℝ) * a i k / (t + (k : ℝ)) ^ (i + 1)
+          + (∑ kp ∈ Finset.range (n + 1), ∑ r ∈ Finset.range i,
+              (c kp : ℝ) * a i k * (-1) ^ r / ((kp : ℝ) - (k : ℝ)) ^ (r + 1) / (t + (k : ℝ)) ^ (i - r))
+          + (∑ kp ∈ Finset.range (n + 1),
+              (c kp : ℝ) * a i k * (-1) ^ i / ((kp : ℝ) - (k : ℝ)) ^ i / (t + (kp : ℝ))) := by
+      intro i hi k hk
+      have huk : t + (k : ℝ) ≠ 0 := ht k hk
+      rw [simpleFn, Finset.sum_mul, ← Finset.add_sum_erase _ _ hk]
+      have hdiag : (c k : ℝ) / (t + (k : ℝ)) * (a i k / (t + (k : ℝ)) ^ i)
+          = (c k : ℝ) * a i k / (t + (k : ℝ)) ^ (i + 1) := by rw [pow_succ]; field_simp
+      rw [hdiag]
+      have herase : ∑ kp ∈ (Finset.range (n + 1)).erase k,
+            (c kp : ℝ) / (t + (kp : ℝ)) * (a i k / (t + (k : ℝ)) ^ i)
+          = ∑ kp ∈ (Finset.range (n + 1)).erase k,
+              ((∑ r ∈ Finset.range i,
+                  (c kp : ℝ) * a i k * (-1) ^ r / ((kp : ℝ) - (k : ℝ)) ^ (r + 1) / (t + (k : ℝ)) ^ (i - r))
+               + (c kp : ℝ) * a i k * (-1) ^ i / ((kp : ℝ) - (k : ℝ)) ^ i / (t + (kp : ℝ))) := by
+        apply Finset.sum_congr rfl
+        intro kp hkp
+        rw [Finset.mem_erase, Finset.mem_range] at hkp
+        obtain ⟨hkpne, hkpr⟩ := hkp
+        have hδ : (kp : ℝ) - (k : ℝ) ≠ 0 := by
+          intro h; apply hkpne; have : (kp : ℝ) = (k : ℝ) := by linarith
+          exact_mod_cast this
+        have hukp : t + (kp : ℝ) ≠ 0 := ht kp (Finset.mem_range.mpr hkpr)
+        have huδeq : (t + (k : ℝ)) + ((kp : ℝ) - (k : ℝ)) = t + (kp : ℝ) := by ring
+        have huδ : (t + (k : ℝ)) + ((kp : ℝ) - (k : ℝ)) ≠ 0 := by rw [huδeq]; exact hukp
+        have hpt := pf_two_pole i (t + (k : ℝ)) ((kp : ℝ) - (k : ℝ)) huk hδ huδ
+        rw [huδeq] at hpt
+        have hrw : (c kp : ℝ) / (t + (kp : ℝ)) * (a i k / (t + (k : ℝ)) ^ i)
+            = (c kp : ℝ) * a i k * (1 / ((t + (k : ℝ)) ^ i * (t + (kp : ℝ)))) := by field_simp
+        rw [hrw, hpt, mul_add, Finset.mul_sum]
+        refine congr_arg₂ (· + ·) ?_ ?_
+        · exact Finset.sum_congr rfl (fun r _ => by ring)
+        · ring
+      rw [herase, Finset.sum_add_distrib]
+      have hmid : ∑ kp ∈ (Finset.range (n + 1)).erase k,
+            (∑ r ∈ Finset.range i,
+              (c kp : ℝ) * a i k * (-1) ^ r / ((kp : ℝ) - (k : ℝ)) ^ (r + 1) / (t + (k : ℝ)) ^ (i - r))
+          = ∑ kp ∈ Finset.range (n + 1),
+            (∑ r ∈ Finset.range i,
+              (c kp : ℝ) * a i k * (-1) ^ r / ((kp : ℝ) - (k : ℝ)) ^ (r + 1) / (t + (k : ℝ)) ^ (i - r)) := by
+        apply Finset.sum_subset (Finset.erase_subset _ _)
+        intro x hx hxni
+        have hxk : x = k := by by_contra h; exact hxni (Finset.mem_erase.mpr ⟨h, hx⟩)
+        subst hxk
+        apply Finset.sum_eq_zero; intro r _
+        rw [sub_self]; simp [zero_pow (Nat.succ_ne_zero r)]
+      have hlast : ∑ kp ∈ (Finset.range (n + 1)).erase k,
+            (c kp : ℝ) * a i k * (-1) ^ i / ((kp : ℝ) - (k : ℝ)) ^ i / (t + (kp : ℝ))
+          = ∑ kp ∈ Finset.range (n + 1),
+            (c kp : ℝ) * a i k * (-1) ^ i / ((kp : ℝ) - (k : ℝ)) ^ i / (t + (kp : ℝ)) := by
+        apply Finset.sum_subset (Finset.erase_subset _ _)
+        intro x hx hxni
+        have hxk : x = k := by by_contra h; exact hxni (Finset.mem_erase.mpr ⟨h, hx⟩)
+        subst hxk
+        rw [sub_self, zero_pow (by omega : i ≠ 0)]; simp
+      rw [hmid, hlast, add_assoc]
+    -- Expand the product using hexp.
+    have hLHS : simpleFn n c t * G t
+        = (∑ i ∈ Finset.Icc 1 L, ∑ k ∈ Finset.range (n + 1),
+            (c k : ℝ) * a i k / (t + (k : ℝ)) ^ (i + 1))
+          + (∑ i ∈ Finset.Icc 1 L, ∑ k ∈ Finset.range (n + 1), ∑ kp ∈ Finset.range (n + 1),
+              ∑ r ∈ Finset.range i,
+                (c kp : ℝ) * a i k * (-1) ^ r / ((kp : ℝ) - (k : ℝ)) ^ (r + 1) / (t + (k : ℝ)) ^ (i - r))
+          + (∑ i ∈ Finset.Icc 1 L, ∑ k ∈ Finset.range (n + 1), ∑ kp ∈ Finset.range (n + 1),
+              (c kp : ℝ) * a i k * (-1) ^ i / ((kp : ℝ) - (k : ℝ)) ^ i / (t + (kp : ℝ))) := by
+      have step1 : simpleFn n c t * G t
+          = ∑ i ∈ Finset.Icc 1 L, ∑ k ∈ Finset.range (n + 1),
+              ((c k : ℝ) * a i k / (t + (k : ℝ)) ^ (i + 1)
+                + (∑ kp ∈ Finset.range (n + 1), ∑ r ∈ Finset.range i,
+                    (c kp : ℝ) * a i k * (-1) ^ r / ((kp : ℝ) - (k : ℝ)) ^ (r + 1) / (t + (k : ℝ)) ^ (i - r))
+                + (∑ kp ∈ Finset.range (n + 1),
+                    (c kp : ℝ) * a i k * (-1) ^ i / ((kp : ℝ) - (k : ℝ)) ^ i / (t + (kp : ℝ)))) := by
+        rw [hdec t ht, Finset.mul_sum]
+        apply Finset.sum_congr rfl; intro i hi
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl; intro k hk
+        exact hexp i (Finset.mem_Icc.mp hi).1 k hk
+      rw [step1]
+      simp only [Finset.sum_add_distrib]
+    rw [hLHS]
+    -- Distribute the RHS over the three pieces.
+    dsimp only
+    rw [show (∑ j ∈ Finset.Icc 1 (L + 1), ∑ m ∈ Finset.range (n + 1),
+          ((if 2 ≤ j then (c m : ℝ) * a (j - 1) m else 0)
+            + (∑ kp ∈ Finset.range (n + 1), ∑ i ∈ Finset.Icc j L,
+                (c kp : ℝ) * a i m * (-1) ^ (i - j) / ((kp : ℝ) - (m : ℝ)) ^ (i - j + 1))
+            + (if j = 1 then
+                ∑ k ∈ Finset.range (n + 1), ∑ i ∈ Finset.Icc 1 L,
+                  (c m : ℝ) * a i k * (-1) ^ i / ((m : ℝ) - (k : ℝ)) ^ i
+               else 0)) / (t + (m : ℝ)) ^ j)
+        = (∑ j ∈ Finset.Icc 1 (L + 1), ∑ m ∈ Finset.range (n + 1),
+            (if 2 ≤ j then (c m : ℝ) * a (j - 1) m else 0) / (t + (m : ℝ)) ^ j)
+          + (∑ j ∈ Finset.Icc 1 (L + 1), ∑ m ∈ Finset.range (n + 1),
+              (∑ kp ∈ Finset.range (n + 1), ∑ i ∈ Finset.Icc j L,
+                (c kp : ℝ) * a i m * (-1) ^ (i - j) / ((kp : ℝ) - (m : ℝ)) ^ (i - j + 1)) / (t + (m : ℝ)) ^ j)
+          + (∑ j ∈ Finset.Icc 1 (L + 1), ∑ m ∈ Finset.range (n + 1),
+              (if j = 1 then
+                ∑ k ∈ Finset.range (n + 1), ∑ i ∈ Finset.Icc 1 L,
+                  (c m : ℝ) * a i k * (-1) ^ i / ((m : ℝ) - (k : ℝ)) ^ i
+               else 0) / (t + (m : ℝ)) ^ j)
+        from by simp only [add_div, Finset.sum_add_distrib]]
+    -- Now: SA + SB + SC = P1 + P2 + P3.
+    refine congr_arg₂ (· + ·) (congr_arg₂ (· + ·) ?_ ?_) ?_
+    · -- Claim A: SA = P1
+      rw [show Finset.Icc 1 (L + 1) = insert 1 (Finset.Icc 2 (L + 1)) from by
+            ext x; simp only [Finset.mem_insert, Finset.mem_Icc]; omega,
+          Finset.sum_insert (by simp)]
+      rw [show (∑ m ∈ Finset.range (n + 1),
+            (if 2 ≤ 1 then (c m : ℝ) * a (1 - 1) m else 0) / (t + (m : ℝ)) ^ 1) = 0 from by
+          apply Finset.sum_eq_zero; intro m _; rw [if_neg (by omega)]; simp]
+      rw [zero_add]
+      -- reindex j = i+1 on RHS
+      refine Finset.sum_nbij' (fun i => i + 1) (fun j => j - 1) ?_ ?_ ?_ ?_ ?_
+      · intro a ha; rw [Finset.mem_Icc] at ha ⊢; omega
+      · intro a ha; rw [Finset.mem_Icc] at ha ⊢; omega
+      · intro a ha; omega
+      · intro a ha; rw [Finset.mem_Icc] at ha; omega
+      · intro i hi
+        rw [Finset.mem_Icc] at hi
+        apply Finset.sum_congr rfl; intro m _
+        rw [if_pos (by omega), show i + 1 - 1 = i from by omega]
+    · -- Claim B: SB = P2
+      -- Canonical form C0 = ∑ j∈Icc1L ∑ m ∑ kp ∑ i∈Iccj L,  S
+      -- where S = (c kp)*a i m*(-1)^(i-j)/((kp)-(m))^(i-j+1)/(t+m)^j
+      have hP2 : (∑ j ∈ Finset.Icc 1 (L + 1), ∑ m ∈ Finset.range (n + 1),
+              (∑ kp ∈ Finset.range (n + 1), ∑ i ∈ Finset.Icc j L,
+                (c kp : ℝ) * a i m * (-1) ^ (i - j) / ((kp : ℝ) - (m : ℝ)) ^ (i - j + 1)) / (t + (m : ℝ)) ^ j)
+          = ∑ j ∈ Finset.Icc 1 L, ∑ m ∈ Finset.range (n + 1), ∑ kp ∈ Finset.range (n + 1),
+              ∑ i ∈ Finset.Icc j L,
+                (c kp : ℝ) * a i m * (-1) ^ (i - j) / ((kp : ℝ) - (m : ℝ)) ^ (i - j + 1) / (t + (m : ℝ)) ^ j := by
+        rw [← Finset.sum_subset (Finset.Icc_subset_Icc_right (Nat.le_succ L))]
+        · apply Finset.sum_congr rfl; intro j _
+          apply Finset.sum_congr rfl; intro m _
+          rw [Finset.sum_div]
+          apply Finset.sum_congr rfl; intro kp _
+          rw [Finset.sum_div]
+        · intro x hx hxni
+          rw [Finset.mem_Icc] at hx
+          have hxL : x = L + 1 := by
+            rw [Finset.mem_Icc] at hxni; omega
+          subst hxL
+          apply Finset.sum_eq_zero; intro m _
+          rw [show (∑ kp ∈ Finset.range (n + 1), ∑ i ∈ Finset.Icc (L + 1) L,
+                (c kp : ℝ) * a i m * (-1) ^ (i - (L + 1)) / ((kp : ℝ) - (m : ℝ)) ^ (i - (L + 1) + 1)) = 0 from by
+            apply Finset.sum_eq_zero; intro kp _
+            rw [Finset.Icc_eq_empty (by omega), Finset.sum_empty]]
+          simp
+      have hSB : (∑ i ∈ Finset.Icc 1 L, ∑ k ∈ Finset.range (n + 1), ∑ kp ∈ Finset.range (n + 1),
+              ∑ r ∈ Finset.range i,
+                (c kp : ℝ) * a i k * (-1) ^ r / ((kp : ℝ) - (k : ℝ)) ^ (r + 1) / (t + (k : ℝ)) ^ (i - r))
+          = ∑ j ∈ Finset.Icc 1 L, ∑ m ∈ Finset.range (n + 1), ∑ kp ∈ Finset.range (n + 1),
+              ∑ i ∈ Finset.Icc j L,
+                (c kp : ℝ) * a i m * (-1) ^ (i - j) / ((kp : ℝ) - (m : ℝ)) ^ (i - j + 1) / (t + (m : ℝ)) ^ j := by
+        -- Step 1: reindex inner r → o = i - r over Icc 1 i.
+        have s1 : (∑ i ∈ Finset.Icc 1 L, ∑ k ∈ Finset.range (n + 1), ∑ kp ∈ Finset.range (n + 1),
+                ∑ r ∈ Finset.range i,
+                  (c kp : ℝ) * a i k * (-1) ^ r / ((kp : ℝ) - (k : ℝ)) ^ (r + 1) / (t + (k : ℝ)) ^ (i - r))
+            = ∑ i ∈ Finset.Icc 1 L, ∑ k ∈ Finset.range (n + 1), ∑ kp ∈ Finset.range (n + 1),
+                ∑ o ∈ Finset.Icc 1 i,
+                  (c kp : ℝ) * a i k * (-1) ^ (i - o) / ((kp : ℝ) - (k : ℝ)) ^ (i - o + 1) / (t + (k : ℝ)) ^ o := by
+          apply Finset.sum_congr rfl; intro i _
+          apply Finset.sum_congr rfl; intro k _
+          apply Finset.sum_congr rfl; intro kp _
+          apply Finset.sum_nbij' (fun r => i - r) (fun o => i - o)
+          · intro a ha; rw [Finset.mem_range] at ha; rw [Finset.mem_Icc]; omega
+          · intro a ha; rw [Finset.mem_Icc] at ha; rw [Finset.mem_range]; omega
+          · intro a ha; rw [Finset.mem_range] at ha; omega
+          · intro a ha; rw [Finset.mem_Icc] at ha; omega
+          · intro a ha; rw [Finset.mem_range] at ha
+            rw [Nat.sub_sub_self (Nat.le_of_lt ha)]
+        rw [s1]
+        -- Step 2: within each i, move ∑_o out: ∑_k∑_kp∑_o → ∑_o∑_k∑_kp.
+        have s2 : (∑ i ∈ Finset.Icc 1 L, ∑ k ∈ Finset.range (n + 1), ∑ kp ∈ Finset.range (n + 1),
+                ∑ o ∈ Finset.Icc 1 i,
+                  (c kp : ℝ) * a i k * (-1) ^ (i - o) / ((kp : ℝ) - (k : ℝ)) ^ (i - o + 1) / (t + (k : ℝ)) ^ o)
+            = ∑ i ∈ Finset.Icc 1 L, ∑ o ∈ Finset.Icc 1 i, ∑ k ∈ Finset.range (n + 1),
+                ∑ kp ∈ Finset.range (n + 1),
+                  (c kp : ℝ) * a i k * (-1) ^ (i - o) / ((kp : ℝ) - (k : ℝ)) ^ (i - o + 1) / (t + (k : ℝ)) ^ o := by
+          apply Finset.sum_congr rfl; intro i _
+          rw [show (∑ k ∈ Finset.range (n + 1), ∑ kp ∈ Finset.range (n + 1), ∑ o ∈ Finset.Icc 1 i,
+                  (c kp : ℝ) * a i k * (-1) ^ (i - o) / ((kp : ℝ) - (k : ℝ)) ^ (i - o + 1) / (t + (k : ℝ)) ^ o)
+                = (∑ k ∈ Finset.range (n + 1), ∑ o ∈ Finset.Icc 1 i, ∑ kp ∈ Finset.range (n + 1),
+                  (c kp : ℝ) * a i k * (-1) ^ (i - o) / ((kp : ℝ) - (k : ℝ)) ^ (i - o + 1) / (t + (k : ℝ)) ^ o)
+              from Finset.sum_congr rfl (fun k _ => Finset.sum_comm)]
+          rw [Finset.sum_comm]
+        rw [s2]
+        -- Step 3: triangular swap ∑_i∑_{o∈Icc1i} → ∑_{o∈Icc1L}∑_{i∈Icco L}.
+        have s3 : (∑ i ∈ Finset.Icc 1 L, ∑ o ∈ Finset.Icc 1 i, ∑ k ∈ Finset.range (n + 1),
+                ∑ kp ∈ Finset.range (n + 1),
+                  (c kp : ℝ) * a i k * (-1) ^ (i - o) / ((kp : ℝ) - (k : ℝ)) ^ (i - o + 1) / (t + (k : ℝ)) ^ o)
+            = ∑ o ∈ Finset.Icc 1 L, ∑ i ∈ Finset.Icc o L, ∑ k ∈ Finset.range (n + 1),
+                ∑ kp ∈ Finset.range (n + 1),
+                  (c kp : ℝ) * a i k * (-1) ^ (i - o) / ((kp : ℝ) - (k : ℝ)) ^ (i - o + 1) / (t + (k : ℝ)) ^ o := by
+          conv_lhs => rw [Finset.sum_sigma']
+          conv_rhs => rw [Finset.sum_sigma']
+          refine Finset.sum_nbij' (fun x => ⟨x.2, x.1⟩) (fun x => ⟨x.2, x.1⟩) ?_ ?_
+            (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl) <;>
+          simp only [Finset.mem_Icc, Sigma.forall, Finset.mem_sigma] <;> omega
+        rw [s3]
+        -- Step 4: within each o, move ∑_i inward: ∑_i∑_k∑_kp → ∑_k∑_kp∑_i.
+        apply Finset.sum_congr rfl; intro o _
+        rw [Finset.sum_comm]
+        apply Finset.sum_congr rfl; intro k _
+        rw [Finset.sum_comm]
+      rw [hSB, hP2]
+    · -- Claim C: SC = P3
+      conv_rhs => rw [Finset.sum_eq_single_of_mem 1 (by rw [Finset.mem_Icc]; omega)
+        (fun j _ hj1 => by apply Finset.sum_eq_zero; intro m _; rw [if_neg hj1]; simp)]
+      simp only [if_true, pow_one, Finset.sum_div]
+      -- ⊢ SC = ∑ m ∑ k ∑ i (c m)*a i k(-1)^i/((m)-(k))^i / (t+m)
+      -- reorder SC (∑_i∑_k∑_kp) to ∑_kp∑_k∑_i
+      rw [Finset.sum_comm]
+      rw [show (∑ k ∈ Finset.range (n + 1), ∑ i ∈ Finset.Icc 1 L, ∑ kp ∈ Finset.range (n + 1),
+              (c kp : ℝ) * a i k * (-1) ^ i / ((kp : ℝ) - (k : ℝ)) ^ i / (t + (kp : ℝ)))
+            = (∑ k ∈ Finset.range (n + 1), ∑ kp ∈ Finset.range (n + 1), ∑ i ∈ Finset.Icc 1 L,
+              (c kp : ℝ) * a i k * (-1) ^ i / ((kp : ℝ) - (k : ℝ)) ^ i / (t + (kp : ℝ)))
+          from Finset.sum_congr rfl (fun k _ => Finset.sum_comm)]
+      rw [Finset.sum_comm]
+      -- ⊢ ∑ kp ∑ k ∑ i (...)/(t+kp) = ∑ m ∑ k ∑ i (c m)*a i k(-1)^i/((m)-(k))^i/(t+m)
+  · -- ============ INTEGRALITY ============
+    intro j hj m hm
+    rw [Finset.mem_Icc] at hj
+    rw [Finset.mem_range] at hm
+    dsimp only
+    set D : ℝ := (Nat.lcmUpto n : ℝ) with hD
+    have hI_add : ∀ x y : ℝ, (∃ z : ℤ, x = z) → (∃ z : ℤ, y = z) → ∃ z : ℤ, x + y = z := by
+      rintro x y ⟨a, rfl⟩ ⟨b, rfl⟩; exact ⟨a + b, by push_cast; ring⟩
+    have hI_mul : ∀ x y : ℝ, (∃ z : ℤ, x = z) → (∃ z : ℤ, y = z) → ∃ z : ℤ, x * y = z := by
+      rintro x y ⟨a, rfl⟩ ⟨b, rfl⟩; exact ⟨a * b, by push_cast; ring⟩
+    have hI_pow : ∀ (x : ℝ) (p : ℕ), (∃ z : ℤ, x = z) → ∃ z : ℤ, x ^ p = z := by
+      rintro x p ⟨a, rfl⟩; exact ⟨a ^ p, by push_cast; ring⟩
+    have hI_sum : ∀ (s : Finset ℕ) (f : ℕ → ℝ), (∀ i ∈ s, ∃ z : ℤ, f i = z) →
+        ∃ z : ℤ, ∑ i ∈ s, f i = z := by
+      intro s f hf
+      classical
+      induction s using Finset.induction_on with
+      | empty => exact ⟨0, by simp⟩
+      | @insert a s ha ih =>
+        rw [Finset.sum_insert ha]
+        exact hI_add _ _ (hf a (Finset.mem_insert_self _ _))
+          (ih (fun i hi => hf i (Finset.mem_insert_of_mem hi)))
+    have hdiv : ∀ p q : ℕ, p < n + 1 → q < n + 1 → ∃ z : ℤ, D / ((p : ℝ) - (q : ℝ)) = z := by
+      intro p q hp hq
+      rcases lt_trichotomy p q with h | h | h
+      · refine ⟨-((Nat.lcmUpto n / (q - p) : ℕ) : ℤ), ?_⟩
+        have hw : q - p ∣ Nat.lcmUpto n := dvd_lcmUpto (by omega) (by omega)
+        have hwne : ((q - p : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+        rw [show (p : ℝ) - (q : ℝ) = -((q - p : ℕ) : ℝ) from by
+              rw [Nat.cast_sub (by omega)]; ring,
+          hD, Int.cast_neg, Int.cast_natCast, Nat.cast_div hw hwne, div_neg]
+      · subst h; exact ⟨0, by simp⟩
+      · refine ⟨((Nat.lcmUpto n / (p - q) : ℕ) : ℤ), ?_⟩
+        have hw : p - q ∣ Nat.lcmUpto n := dvd_lcmUpto (by omega) (by omega)
+        have hwne : ((p - q : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+        rw [show (p : ℝ) - (q : ℝ) = ((p - q : ℕ) : ℝ) from by
+              rw [Nat.cast_sub (by omega)],
+          hD, Int.cast_natCast, Nat.cast_div hw hwne]
+    rw [mul_add, mul_add]
+    refine hI_add _ _ (hI_add _ _ ?_ ?_) ?_
+    · -- D^(L+1-j) * piece1
+      by_cases hj2 : 2 ≤ j
+      · rw [if_pos hj2]
+        obtain ⟨z1, hz1⟩ := hint (j - 1) (Finset.mem_Icc.mpr ⟨by omega, by omega⟩) m
+          (Finset.mem_range.mpr hm)
+        refine ⟨(c m) * z1, ?_⟩
+        rw [show L + 1 - j = L - (j - 1) from by omega]
+        push_cast
+        rw [← hz1]; ring
+      · rw [if_neg hj2]; exact ⟨0, by simp⟩
+    · -- D^(L+1-j) * piece2
+      rw [Finset.mul_sum]
+      apply hI_sum; intro kp hkp
+      rw [Finset.mul_sum]
+      apply hI_sum; intro i hi
+      rw [Finset.mem_range] at hkp
+      rw [Finset.mem_Icc] at hi
+      obtain ⟨z1, hz1⟩ := hint i (Finset.mem_Icc.mpr ⟨by omega, hi.2⟩) m (Finset.mem_range.mpr hm)
+      have hval : D ^ (L + 1 - j) *
+            ((c kp : ℝ) * a i m * (-1) ^ (i - j) / ((kp : ℝ) - (m : ℝ)) ^ (i - j + 1))
+          = (c kp : ℝ) * (-1) ^ (i - j) * (D ^ (L - i) * a i m) * (D / ((kp : ℝ) - (m : ℝ))) ^ (i - j + 1) := by
+        rw [show D ^ (L + 1 - j) = D ^ (L - i) * D ^ (i - j + 1) from by
+              rw [← pow_add]; congr 1; omega, div_pow]
+        ring
+      rw [hval]
+      refine hI_mul _ _ (hI_mul _ _ (hI_mul _ _ ⟨c kp, by norm_cast⟩
+        ⟨(-1) ^ (i - j), by norm_cast⟩) ⟨z1, hz1⟩) ?_
+      exact hI_pow _ _ (hdiv kp m (by omega) (by omega))
+    · -- D^(L+1-j) * piece3
+      by_cases hj1 : j = 1
+      · subst hj1
+        rw [if_pos rfl, Finset.mul_sum]
+        apply hI_sum; intro k hk
+        rw [Finset.mul_sum]
+        apply hI_sum; intro i hi
+        rw [Finset.mem_range] at hk
+        rw [Finset.mem_Icc] at hi
+        obtain ⟨z1, hz1⟩ := hint i (Finset.mem_Icc.mpr ⟨hi.1, hi.2⟩) k (Finset.mem_range.mpr hk)
+        have hval : D ^ (L + 1 - 1) *
+              ((c m : ℝ) * a i k * (-1) ^ i / ((m : ℝ) - (k : ℝ)) ^ i)
+            = (c m : ℝ) * (-1) ^ i * (D ^ (L - i) * a i k) * (D / ((m : ℝ) - (k : ℝ))) ^ i := by
+          rw [show D ^ (L + 1 - 1) = D ^ (L - i) * D ^ i from by
+                rw [← pow_add]; congr 1; omega, div_pow]
+          ring
+        rw [hval]
+        refine hI_mul _ _ (hI_mul _ _ (hI_mul _ _ ⟨c m, by norm_cast⟩
+          ⟨(-1) ^ i, by norm_cast⟩) ⟨z1, hz1⟩) ?_
+        exact hI_pow _ _ (hdiv m k (by omega) (by omega))
+      · rw [if_neg hj1]; exact ⟨0, by simp⟩
 
 /-- **Product of `simple` integer functions decomposes with integrality** (paper Lemma 1).
 By induction on the list `cs`, base case a singleton, inductive step `pf_mul_simple`. -/

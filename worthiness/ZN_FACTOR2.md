@@ -1,5 +1,15 @@
 # Is the factor 2 in Krattenthaler–Rivoal (17.1) actually needed?
 
+> **Scope note (added after review):** this is a finite exact computation
+> (n = 1..5), NOT a proof for all n. It provides the first direct evidence
+> that the leading factor 2 in KR's conjectured law (17.1) is unnecessary,
+> and had the 2 been *needed* at any tested n it would have decisively
+> refuted the 2-free form — but the favorable direction settles nothing
+> universal. A proof would require the asymmetric-series analogue of KR's
+> elementary-brick arithmetic, which they explicitly flagged as unresolved.
+
+
+
 **Question.** Zudilin's asymmetric derived series `Z_n` produces a ℚ-linear form in
 `1, ζ(5), ζ(7), ζ(9), ζ(11)`. Krattenthaler–Rivoal (arXiv:math/0311114, §17.1) prove a
 denominator bound and conjecture a sharpening, **both carrying a leading factor 2**:

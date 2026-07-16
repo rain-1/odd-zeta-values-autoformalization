@@ -175,11 +175,11 @@ Note: the identity requires `1 ≤ q` (equivalently the paper's `s = 2q-1 ≥ 1`
 At `q = 0` the `ℕ`-truncated exponents `2*q-1 = 0` (in `Rn`) and `2*q = 0` (in `c`)
 break the relation `(2q-1)+1 = 2q`, and the statement is genuinely FALSE
 (counterexample `n=0, k=1`: `Rn 0 0 2 = 1` but `c 0 0 1 = 4!/(2·3!) = 2`). -/
-theorem Rn_eq_c (q n k : ℕ) : Rn q n ((n : ℝ) + 1 + (k : ℝ)) = c q n k := by
+theorem Rn_eq_c (q n k : ℕ) (hq1 : 1 ≤ q) : Rn q n ((n : ℝ) + 1 + (k : ℝ)) = c q n k := by
   rcases Nat.eq_zero_or_pos q with hq0 | hq
-  · -- q = 0 : the statement is FALSE (see the counterexample in the docstring).
+  · -- q = 0 excluded by hypothesis (the statement is genuinely false there).
     subst hq0
-    sorry
+    exact absurd hq1 (by norm_num)
   · -- q ≥ 1 : the genuine content.
     set t : ℝ := (n : ℝ) + 1 + (k : ℝ) with ht
     have hP1 : ∏ j ∈ Finset.Icc 1 n, (t - (j : ℝ)) = ((n + k)! : ℝ) / (k ! : ℝ) := by
@@ -252,11 +252,11 @@ theorem Rn_eq_c (q n k : ℕ) : Rn q n ((n : ℝ) + 1 + (k : ℝ)) = c q n k := 
 
 As with `Rn_eq_c`, this needs `1 ≤ q` and is FALSE at `q = 0` (same `ℕ`-truncation
 of `2*q-1` vs `2*q`). -/
-theorem Rn_eq_chat (q n k : ℕ) : Rn q n ((n : ℝ) + 1 / 2 + (k : ℝ)) = chat q n k := by
+theorem Rn_eq_chat (q n k : ℕ) (hq1 : 1 ≤ q) : Rn q n ((n : ℝ) + 1 / 2 + (k : ℝ)) = chat q n k := by
   rcases Nat.eq_zero_or_pos q with hq0 | hq
-  · -- q = 0 : FALSE (same truncation obstruction as `Rn_eq_c`).
+  · -- q = 0 excluded by hypothesis (same truncation obstruction).
     subst hq0
-    sorry
+    exact absurd hq1 (by norm_num)
   · set t : ℝ := (n : ℝ) + 1 / 2 + (k : ℝ) with ht
     -- Half-integer descending product `P1`.
     have hP1 : ∏ j ∈ Finset.Icc 1 n, (t - (j : ℝ))

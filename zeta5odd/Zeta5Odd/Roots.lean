@@ -165,6 +165,25 @@ private lemma tendsto_facTerm (a : ℕ → ℕ) {α : ℝ} (hα : 0 < α)
   field_simp
   ring
 
+/-- Ratio limit for an affine index `a n = A·n + B·κ n + C`. -/
+private lemma tendsto_ratio (κ : ℕ → ℕ) {x₀ : ℝ}
+    (hκ : Tendsto (fun n : ℕ => (κ n : ℝ) / n) atTop (𝓝 x₀))
+    (A B C : ℝ) (a : ℕ → ℕ) (hform : ∀ n, (a n : ℝ) = A * n + B * κ n + C) :
+    Tendsto (fun n : ℕ => (a n : ℝ) / n) atTop (𝓝 (A + B * x₀)) := by
+  have key : ∀ᶠ n : ℕ in atTop,
+      A + B * ((κ n : ℝ) / n) + C * (1 / n) = (a n : ℝ) / n := by
+    filter_upwards [eventually_gt_atTop 0] with n hn0
+    have hnz : (n : ℝ) ≠ 0 := by exact_mod_cast hn0.ne'
+    rw [hform n]; field_simp
+  have hlim : Tendsto (fun n : ℕ => A + B * ((κ n : ℝ) / n) + C * (1 / n)) atTop
+      (𝓝 (A + B * x₀)) := by
+    have h2 : Tendsto (fun n : ℕ => C * (1 / (n : ℝ))) atTop (𝓝 (C * 0)) :=
+      (tendsto_one_div_atTop_nhds_zero_nat).const_mul C
+    have h1 : Tendsto (fun _ : ℕ => A) atTop (𝓝 A) := tendsto_const_nhds
+    have := (h1.add (hκ.const_mul B)).add h2
+    simpa using this
+  exact hlim.congr' key
+
 /-! ### The core peak asymptotic -/
 
 /-- CORE: for any index sequence with `κ n / n → x₀`, the normalized log of the
@@ -174,7 +193,85 @@ private lemma tendsto_logRoot_peak (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ 
     (hfx₀ : f q x₀ = 1) (κ : ℕ → ℕ)
     (hκ : Tendsto (fun n : ℕ => (κ n : ℝ) / n) atTop (𝓝 x₀)) :
     Tendsto (fun n : ℕ => Real.log (c q n (κ n)) / n) atTop (𝓝 (Real.log (g q x₀))) := by
-  sorry
+  -- clean ratio limits
+  have hα1 : Tendsto (fun n : ℕ => ((n : ℕ) : ℝ) / n) atTop (𝓝 1) := by
+    have h := tendsto_ratio κ hκ 1 0 0 (fun n => n) (fun n => by push_cast; ring)
+    rwa [show (1 : ℝ) + 0 * x₀ = 1 by ring] at h
+  have hα2 : Tendsto (fun n : ℕ => ((6 * n + 2 * κ n + 2 : ℕ) : ℝ) / n) atTop (𝓝 (2 * (x₀ + 3))) := by
+    have h := tendsto_ratio κ hκ 6 2 2 (fun n => 6 * n + 2 * κ n + 2) (fun n => by push_cast; ring)
+    rwa [show (6 : ℝ) + 2 * x₀ = 2 * (x₀ + 3) by ring] at h
+  have hα3 : Tendsto (fun n : ℕ => ((n + κ n : ℕ) : ℝ) / n) atTop (𝓝 (x₀ + 1)) := by
+    have h := tendsto_ratio κ hκ 1 1 0 (fun n => n + κ n) (fun n => by push_cast; ring)
+    rwa [show (1 : ℝ) + 1 * x₀ = x₀ + 1 by ring] at h
+  have hα4 : Tendsto (fun n : ℕ => ((2 * κ n + 1 : ℕ) : ℝ) / n) atTop (𝓝 (2 * x₀)) := by
+    have h := tendsto_ratio κ hκ 0 2 1 (fun n => 2 * κ n + 1) (fun n => by push_cast; ring)
+    rwa [show (0 : ℝ) + 2 * x₀ = 2 * x₀ by ring] at h
+  have hα5 : Tendsto (fun n : ℕ => ((2 * n + κ n + 1 : ℕ) : ℝ) / n) atTop (𝓝 (x₀ + 2)) := by
+    have h := tendsto_ratio κ hκ 2 1 1 (fun n => 2 * n + κ n + 1) (fun n => by push_cast; ring)
+    rwa [show (2 : ℝ) + 1 * x₀ = x₀ + 2 by ring] at h
+  -- five factorial asymptotics
+  have F1 := tendsto_facTerm (fun n => n) one_pos hα1
+  have F2 := tendsto_facTerm (fun n => 6 * n + 2 * κ n + 2) (by linarith : (0 : ℝ) < 2 * (x₀ + 3)) hα2
+  have F3 := tendsto_facTerm (fun n => n + κ n) (by linarith : (0 : ℝ) < x₀ + 1) hα3
+  have F4 := tendsto_facTerm (fun n => 2 * κ n + 1) (by linarith : (0 : ℝ) < 2 * x₀) hα4
+  have F5 := tendsto_facTerm (fun n => 2 * n + κ n + 1) (by linarith : (0 : ℝ) < x₀ + 2) hα5
+  -- assemble the log(c)/n combination
+  have base := ((((((F1.const_mul (2 * (q : ℝ) - 6)).add F2).add (F3.const_mul (2 * (q : ℝ)))).sub
+    F4).sub (F5.const_mul (2 * (q : ℝ)))).add (tendsto_logNat_div.const_mul (1 - 2 * (q : ℝ)))).sub
+    (tendsto_const_div_atTop_nhds_zero_nat (Real.log 2))
+  -- log identities at x₀
+  have hx3 : (0 : ℝ) < x₀ + 3 := by linarith
+  have hx1 : (0 : ℝ) < x₀ + 1 := by linarith
+  have hx2 : (0 : ℝ) < x₀ + 2 := by linarith
+  have hlogf : Real.log (x₀ + 3) - Real.log x₀ + (q : ℝ) * (Real.log (x₀ + 1) - Real.log (x₀ + 2))
+      = 0 := by
+    have h0 : Real.log (f q x₀) = 0 := by rw [hfx₀]; exact Real.log_one
+    unfold f at h0
+    rw [Real.log_mul (div_ne_zero hx3.ne' hx₀.ne') (pow_ne_zero q (div_ne_zero hx1.ne' hx2.ne')),
+        Real.log_div hx3.ne' hx₀.ne', Real.log_pow, Real.log_div hx1.ne' hx2.ne'] at h0
+    linear_combination h0
+  have hnum : (0 : ℝ) < 2 ^ 6 * (x₀ + 3) ^ 6 * (x₀ + 1) ^ (2 * q) := by
+    apply mul_pos (mul_pos (by positivity) (pow_pos hx3 6)) (pow_pos hx1 (2 * q))
+  have hlogg : Real.log (g q x₀)
+      = 6 * Real.log 2 + 6 * Real.log (x₀ + 3) + 2 * (q : ℝ) * Real.log (x₀ + 1)
+        - 4 * (q : ℝ) * Real.log (x₀ + 2) := by
+    unfold g
+    rw [Real.log_div hnum.ne' (pow_pos hx2 (4 * q)).ne',
+        Real.log_mul (mul_pos (by positivity) (pow_pos hx3 6)).ne' (pow_pos hx1 (2 * q)).ne',
+        Real.log_mul (by positivity) (pow_pos hx3 6).ne',
+        Real.log_pow, Real.log_pow, Real.log_pow, Real.log_pow]
+    push_cast; ring
+  -- the combination equals `log (c q n (κ n)) / n`, eventually
+  have heq : (fun n : ℕ =>
+      (2 * (q : ℝ) - 6) * ((Real.log ((n)! : ℝ) - (n : ℝ) * Real.log n) / n)
+        + (Real.log ((6 * n + 2 * κ n + 2)! : ℝ)
+            - ((6 * n + 2 * κ n + 2 : ℕ) : ℝ) * Real.log n) / n
+        + 2 * (q : ℝ) * ((Real.log ((n + κ n)! : ℝ)
+            - ((n + κ n : ℕ) : ℝ) * Real.log n) / n)
+        - (Real.log ((2 * κ n + 1)! : ℝ) - ((2 * κ n + 1 : ℕ) : ℝ) * Real.log n) / n
+        - 2 * (q : ℝ) * ((Real.log ((2 * n + κ n + 1)! : ℝ)
+            - ((2 * n + κ n + 1 : ℕ) : ℝ) * Real.log n) / n)
+        + (1 - 2 * (q : ℝ)) * (Real.log n / n)
+        - Real.log 2 / n) =ᶠ[atTop] (fun n : ℕ => Real.log (c q n (κ n)) / n) := by
+    filter_upwards [eventually_gt_atTop 0] with n hn0
+    have hnz : (n : ℝ) ≠ 0 := by exact_mod_cast hn0.ne'
+    rw [log_c_expand]
+    have e6 : ((2 * q - 6 : ℕ) : ℝ) = 2 * (q : ℝ) - 6 := by
+      rw [Nat.cast_sub (by omega)]; push_cast; ring
+    have e2 : ((2 * q : ℕ) : ℝ) = 2 * (q : ℝ) := by push_cast; ring
+    rw [e6, e2]
+    field_simp
+    push_cast
+    ring
+  have hbase := base.congr' heq
+  -- identify the limit with log (g x₀)
+  convert hbase using 2
+  rw [hlogg, Real.log_one,
+      show Real.log (2 * (x₀ + 3)) = Real.log 2 + Real.log (x₀ + 3) from
+        Real.log_mul (by norm_num) hx3.ne',
+      show Real.log (2 * x₀) = Real.log 2 + Real.log x₀ from
+        Real.log_mul (by norm_num) hx₀.ne']
+  linear_combination (-(2 * x₀)) * hlogf
 
 /-! ### Peak index and lower bound -/
 

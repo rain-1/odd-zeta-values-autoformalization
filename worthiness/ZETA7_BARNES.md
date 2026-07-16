@@ -604,3 +604,59 @@ exact* (a new, clean 4-coupled-factor J-form for the M₀,₁₀ ζ(7) integral,
 verified for all n); the Barnes/decomposition half is *precisely mapped but not
 executed*, blocked at the symmetrisation step. No fabricated progress: every
 identity above is `sympy`-verified.
+
+---
+
+## 7. MATHEMATICA 15 CAMPAIGN — HolonomicFunctions pending; built-ins hit the weight-3 wall
+
+River installed Mathematica 15.0 (`/home/ubuntu/fable-episode-2/mathematica/bin/wolfram`;
+the `math` symlink segfaults — use `wolfram -noprompt` via **stdin**). After an
+initial license-expiry hiccup ("No valid password found" on long kernels) River
+**activated the license**; real symbolic work then runs (e.g. ∫₀¹ log(1−x)/x dx =
+−π²/6 confirmed). $Version = "15.0.0 for Linux x86 (64-bit)".
+
+**HolonomicFunctions (Koutschan/RISC) — the right tool, not yet in hand.**
+RISC source `…/ergosum/riscergosum-1.2.4.{tgz,zip}` → **HTTP 401** (password-gated;
+credentials by email to Carsten Schneider — River has emailed RISC). No mirror
+(koutschan.de 404, no GitHub, no Wayback snapshot), and v1.7.3 targets Mathematica
+5.2–11.0 (compatibility risk vs 15). **A ready-to-run creative-telescoping script
+is staged: `zeta7_mma_holonomic.wl`** (Annihilator + CreativeTelescoping of the
+pure-hypergeometric 6-fold summand → the order-≈4 recurrence in n); fire it the
+moment the package is available.
+
+**Mathematica 15 built-ins (fallback) — the same structural wall.**
+1. **Terminating single sums close** [VERIFIED, `zeta7_mma_series.wl`]:
+   Σ_j(−1)^j C(q,j)Γ(n+j+1)Γ(n+1)/Γ(2n+j+2) → B(n+1,n+q+1) (the r-index collapse).
+2. **Infinite ₃F₂-coupled sums do NOT close** [VERIFIED]: with the exact summand
+   ported and re-validated against I₀,I₁ partial sums, `Sum[…,{d,0,∞}]` returns
+   **unevaluated**, exposing the H₂ coupling as
+   `HypergeometricPFQ[{−b−c,1+n,1+n},{2+2n,2+d+2n},1]` — the non-hypergeometric
+   coupling defeats built-in summation (same wall as ore_algebra, §5g).
+3. **Iterated symbolic integration of the J-form (HyperInt-style)** — the direct
+   route to exact I_n, and the numeric-precision-wall-free one (it yields the
+   *exact* symbolic value ⇒ PSLQ is trivial). But generic `Integrate`
+   **blows up at weight 3**, in *every* fibration order tried
+   [`zeta7_mma_iint.wl`, blowup profile]:
+   - y₁-first order: y₁ (wt 1, leaf 85, 4 s), y₂ (wt 2, leaf 148, 19 s),
+     **y₆ (wt 3): ABORT** (>600 s).
+   - y₄-first order: y₄ (wt 1), y₁ (wt 2, leaf 759, 245 s),
+     **y₂ (wt 3): ABORT** (>600 s).
+   Root cause: `Integrate` keeps results in `PolyLog` form, whose *multivariable
+   arguments* explode; HyperInt/HolonomicFunctions instead use a hyperlogarithm
+   representation that composes cleanly under integration. Generic `Integrate` is
+   not a hyperlogarithm engine, so it stalls at weight 3 — far below the weight 7
+   the ζ(7) integral needs, even at n=0.
+
+**Verdict (publication-grade difficulty evidence).** Two independent
+computer-algebra systems — ore_algebra (SageMath) and Mathematica 15 — fail to
+close the M₀,₁₀ ζ(7) reduction, for the **same structural reason** documented
+throughout §5–§7: the natural low-fold summand carries non-hypergeometric
+₃F₂/Appell couplings, and neither generic summation nor generic integration
+handles them; the purpose-built tools (Koutschan's HolonomicFunctions for the
+recurrence, Panzer's HyperInt for the integral) are exactly what BZ used to reach
+n=0,1,2, and exactly what is missing here. **The single clear path to I′₃ is
+running `zeta7_mma_holonomic.wl` under HolonomicFunctions once RISC provides the
+password** — every piece upstream of it (the exact J-form, the exact summand, the
+validated guess-pipeline) is in hand and machine-verified. Absent that, I′₃
+remains open — BZ's stated limitation at this weight, now demonstrated across
+symbolic (§5b), numeric (§5f), and CT (§5g, §7) routes rather than asserted.

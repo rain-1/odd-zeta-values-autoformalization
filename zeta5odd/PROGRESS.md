@@ -43,8 +43,11 @@ axioms `[propext, Classical.choice, Quot.sound]`. Divisibility (Sylvester/Legend
 (`decide` to n<1600), and large-n Stirling (certified `Σ(log aᵢ)/aᵢ<log3` + self-bootstrapping
 `hanson_key` induction, N₀=1600) all done.
 
-**Only Forms.lean remains** — 2 lemmas: `pf_decomp` (partial-fraction + Lemma-1 integrality;
-unassigned) and `hraw` (repr_combined's Lemma-3 series identity; worker running).
+**Forms.lean — down to ONE lemma.** `repr_combined` (both e07 r_n and e08 r̂_n halves),
+`pf_unique`, bridges, well-poised symmetry, `elim_integer` all PROVED sorry-free.
+The SINGLE remaining sorry in the whole project is `pf_decomp` (partial-fraction decomposition
+e04 + Lemma-1 integrality `d_n^{33-i}·a_{i,k} ∈ ℤ`) — **worker running** (via the paper's
+six-simpler-functions route). When it closes, the theorem is complete.
 **Numeric.lean** — `g_small` (`3^33·g(x₀)<1`) — **DONE (sorry-free)**, bracket b=1/40, quadratic-Bernoulli + log-g monotonicity + exact rational `64·121⁶·41³⁴·40²⁸ < 3²³⁹`.
 
 Workers auto-merge to master on completion (harness handles worktree→master).

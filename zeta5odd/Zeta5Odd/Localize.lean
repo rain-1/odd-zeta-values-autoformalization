@@ -108,6 +108,38 @@ private lemma tendsto_Q_geom {lam : ℝ} (hlam0 : 0 ≤ lam) (hlam1 : lam < 1)
   · exact mul_nonneg (hQpos n) (pow_nonneg hlam0 _)
   · exact mul_le_mul_of_nonneg_right (hQ n) (pow_nonneg hlam0 _)
 
+/-- If `0 ≤ Q n ≤ a n² + b` (`a ≥ 0`) then `Q n · λ^(⌊c n⌋ + 1) → 0` for
+`0 < c`, `0 ≤ λ < 1`.  (Geometric decay in `⌊c n⌋` beats the polynomial in `n`.) -/
+private lemma tendsto_npoly_floor_geom {c lam : ℝ} (hc : 0 < c)
+    (hlam0 : 0 ≤ lam) (hlam1 : lam < 1) {Q : ℕ → ℝ} {a b : ℝ} (ha : 0 ≤ a)
+    (hQ0 : ∀ n, 0 ≤ Q n) (hQ : ∀ n, Q n ≤ a * (n : ℝ) ^ 2 + b) :
+    Tendsto (fun n => Q n * lam ^ (⌊c * (n : ℝ)⌋₊ + 1)) atTop (𝓝 0) := by
+  have hdtend : Tendsto (fun n : ℕ => ⌊c * (n : ℝ)⌋₊) atTop atTop :=
+    tendsto_nat_floor_atTop.comp
+      (Filter.Tendsto.const_mul_atTop hc (tendsto_natCast_atTop_atTop (R := ℝ)))
+  have hc2 : (0 : ℝ) < c ^ 2 := by positivity
+  have key : Tendsto (fun n => (Q n * lam) * lam ^ (⌊c * (n : ℝ)⌋₊)) atTop (𝓝 0) := by
+    refine tendsto_Q_geom hlam0 hlam1 (lam * (2 * a / c ^ 2)) (lam * (2 * a / c ^ 2 + b))
+      (fun n => mul_nonneg (hQ0 n) hlam0) (fun n => ?_) hdtend
+    have hcn : c * (n : ℝ) ≤ ((⌊c * (n : ℝ)⌋₊ : ℝ)) + 1 := (Nat.lt_floor_add_one _).le
+    have hn0 : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+    have hd0 : (0 : ℝ) ≤ (⌊c * (n : ℝ)⌋₊ : ℝ) := Nat.cast_nonneg _
+    have hnsq : (n : ℝ) ^ 2 * c ^ 2 ≤ 2 * (⌊c * (n : ℝ)⌋₊ : ℝ) ^ 2 + 2 := by
+      nlinarith [hcn, hn0, hd0, mul_nonneg hc.le hn0, sq_nonneg ((⌊c * (n : ℝ)⌋₊ : ℝ) - 1)]
+    have hgoal : a * (n : ℝ) ^ 2 ≤ 2 * a * ((⌊c * (n : ℝ)⌋₊ : ℝ) ^ 2 + 1) / c ^ 2 := by
+      rw [le_div_iff₀ hc2]; nlinarith [hnsq, ha]
+    have hexp : 2 * a * ((⌊c * (n : ℝ)⌋₊ : ℝ) ^ 2 + 1) / c ^ 2
+        = (2 * a / c ^ 2) * (⌊c * (n : ℝ)⌋₊ : ℝ) ^ 2 + 2 * a / c ^ 2 := by
+      field_simp
+    calc Q n * lam ≤ (a * (n : ℝ) ^ 2 + b) * lam :=
+          mul_le_mul_of_nonneg_right (hQ n) hlam0
+      _ ≤ ((2 * a / c ^ 2) * (⌊c * (n : ℝ)⌋₊ : ℝ) ^ 2 + (2 * a / c ^ 2 + b)) * lam := by
+            apply mul_le_mul_of_nonneg_right _ hlam0
+            linarith [hgoal, hexp.le]
+      _ = lam * (2 * a / c ^ 2) * (⌊c * (n : ℝ)⌋₊ : ℝ) ^ 2 + lam * (2 * a / c ^ 2 + b) := by ring
+  refine key.congr (fun n => ?_)
+  rw [pow_succ]; ring
+
 /-- Split the two-sided tail into a finite lower part and an upper subtype tail. -/
 private lemma tail_decomp {u : ℕ → ℝ} (hsum : Summable u)
     {a b : ℝ} (hab : a ≤ b) :

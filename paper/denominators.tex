@@ -1,0 +1,437 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1.1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[numbers]{natbib}
+\usepackage{hyperref}
+\usepackage{booktabs}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{observation}[theorem]{Observation}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\dn}[1]{d_{#1}}
+\newcommand{\Dnu}{D_{\nu}}
+\newcommand{\ord}{\operatorname{ord}}
+\newcommand{\den}{\operatorname{den}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\frG}{\mathfrak{G}}
+\newcommand{\cF}{\mathcal{F}}
+
+\title{Sharp denominator corrections for Brown--Zudilin cellular\\
+linear forms in $\zeta(5)$: measurements, a conjecture,\\ and a lattice
+mechanism}
+\author{[author list to be determined]\thanks{Draft of 16 July 2026.
+Computations, conjectures and proofs in this paper were produced in a
+human--AI collaboration; the verification code and complete datasets are
+available in the accompanying repository. Correspondence: [address].}}
+\date{July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Brown and Zudilin [arXiv:2210.03391] constructed effective rational
+approximations $I'(\mathbf{a}\cdot n)=Q_n\zeta(5)-P_n$ to $\zeta(5)$ from
+cellular integrals on $\overline{\mathcal M}_{0,8}$, together with
+experimental integrality statements for the coefficients. By recovering
+the exact rational coefficients $P_n,\hat P_n$ at more than $200$
+parameter points via certified integer-relation computations, we show
+that the published integrality claims are false as stated---their own
+printed values violate them---and that the correct statements carry a
+correction factor of exactly $12=2^2\cdot 3$ (respectively $2$ for the
+$\zeta(3)$-companion), which we conjecture to be sharp and verify in
+every measured cell. Unlike the familiar correction factors in the
+classical literature (Ap\'ery, Rhin--Viola, Krattenthaler--Rivoal),
+which we check are uniformly \emph{removable}, this correction is
+\emph{attained}. We propose a mechanism: the coefficients are periods
+against a non-primitive integral Betti class produced by the
+construction's motivic elimination of $\zeta(2)$, so the correction is a
+lattice index bounded by the Bernoulli constant $24$ arising from
+$\zeta(2)=-(2\pi i)^2/24$; an elementary elimination-cost lemma, a
+conditional theorem, and a concrete derivation in the totally symmetric
+case (where the factor $12$ appears as a doubled sine-kernel Laurent
+coefficient $\tfrac16$) support this. As by-products we determine the
+supremum of the Brown--Zudilin ``worthiness'' exponent over the full
+parameter cone, verify that the leading factor $2$ in a denominator
+conjecture of Krattenthaler--Rivoal is unnecessary for $n\le 5$, and
+document an orbit-coherent boundary-prime anomaly. All measured
+denominator slack is bounded; no measured direction offers exponential
+arithmetic gain.
+\end{abstract}
+
+\section{Introduction}
+
+For the linear forms of Ap\'ery-type used in irrationality proofs, the
+arithmetic of the rational coefficients is traditionally expressed by
+\emph{inclusions}: statements of the shape $D_n\cdot(\text{coefficient})
+\in\Z$ for explicit denominators $D_n$ built from $\dn{n}=
+\operatorname{lcm}(1,\dots,n)$. These inclusions are proved (or
+conjectured) from term-by-term analysis, and the question of their
+\emph{sharpness}---whether the true denominators actually attain
+$D_n$---is rarely addressed and, to our knowledge, has never been
+investigated systematically by direct computation.
+
+This paper does so for the family of cellular integrals
+$I(\mathbf{a})$ on $\overline{\mathcal M}_{0,8}$ introduced by Brown and
+Zudilin \cite{BZ}, which produce simultaneous rational approximations
+$I'=Q\zeta(5)-P$, $I''=Q\zeta(3)-\hat P$ by a motivic elimination of the
+parasitic $\zeta(2)$. Our findings:
+
+\begin{enumerate}
+\item The integrality statements printed in \cite{BZ} (their
+experimental inclusions for $I'$, and the totally symmetric display
+$\dn{n}^5 P_n\in\Z$) are \textbf{false as stated}, already against the
+paper's own printed values (\S\ref{sec:corrections}).
+\item The corrected statements carry a factor of exactly $12$
+(resp.\ $2$), and this factor is \textbf{sharp}: it is attained in
+$46$ of $164$ systematically sampled cells at the prime $2$ and $30$
+cells at the prime $3$, and never exceeded in any of our more than
+$200$ certified cells (\S\ref{sec:conjecture}). One isolated,
+orbit-coherent, non-persistent exception at a boundary prime $p=7$ is
+documented in \S\ref{sec:anomaly}.
+\item By contrast, the analogous correction factors appearing in the
+classical literature are uniformly \emph{removable}: we verify
+$\dn{n}^3 a_n\in\Z$ for Ap\'ery's $\zeta(3)$ forms for $n\le 50$
+(sharpening the ubiquitous ``$2\dn{n}^3$''), and we verify that the
+leading factor $2$ retained even in the \emph{conjectured} sharp
+denominator law of Krattenthaler--Rivoal \cite[eq.~(17.1)]{KR} for
+Zudilin's $\zeta(5),\dots,\zeta(11)$ forms is unnecessary for $n\le5$
+(\S\ref{sec:crossfamily})---apparently the first direct computation of
+those coefficients.
+\item We propose a mechanism (\S\ref{sec:mechanism}): the elimination of
+$\zeta(2)$ forces the linear form to be the period of a
+\emph{non-primitive} integral Betti class, and the identity
+$\zeta(2)=-(2\pi i)^2/24$ prices any integral elimination at a lattice
+index dividing $24$. An elementary lemma makes this precise; the
+measured constants $12$ and $2$ then \emph{measure} $2$-adic indices of
+the integral Betti lattice of the underlying rank-$3$ mixed Tate motive.
+In the totally symmetric case we exhibit the factor concretely: the
+excess enters through the doubled Laurent coefficient $\tfrac16$ of the
+reciprocal-sine kernel, and we prove unconditionally that no prime
+$p\ge5$ contributes (\S\ref{sec:symmetric}).
+\item All measured denominator slack (cells where the true denominator
+is \emph{smaller} than predicted) is bounded along every measured
+direction, including growth series $n\le8$; consequently the
+construction's ``worthiness'' budget receives no hidden arithmetic
+subsidy. We also determine $\sup\gamma=0.86597135\ldots$ over the full
+$7$-dimensional projective parameter cone---attained exactly at the
+authors' published point, whose symmetric coordinates form an arithmetic
+progression (\S\ref{sec:gamma}).
+\end{enumerate}
+
+Throughout, ``verified'' means: exact integers $Q_n$ from the closed
+binomial double sum of \cite{BZ}; values of $I(\mathbf a\cdot n)$
+computed to a certified precision (hundreds of digits) from the
+$1$-dimensional integral of a product of two ${}_3F_2$'s given in
+\cite{BZ}, evaluated by an exact partial-fraction/polylogarithm method;
+and $P_n,\hat P_n$ recovered by PSLQ over the basis $\{1,\zeta(2)\}$
+with residual certification, precision-stability checks, and exact
+agreement with all rational values printed in \cite{BZ}
+(\S\ref{sec:method}).
+
+\section{The family and the measurement pipeline}\label{sec:method}
+
+We follow the notation of \cite{BZ}. For admissible integer parameters
+$\mathbf a=(a_1,\dots,a_8)$ (the $17$ convergence forms nonnegative; we
+require all $28$ forms of the multiset $\mathbf h(\mathbf a)$
+nonnegative so that the full symmetry orbit is admissible), the cellular
+integral decomposes as
+\[
+I(\mathbf a) \;=\; 2Q\,(\zeta(5)+2\zeta(3)\zeta(2)) \;-\;
+4\hat P\,\zeta(2)\;-\;2P ,\qquad Q\in\Z,\ P,\hat P\in\Q ,
+\]
+and the object of interest is $I'=Q\zeta(5)-P$. The group
+$\frG\cong\Sigma_7$ acts on normalized integrals through the symmetric
+parameters $s_0;s_1,\dots,s_7$, permuting the $28$-element multiset
+$\mathbf h$, with $I(\mathbf a)/\prod_{i\in\cF}h_i!$ invariant for the
+$17$-element index set $\cF$ of \cite{BZ}.
+
+\emph{Exact $Q$.} $Q(\mathbf a\cdot n)$ is computed exactly from the
+double binomial sum \cite[eq.~(sumQ)]{BZ}.
+
+\emph{Certified $I$.} $J(\mathbf p;\mathbf q)=I(\mathbf a)$ reduces
+\cite{BZ} to a $1$-dimensional integral of a product of two
+${}_3F_2$'s. For integer parameters each ${}_3F_2$ coefficient is a
+proper rational function of the summation index; its exact partial
+fractions over $\Q$ convert every evaluation into finitely many
+polylogarithms $\operatorname{Li}_m(z)$, $z\le0$, with rational weights
+(analytic continuation built in). Working precision is raised until two
+runs agree; tanh--sinh quadrature errors are certified against the
+target precision. On validation, this evaluator agrees with the direct
+(slow) hypergeometric path to all compared digits ($\ge40$) and is
+$\sim57\times$ faster on production cells.
+
+\emph{Recovery.} With $\zeta$-values to matching precision,
+$x=(2Q\zeta(5)+4Q\zeta(3)\zeta(2)-I)/2=P+2\hat P\zeta(2)$, and PSLQ on
+$(x,1,\zeta(2))$ returns $P,\hat P$ as exact rationals. Certification:
+the relation residual must vanish to half the working precision; the
+recovery must be stable under a $+80$-digit rerun; and the pipeline must
+reproduce the exact printed values of \cite{BZ} in the totally symmetric
+case,
+\[
+Q_1=21,\quad P_1=\tfrac{87}{4},\quad \hat P_1=\tfrac{101}{4},\qquad
+Q_2=2989,\quad P_2=\tfrac{1190161}{384},\quad
+\hat P_2=\tfrac{344923}{96},
+\]
+which it does. An incidental end-to-end validation appears in
+\S\ref{sec:anomaly}: two independent recoveries at distinct parameter
+points agree with the exact factorial-ratio identity
+$I'(g\mathbf a)=I'(\mathbf a)\cdot\prod h_i(\mathbf a)!/\prod
+h_i(g\mathbf a)!$ through a discrepancy of $7^2$.
+
+\section{The published inclusions are false as stated}
+\label{sec:corrections}
+
+Brown--Zudilin state (experimentally) the inclusion
+$\dn{m_1n}\cdots \dn{m_5n}\,I'(\mathbf a\cdot n)\in\Z\zeta(5)+\Z$, where
+$m_1\ge\cdots\ge m_5$ are the five largest entries of
+$\mathbf h(\mathbf a)$, together with a sharpening by the factor
+$\Phi_n=\prod_{p>\sqrt{m_1n}}p^{\nu_p}$, and, in the totally symmetric
+case, the display $Q_n,\ \dn{n}^2\dn{2n}\hat P_n,\ \dn{n}^5P_n\in\Z$.
+
+Already at $n=2$ in the totally symmetric case, with the paper's own
+printed values: $\dn{2}^5P_2=2^5\cdot\frac{1190161}{384}
+=\frac{1190161}{12}\notin\Z$ (off by $2^2\cdot3$), and
+$\dn{2}^2\dn{4}\hat P_2=48\cdot\frac{344923}{96}
+=\frac{344923}{2}\notin\Z$ (off by $2$). The numerators are coprime to
+$6$, so the failures are exact. Our recovered values agree with the
+printed ones, independently. Analogous failures occur at $3$ of $19$
+small interior points in our first systematic sample, always
+$2$-adically. The corrected statements are the subject of the next
+section.
+
+\section{The sharp correction: data and conjecture}
+\label{sec:conjecture}
+
+Extend Brown--Zudilin's sharpening to every prime (legitimate, since the
+factorial-ratio identity above is exact $p$-adically):
+\[
+\Dnu(\mathbf a,n)=\frac{\prod_{i=1}^{5}\dn{m_in}}{\Phi^{*}_n},\qquad
+\Phi^{*}_n=\prod_{\text{all }p}p^{\nu_p},\qquad
+\nu_p=\max_{g\in\frG}\ \ord_p
+\frac{\prod_{i\in\cF}(h_i(\mathbf a)n)!}{\prod_{i\in\cF}(h_i(g\mathbf a)n)!}.
+\]
+
+\begin{conjecture}\label{conj:main}
+For all admissible $\mathbf a$ and $n\ge1$, and every prime $p$,
+\[
+\ord_p \den(P_n)\ \le\ \ord_p \Dnu(\mathbf a,n)\;+\;
+\begin{cases} 2, & p=2,\\ 1, & p=3,\\ 0, & p\ge5\ \text{(see
+\S\ref{sec:anomaly})},\end{cases}
+\]
+i.e.\ $12\,\Dnu(\mathbf a,n)\,I'(\mathbf a\cdot n)\in\Z\zeta(5)+\Z$, and
+the ceilings at $2$ and $3$ are attained.
+\end{conjecture}
+
+\emph{Evidence.} Over $200$ certified cells (systematic random interior
+points with entries up to $7$, growth series at selected points with
+$n\le8$, and the authors' record point): the $2$-adic excess
+distribution over the first $164$ cells is
+$\{-6{:}2,\,-5{:}1,\,-4{:}4,\,-3{:}9,\,-2{:}9,\,-1{:}20,\,0{:}33,
+\,+1{:}40,\,+2{:}46\}$ --- ceiling $+2$, attained $46$ times, never
+exceeded; the $3$-adic distribution is
+$\{-4{:}1,\,-3{:}3,\,-2{:}8,\,-1{:}43,\,0{:}133,\,+1{:}30\}$ ---
+ceiling $+1$, attained, never exceeded. In the totally symmetric case
+the $2$-adic ceiling is attained at every computed $n$
+($n=1,\dots,5$ and $8$): $\den(P_n)=4\cdot 2^{\ord_2 \dn{n}^5}\cdot(\text{odd
+part})$, and $\den(\hat P_n)=2\cdot2^{\ord_2 \dn{n}^2\dn{2n}}\cdot
+(\text{odd part})$ for $n\le5$. The odd parts show only slack (the
+$3$-adic prediction over-pays at most points, which is why the $3$-part
+of the correction is visible only where the $3$-adic prediction is
+tight).
+
+\emph{Growth.} Along every measured series the excess/slack trajectory
+is bounded: e.g.\ the largest observed slack point
+$\mathbf a=(4,3,4,4,3,2,4,2)$ has $2$-adic slack
+$6,5,4,5,3$ bits at $n=1,\dots,5$; points with attained ceiling at
+$n=1,2$ can relax into slack at $n=3$. The conjectured bound---not any
+pointwise formula---is the stable object.
+
+\section{A boundary-prime anomaly, and orbit coherence}
+\label{sec:anomaly}
+
+Exactly one sampled orbit violates the $p\ge5$ clause: at
+$\mathbf a=(6,2,6,1,6,4,5,5)$, $n=1$ (where $m_1=7$ is prime and
+$\nu_7=1$), $\den(P_1)=2^7\cdot3^4\cdot5^2\cdot7$ exceeds the
+$\nu$-sharpened prediction by one factor of $7$. Since the
+factorial-ratio identity is exact, this \emph{predicts} that the
+maximizing orbit partner $\mathbf a'=(6,2,5,2,4,6,6,5)$ must violate
+even the raw ($\nu$-free) law; direct audit confirms
+$\den(P_1(\mathbf a'))=2^6\cdot3^4\cdot5^2\cdot7^2$ against a
+$d$-product paying a single $7$. Excesses are thus \emph{orbit-coherent}:
+the correct invariant is an orbit-level anomaly divisor.
+
+The effect is rare and non-persistent: a targeted scan of $40$ fresh
+points satisfying the same trigger condition ($m_1\in\{5,7,11,13\}$
+prime, $\nu_{m_1}\ge1$) produced \emph{no} further instance, and the
+anomalous orbit itself relaxes to slack ($-2$ at $p=7$) at $n=2$, at
+both partners coherently. We therefore state
+Conjecture~\ref{conj:main}'s $p\ge5$ clause as holding up to such
+isolated small-$n$, boundary-prime ($p=m_1$) fluctuations of size $1$;
+characterizing them exactly is open.
+
+\section{The mechanism}\label{sec:mechanism}
+
+\begin{lemma}[elimination cost]\label{lem:cost}
+Let $e_0,e_2$ span a $2$-dimensional $\Q$-vector space and let
+$L$ be a lattice in the dual with basis $\gamma_1,\gamma_2$ pairing as
+$\langle\gamma_1,(e_0,e_2)\rangle=(1,\zeta(2))$,
+$\langle\gamma_2,(e_0,e_2)\rangle=(0,(2\pi i)^2)$. Every nonzero
+$\delta\in L$ with $\langle\delta,e_2\rangle=0$ is an integer multiple
+of $\delta_0=24\gamma_1+\gamma_2$; in particular
+$\langle\delta,e_0\rangle\in24\Z$.
+\end{lemma}
+
+\begin{proof}
+$a\zeta(2)+b(2\pi i)^2=0$ and $\zeta(2)/(2\pi i)^2=-\tfrac1{24}$ force
+$b=a/24$, so $24\mid a$.
+\end{proof}
+
+If the true integral lattice is finer, with $\gamma_2/2^k$ integral, the
+cost drops to $24/2^k$. The linear form $I'$ arises exactly by such an
+elimination: $\operatorname{Ext}^1_{MT(\Z)_\Q}(\Q(0),\Q(2))=0$
+\cite{BrownMTZ} splits the weight-$4$ part rationally, and the identity
+$\zeta^{\mathfrak m}(2)=-(\mathbb L^{\mathfrak m})^2/24$ is available
+motivically \cite[\S2.2]{BrownP1}. Under two explicitly stated
+hypotheses---(H1) the integrand's de Rham coefficients are
+$\Dnu$-controlled (the integral form of Brown--Zudilin's own sketched
+Barnes analysis), and (H2) a normalization of the integral Betti
+lattice---one obtains $24\,\Dnu\,I'\in\Z\zeta(5)+\Z$, with the constant
+improving by the lattice index. The measured sharp constants then
+\emph{measure} that index: $12=24/2$ for $P$ (equivalently, cost $2$ on
+the natural coefficient $2P$), and $2$ for $\hat P$. To our knowledge
+these are the first experimentally measured integral-lattice invariants
+of periods of $\overline{\mathcal M}_{0,8}$; the literature contains the
+$\Q$-theory \cite{DG,BrownMTZ,BrownM08} and an empirical
+$\{2,3\}$-clearing phenomenon for motivic period expansions
+\cite{Schnetz}, but---so far as we can determine---no integral-lattice
+synthesis. The support $\{2,3\}$ matches the torsion
+$K_3(\Z)\cong\Z/48$ \cite{LS} of the relevant splitting obstruction; we
+flag this as a consistency, not a derivation.
+
+\section{The totally symmetric case: concrete derivation and a support
+theorem}\label{sec:symmetric}
+
+In the totally symmetric case $\mathbf a=(1,\dots,1)$ the Barnes
+representation reduces to the reciprocal-sine kernel with rational part
+$r(s)r(t)C(s,t)$, $r(s)=\prod_{i=1}^n(s+i)\big/\prod_{j=n+1}^{2n+1}(s+j)^2$,
+whose partial-fraction data is fully explicit:
+$B_j=(-1)^n\binom{n+a}{a}\binom{n}{a}^2/n!$ and
+$A_j=B_j\,(3H_a-H_{n+a}-2H_{n-a})$ with $a=j-n-1$ (verified exactly for
+$n\le6$). Two consequences, proved in the accompanying notes:
+
+\begin{theorem}[support]\label{thm:support}
+In the totally symmetric case every prime dividing $\den(P_n)$ is at
+most $2n+1$, and no prime $p\ge5$ exceeds the $\dn{n}^5$ budget.
+\end{theorem}
+
+Moreover the $\{2,3\}$-excess enters \emph{only} through the Laurent
+coefficients $1,\tfrac16,\tfrac1{90},\dots$ of the sine kernel: the
+constant term $P_n$ picks up exactly one doubled factor of the
+$\zeta(2)$-coefficient $\tfrac16$, i.e.\ the factor
+$12=2\cdot 6$---the concrete avatar of Lemma~\ref{lem:cost}---while
+$\tfrac1{90}$ (which would inject a $5$) provably does not contribute,
+matching Theorem~\ref{thm:support} and the data. The remaining gap to a
+full proof of $12\,\dn{n}^5P_n\in\Z$ is a classical-type
+$\dn{n}^5$-collapse bookkeeping for the structured sums above; it is
+verified exactly for $n\le5$.
+
+\section{Cross-family controls}\label{sec:crossfamily}
+
+The same measurement standard applied to the classical corpus shows its
+correction factors are uniformly \emph{removable}, in contrast to
+\S\ref{sec:conjecture}:
+(i) Ap\'ery $\zeta(3)$: $\dn{n}^3a_n\in\Z$ for $n\le50$ (the quoted
+$2\dn{n}^3$ is slack; consistent with Rhin--Viola's exact theorem
+\cite{RV3}, where the genuine $2$ rides on the $\zeta(3)$-coefficient
+parity, not the denominator).
+(ii) $\zeta(4)$: $\dn{n}^4v_n\in\Z$ for $n\le5$ in Zudilin's derived
+series (the factor $2$ retained in \cite[Th\'eor\`eme 3]{KR} is slack
+there).
+(iii) Zudilin's asymmetric $\zeta(5),\dots,\zeta(11)$ forms: computing
+the five coefficients $z_{j,n}$ exactly for $n\le5$ (apparently for the
+first time), the leading factor $2$ retained even in the
+\emph{conjectured} law \cite[eq.~(17.1)]{KR} is unnecessary, with
+$\sim30$ bits of $2$-adic margin; the well-poised parity cancellation
+and the proven inclusion of \cite{KR} serve as engine validations. These
+are finite verifications, not proofs; but they isolate the
+Brown--Zudilin family---the only construction here that performs a
+$\zeta(2)$-elimination---as the only one whose correction is attained.
+
+\section{The worthiness supremum, and what the arithmetic cannot do}
+\label{sec:gamma}
+
+For completeness we record the analytic side. Implementing the
+worthiness exponent $\gamma(\mathbf a)$ of \cite{BZ} (validated to $8$
+decimals against all three published values, including every printed
+intermediate), a global search of the $7$-dimensional projective cone
+---steepest ascent from the published point on integer and half-integer
+lattices, $120$ random multi-starts, $60$ basin hops, and an exhaustive
+scan of all $31{,}710$ projectively distinct arithmetic-progression
+points to height $160$---finds the supremum
+\[
+\sup_{\mathbf a}\gamma \;=\; 0.86597135\ldots,
+\]
+attained exactly at the published point $\mathbf a=(8,16,10,15,12,16,18,13)$,
+whose symmetric coordinates $(20.5;\,3.5,4.5,\dots,9.5)$ form an
+arithmetic progression. Combined with the bounded-slack measurements of
+\S\ref{sec:conjecture}, the construction's arithmetic is now understood
+to bounded factors, and none of it moves the exponential budget: within
+this family the barrier to $\gamma>1$ is structural.
+
+\section{Limitations and outlook}
+
+All sharpness and slack statements are finite verifications under the
+certification protocol of \S\ref{sec:method}; Conjecture~\ref{conj:main}
+is falsifiable by a single future cell. The mechanism of
+\S\ref{sec:mechanism} is proved only in the elementary
+Lemma~\ref{lem:cost} plus the conditional reduction; hypothesis (H2) is
+one finite lattice computation (torsion-freeness of
+$H^\ast(\overline{\mathcal M}_{0,n},\Z)$ \cite{Keel} should make it
+tractable), and (H1) is the integral form of the Barnes bookkeeping
+sketched in \cite{BZ}. The measurement pipeline itself is portable, and
+we suggest its use as an \emph{arithmetic screen} for any future
+candidate constructions: the true denominators of a proposed family can
+now be measured in hours rather than conjectured. In a companion
+development, Lemma~4 of \cite{Zu18} (the asymptotic core of the
+elementary proof that one of $\zeta(5),\dots,\zeta(25)$ is irrational)
+has been fully formalized in Lean~4/Mathlib, with a complete
+formalization of the theorem in progress; details will appear
+separately.
+
+\begin{thebibliography}{99}
+\bibitem{BZ} F.~Brown, W.~Zudilin, \emph{On cellular rational
+approximations to $\zeta(5)$}, arXiv:2210.03391.
+\bibitem{Zu18} W.~Zudilin, \emph{One of the odd zeta values from
+$\zeta(5)$ to $\zeta(25)$ is irrational. By elementary means}, SIGMA 14
+(2018), 028; arXiv:1801.09895.
+\bibitem{KR} C.~Krattenthaler, T.~Rivoal, \emph{Hyperg\'eom\'etrie et
+fonction z\^eta de Riemann}, Mem.\ Amer.\ Math.\ Soc.\ 186 (2007), no.\
+875; arXiv:math/0311114.
+\bibitem{RV3} G.~Rhin, C.~Viola, \emph{The group structure for
+$\zeta(3)$}, Acta Arith.\ 97 (2001), 269--293.
+\bibitem{BrownMTZ} F.~Brown, \emph{Mixed Tate motives over $\Z$}, Ann.\
+of Math.\ 175 (2012), 949--976; arXiv:1102.1312.
+\bibitem{BrownP1} F.~Brown, \emph{Motivic periods and
+$\mathbb P^1\setminus\{0,1,\infty\}$}, arXiv:1407.5165.
+\bibitem{BrownM08} F.~Brown, \emph{Multiple zeta values and periods of
+moduli spaces $\overline{\mathcal M}_{0,n}$}, Ann.\ Sci.\ \'Ec.\ Norm.\
+Sup\'er.\ 42 (2009), 371--489; arXiv:math/0606419.
+\bibitem{DG} P.~Deligne, A.~Goncharov, \emph{Groupes fondamentaux
+motiviques de Tate mixte}, Ann.\ Sci.\ \'Ec.\ Norm.\ Sup\'er.\ 38
+(2005), 1--56.
+\bibitem{Schnetz} O.~Schnetz, \emph{Multiple Deligne values: a data mine
+with empirically tamed denominators}, arXiv:1409.7204.
+\bibitem{LS} R.~Lee, R.~Szczarba, \emph{The group $K_3(\Z)$ is cyclic of
+order forty-eight}, Ann.\ of Math.\ 104 (1976), 31--60.
+\bibitem{Keel} S.~Keel, \emph{Intersection theory of moduli space of
+stable $n$-pointed curves of genus zero}, Trans.\ Amer.\ Math.\ Soc.\
+330 (1992), 545--574.
+\end{thebibliography}
+
+\end{document}

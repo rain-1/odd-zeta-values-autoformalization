@@ -1177,6 +1177,66 @@ private lemma c_upper_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x�
 
 /-! ### Analytic cores for `chat` -/
 
+/-- Telescoping identity for the product of odds in `chat`:
+`(∏_{j<n+1} (2(n+k+1+j)+1))·(2n+2k+1) = (∏_{j<n+1} (2(n+k+j)+1))·(4n+2k+3)`. -/
+private lemma prod_shift_identity (n k : ℕ) :
+    (∏ j ∈ range (n + 1), (2 * (n + (k + 1) + j) + 1)) * (2 * n + 2 * k + 1)
+      = (∏ j ∈ range (n + 1), (2 * (n + k + j) + 1)) * (4 * n + 2 * k + 3) := by
+  have h1 := Finset.prod_range_succ' (fun j => 2 * (n + k + j) + 1) (n + 1)
+  have h2 := Finset.prod_range_succ (fun j => 2 * (n + k + j) + 1) (n + 1)
+  have e1 : (∏ j ∈ range (n + 1), (2 * (n + (k + 1) + j) + 1))
+      = ∏ j ∈ range (n + 1), (2 * (n + k + (j + 1)) + 1) := by
+    apply Finset.prod_congr rfl; intro j _; ring_nf
+  rw [e1]
+  have hg0 : 2 * (n + k + 0) + 1 = 2 * n + 2 * k + 1 := by ring
+  have hgN : 2 * (n + k + (n + 1)) + 1 = 4 * n + 2 * k + 3 := by ring
+  rw [hg0] at h1
+  rw [hgN] at h2
+  rw [← h1, ← h2]
+
+/-- Exact term ratio for the half-shifted series `chat` (analogue of `c_ratio`). -/
+private lemma chat_ratio (q n k : ℕ) :
+    chat q n (k + 1) / chat q n k
+      = (6 * n + 2 * k + 3) * (6 * n + 2 * k + 2) / ((2 * k + 2) * (2 * k + 1))
+        * (((2 * n + 2 * k + 1 : ℕ) : ℝ) / ((4 * n + 2 * k + 3 : ℕ) : ℝ)) ^ (2 * q) := by
+  have f1 : ((6 * n + 2 * (k + 1) + 1)! : ℝ)
+      = (6 * n + 2 * k + 3) * (6 * n + 2 * k + 2) * ((6 * n + 2 * k + 1)! : ℝ) := by
+    rw [show 6 * n + 2 * (k + 1) + 1 = (6 * n + 2 * k + 2) + 1 by ring, Nat.factorial_succ,
+      show 6 * n + 2 * k + 2 = (6 * n + 2 * k + 1) + 1 by ring, Nat.factorial_succ]
+    push_cast; ring
+  have f2 : ((2 * (k + 1))! : ℝ)
+      = ((2 * k + 2 : ℕ) : ℝ) * ((2 * k + 1 : ℕ) : ℝ) * ((2 * k)! : ℝ) := by
+    rw [show 2 * (k + 1) = (2 * k + 1) + 1 by ring, Nat.factorial_succ,
+      show 2 * k + 1 = (2 * k) + 1 by ring, Nat.factorial_succ]
+    push_cast; ring
+  -- product ratio
+  have pP : (0 : ℝ) < ∏ j ∈ range (n + 1), ((2 * (n + k + j) + 1 : ℕ) : ℝ) := by
+    apply Finset.prod_pos; intro j _; exact_mod_cast Nat.succ_pos _
+  have pP' : (0 : ℝ) < ∏ j ∈ range (n + 1), ((2 * (n + (k + 1) + j) + 1 : ℕ) : ℝ) := by
+    apply Finset.prod_pos; intro j _; exact_mod_cast Nat.succ_pos _
+  have hprodR : (∏ j ∈ range (n + 1), ((2 * (n + (k + 1) + j) + 1 : ℕ) : ℝ))
+        * ((2 * n + 2 * k + 1 : ℕ) : ℝ)
+      = (∏ j ∈ range (n + 1), ((2 * (n + k + j) + 1 : ℕ) : ℝ)) * ((4 * n + 2 * k + 3 : ℕ) : ℝ) := by
+    have := prod_shift_identity n k
+    have hc : ((∏ j ∈ range (n + 1), (2 * (n + (k + 1) + j) + 1)) * (2 * n + 2 * k + 1) : ℕ)
+        = ((∏ j ∈ range (n + 1), (2 * (n + k + j) + 1)) * (4 * n + 2 * k + 3) : ℕ) := this
+    have := congrArg (fun m : ℕ => (m : ℝ)) hc
+    push_cast at this ⊢
+    convert this using 2 <;> rw [Nat.cast_prod]
+  have h4 : (0 : ℝ) < ((4 * n + 2 * k + 3 : ℕ) : ℝ) := by positivity
+  have h2k1 : (0 : ℝ) < ((2 * n + 2 * k + 1 : ℕ) : ℝ) := by positivity
+  have hPeq : (∏ j ∈ range (n + 1), ((2 * (n + (k + 1) + j) + 1 : ℕ) : ℝ))
+      = (∏ j ∈ range (n + 1), ((2 * (n + k + j) + 1 : ℕ) : ℝ)) * ((4 * n + 2 * k + 3 : ℕ) : ℝ)
+          / ((2 * n + 2 * k + 1 : ℕ) : ℝ) := by
+    rw [eq_div_iff h2k1.ne']; exact hprodR
+  have hck : chat q n k ≠ 0 := (chat_pos q n k).ne'
+  rw [div_eq_iff hck]
+  unfold chat
+  rw [f1, f2, hPeq]
+  simp only [div_pow, mul_pow]
+  push_cast
+  field_simp
+
 private lemma chat_lower_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :
     ∃ δ : ℝ, 0 < δ ∧ ∀ᶠ n : ℕ in atTop, ∀ j : ℕ,

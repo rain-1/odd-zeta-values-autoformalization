@@ -294,6 +294,110 @@ private lemma tendsto_ceil_div (x₀ : ℝ) (hx₀ : 0 < x₀) :
           (Nat.ceil_lt_add_one (show (0 : ℝ) ≤ x₀ * n by positivity)).le
       _ = (x₀ + 1 / n) * n := by field_simp
 
+/-- Telescoping upward: from `u (j+1) ≤ ρ · u j` (`j ≥ b`), `u a ≤ ρ^(a−b)·u b`. -/
+private lemma geom_up {u : ℕ → ℝ} {ρ : ℝ} (hρ : 1 ≤ ρ)
+    {b : ℕ} (hstep : ∀ j, b ≤ j → u (j + 1) ≤ ρ * u j) :
+    ∀ a, b ≤ a → u a ≤ ρ ^ (a - b) * u b := by
+  intro a hba
+  induction a, hba using Nat.le_induction with
+  | base => simp
+  | succ a hba ih =>
+    calc u (a + 1) ≤ ρ * u a := hstep a hba
+      _ ≤ ρ * (ρ ^ (a - b) * u b) := mul_le_mul_of_nonneg_left ih (by linarith)
+      _ = ρ ^ (a + 1 - b) * u b := by rw [← mul_assoc, ← pow_succ']; congr 2; omega
+
+/-- Telescoping downward: from `u j ≤ ρ · u (j+1)` (`j ≥ b`), `u b ≤ ρ^(a−b)·u a`. -/
+private lemma geom_down {u : ℕ → ℝ} {ρ : ℝ} (hρ : 1 ≤ ρ)
+    {b : ℕ} (hstep : ∀ j, b ≤ j → u j ≤ ρ * u (j + 1)) :
+    ∀ a, b ≤ a → u b ≤ ρ ^ (a - b) * u a := by
+  intro a hba
+  induction a, hba using Nat.le_induction with
+  | base => simp
+  | succ a hba ih =>
+    calc u b ≤ ρ ^ (a - b) * u a := ih
+      _ ≤ ρ ^ (a - b) * (ρ * u (a + 1)) :=
+          mul_le_mul_of_nonneg_left (hstep a hba) (pow_nonneg (by linarith) _)
+      _ = ρ ^ (a + 1 - b) * u (a + 1) := by rw [← mul_assoc, ← pow_succ]; congr 2; omega
+
+/-- The exact term ratio `c_{k+1}/c_k` is uniformly within `δ` of `1` on a small
+window `|k − x₀ n| ≤ ε n` (its limit profile is `f(x)² → f(x₀)² = 1`).  Mirrors
+`Window.mainFactor_near_one`. -/
+private lemma cratio_near_one (q : ℕ) {x₀ : ℝ} (hx₀ : 0 < x₀) (hfx₀ : f q x₀ = 1)
+    {δ : ℝ} (hδ : 0 < δ) :
+    ∃ ε, 0 < ε ∧ ε < x₀ ∧ ∃ N : ℕ, 1 ≤ N ∧ ∀ n : ℕ, N ≤ n → ∀ k : ℕ,
+      (x₀ - ε) * n ≤ (k : ℝ) → (k : ℝ) ≤ (x₀ + ε) * n →
+      |c q n (k + 1) / c q n k - 1| ≤ δ := by
+  set prof : ℝ × ℝ → ℝ := fun p =>
+    (6 + 2 * p.1 + 4 * p.2) * (6 + 2 * p.1 + 3 * p.2) / ((2 * p.1 + 3 * p.2) * (2 * p.1 + 2 * p.2))
+      * ((1 + p.1 + p.2) / (2 + p.1 + 2 * p.2)) ^ (2 * q) with hprof
+  have hval : prof (x₀, 0) = 1 := by
+    have hf : (x₀ + 3) / x₀ * ((x₀ + 1) / (x₀ + 2)) ^ q = 1 := by rw [← f]; exact hfx₀
+    rw [hprof]
+    show (6 + 2 * x₀ + 4 * 0) * (6 + 2 * x₀ + 3 * 0) / ((2 * x₀ + 3 * 0) * (2 * x₀ + 2 * 0))
+        * ((1 + x₀ + 0) / (2 + x₀ + 2 * 0)) ^ (2 * q) = 1
+    have hx0 : x₀ ≠ 0 := hx₀.ne'
+    have hexp : ((1 + x₀ + 0) / (2 + x₀ + 2 * 0)) ^ (2 * q)
+        = (((x₀ + 1) / (x₀ + 2)) ^ q) ^ 2 := by
+      rw [show (1 + x₀ + 0) / (2 + x₀ + 2 * 0) = (x₀ + 1) / (x₀ + 2) from by ring,
+        show 2 * q = q * 2 from Nat.mul_comm 2 q, pow_mul]
+    have hrat : (6 + 2 * x₀ + 4 * 0) * (6 + 2 * x₀ + 3 * 0) / ((2 * x₀ + 3 * 0) * (2 * x₀ + 2 * 0))
+        = ((x₀ + 3) / x₀) ^ 2 := by
+      rw [div_pow]; field_simp; ring
+    rw [hexp, hrat, ← mul_pow, hf, one_pow]
+  have hcont : ContinuousAt prof (x₀, 0) := by
+    rw [hprof]
+    have hnum1 : Continuous (fun p : ℝ × ℝ => (6 + 2 * p.1 + 4 * p.2) * (6 + 2 * p.1 + 3 * p.2)) := by
+      fun_prop
+    have hden1 : Continuous (fun p : ℝ × ℝ => (2 * p.1 + 3 * p.2) * (2 * p.1 + 2 * p.2)) := by
+      fun_prop
+    have hnum2 : Continuous (fun p : ℝ × ℝ => 1 + p.1 + p.2) := by fun_prop
+    have hden2 : Continuous (fun p : ℝ × ℝ => 2 + p.1 + 2 * p.2) := by fun_prop
+    exact (hnum1.continuousAt.div hden1.continuousAt
+        (by show ((2 * x₀ + 3 * 0) * (2 * x₀ + 2 * 0) : ℝ) ≠ 0; positivity)).mul
+      ((hnum2.continuousAt.div hden2.continuousAt
+        (by show ((2 : ℝ) + x₀ + 2 * 0) ≠ 0; positivity)).pow (2 * q))
+  rw [Metric.continuousAt_iff] at hcont
+  obtain ⟨γ, hγ, hball⟩ := hcont δ hδ
+  set ε : ℝ := min (x₀ / 2) (γ / 2) with hεdef
+  have hεpos : 0 < ε := by rw [hεdef]; positivity
+  have hεlt : ε < x₀ := lt_of_le_of_lt (min_le_left _ _) (by linarith)
+  have hεγ : ε < γ := lt_of_le_of_lt (min_le_right _ _) (by linarith)
+  obtain ⟨N, hN⟩ := exists_nat_ge (1 / ε)
+  refine ⟨ε, hεpos, hεlt, max N 1, le_max_right _ _, ?_⟩
+  intro n hn k hk1 hk2
+  have hn1 : 1 ≤ n := le_trans (le_max_right N 1) hn
+  have hnpos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn1
+  have hnne : (n : ℝ) ≠ 0 := hnpos.ne'
+  have hNn : 1 / ε ≤ (n : ℝ) := le_trans hN (by exact_mod_cast le_trans (le_max_left N 1) hn)
+  have h1n : 1 / (n : ℝ) ≤ ε := by
+    rw [div_le_iff₀ hnpos]; have := (div_le_iff₀ hεpos).mp hNn; linarith
+  have hx1 : x₀ - ε ≤ (k : ℝ) / n := (le_div_iff₀ hnpos).mpr hk1
+  have hx2 : (k : ℝ) / n ≤ x₀ + ε := (div_le_iff₀ hnpos).mpr hk2
+  have habs : |(k : ℝ) / n - x₀| ≤ ε := abs_le.mpr ⟨by linarith, by linarith⟩
+  have hdle : dist ((k : ℝ) / n, 1 / (n : ℝ)) (x₀, (0 : ℝ)) ≤ ε := by
+    rw [Prod.dist_eq]
+    apply max_le
+    · rw [Real.dist_eq]; exact habs
+    · rw [Real.dist_eq, sub_zero, abs_of_pos (by positivity)]; exact h1n
+  have hprofp := hball (lt_of_le_of_lt hdle hεγ)
+  rw [hval, Real.dist_eq] at hprofp
+  have hM0 : c q n (k + 1) / c q n k = prof ((k : ℝ) / n, 1 / (n : ℝ)) := by
+    rw [c_ratio, hprof]
+    show _ = (6 + 2 * ((k : ℝ) / n) + 4 * (1 / n)) * (6 + 2 * ((k : ℝ) / n) + 3 * (1 / n))
+        / ((2 * ((k : ℝ) / n) + 3 * (1 / n)) * (2 * ((k : ℝ) / n) + 2 * (1 / n)))
+        * ((1 + (k : ℝ) / n + 1 / n) / (2 + (k : ℝ) / n + 2 * (1 / n))) ^ (2 * q)
+    have e1 : (6 * (n : ℝ) + 2 * k + 4) * (6 * (n : ℝ) + 2 * k + 3)
+          / ((2 * (k : ℝ) + 3) * (2 * k + 2))
+        = (6 + 2 * ((k : ℝ) / n) + 4 * (1 / n)) * (6 + 2 * ((k : ℝ) / n) + 3 * (1 / n))
+          / ((2 * ((k : ℝ) / n) + 3 * (1 / n)) * (2 * ((k : ℝ) / n) + 2 * (1 / n))) := by
+      rw [div_eq_div_iff (by positivity) (by positivity)]; field_simp
+    have e2 : (((n + k + 1 : ℕ) : ℝ) / ((2 * n + k + 2 : ℕ) : ℝ))
+        = (1 + (k : ℝ) / n + 1 / n) / (2 + (k : ℝ) / n + 2 * (1 / n)) := by
+      push_cast
+      rw [div_eq_div_iff (by positivity) (by positivity)]; field_simp
+    rw [e1, e2]
+  rw [hM0]; exact le_of_lt hprofp
+
 /-! ### Upper bound (localization)
 
 REMAINING SUB-SORRY (analytic).  `logRoot_r_upper` is the only missing input to

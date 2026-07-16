@@ -511,6 +511,153 @@ The lower core gives a uniform *constant* margin (min of `f²` on `(0,x₀-ε/2]
 the upper core gives both a constant margin on `[(x₀+ε/2)n,(x₀+ε)n]` and the
 telescoping square-ratio majorant that controls `k ≫ n` where the margin decays. -/
 
+/-- Shape of the profile `f`: there is a turning point `x₁ > x₀` with `f`
+strictly decreasing on `(0, x₁)`, and `f < 1` on all of `(x₀, ∞)`.  (Reproduces
+the `L`/`N` log-derivative analysis of `Basic.existsUnique_x0` and pins `x₀` to
+the unique crossing via that theorem.) -/
+private lemma f_shape (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
+    (hfx₀ : f q x₀ = 1) :
+    ∃ x₁ : ℝ, x₀ < x₁ ∧ StrictAntiOn (f q) (Set.Ioo 0 x₁) ∧
+      (∀ x : ℝ, x₀ < x → f q x < 1) := by
+  set qr : ℝ := (q : ℝ) with hqr
+  have hqr4 : (4 : ℝ) ≤ qr := by rw [hqr]; exact_mod_cast hq
+  set N : ℝ → ℝ := fun x => (qr - 3) * x ^ 2 + 3 * (qr - 3) * x - 6 with hN
+  set L : ℝ → ℝ := fun x =>
+    Real.log (x + 3) - Real.log x + qr * (Real.log (x + 1) - Real.log (x + 2)) with hL
+  have hfpos : ∀ x : ℝ, 0 < x → 0 < f q x := by
+    intro x hx
+    have : (0:ℝ) < (x+1)/(x+2) := by positivity
+    unfold f; positivity
+  have hLlog : ∀ x : ℝ, 0 < x → Real.log (f q x) = L x := by
+    intro x hx
+    unfold f
+    rw [Real.log_mul (by positivity) (by positivity), Real.log_div (by positivity) (by positivity),
+      Real.log_pow, Real.log_div (by positivity) (by positivity), hL]
+  have hfexp : ∀ x : ℝ, 0 < x → f q x = Real.exp (L x) := by
+    intro x hx; rw [← hLlog x hx, Real.exp_log (hfpos x hx)]
+  have hf1 : ∀ x : ℝ, 0 < x → (f q x = 1 ↔ L x = 0) := by
+    intro x hx
+    rw [← hLlog x hx]
+    constructor
+    · intro h; rw [h]; exact Real.log_one
+    · intro h; exact Real.eq_one_of_pos_of_log_eq_zero (hfpos x hx) h
+  have hLderiv : ∀ x : ℝ, 0 < x →
+      HasDerivAt L (N x / (x * (x + 1) * (x + 2) * (x + 3))) x := by
+    intro x hx
+    have e3 : HasDerivAt (fun y : ℝ => Real.log (y + 3)) (1 / (x + 3)) x := by
+      have := ((hasDerivAt_id x).add_const (3:ℝ)).log (by positivity); simpa using this
+    have e0 : HasDerivAt (fun y : ℝ => Real.log y) (1 / x) x := by
+      simpa using (Real.hasDerivAt_log (by positivity : x ≠ 0))
+    have e1 : HasDerivAt (fun y : ℝ => Real.log (y + 1)) (1 / (x + 1)) x := by
+      have := ((hasDerivAt_id x).add_const (1:ℝ)).log (by positivity); simpa using this
+    have e2 : HasDerivAt (fun y : ℝ => Real.log (y + 2)) (1 / (x + 2)) x := by
+      have := ((hasDerivAt_id x).add_const (2:ℝ)).log (by positivity); simpa using this
+    have hd := (e3.sub e0).add ((e1.sub e2).const_mul qr)
+    have heq : 1 / (x + 3) - 1 / x + qr * (1 / (x + 1) - 1 / (x + 2))
+        = N x / (x * (x + 1) * (x + 2) * (x + 3)) := by rw [hN]; field_simp; ring
+    rw [heq] at hd; exact hd
+  have hNmono : StrictMonoOn N (Set.Ici 0) := by
+    intro a ha b hb hab
+    simp only [Set.mem_Ici] at ha hb
+    simp only [hN]
+    nlinarith [mul_pos (mul_pos (show (0:ℝ) < qr - 3 by linarith)
+      (show (0:ℝ) < b - a by linarith)) (show (0:ℝ) < b + a + 3 by linarith)]
+  have hNcont : Continuous N := by rw [hN]; fun_prop
+  have hN0 : N 0 = -6 := by rw [hN]; ring
+  have hN3 : 0 < N 3 := by simp only [hN]; nlinarith [hqr4]
+  obtain ⟨x₁, hx₁mem, hx₁0⟩ : ∃ x ∈ Set.Icc (0:ℝ) 3, N x = 0 := by
+    have hmem : (0:ℝ) ∈ Set.Icc (N 0) (N 3) := by
+      rw [Set.mem_Icc, hN0]; exact ⟨by norm_num, hN3.le⟩
+    obtain ⟨x, hx, hxeq⟩ := intermediate_value_Icc (by norm_num : (0:ℝ) ≤ 3)
+      hNcont.continuousOn hmem
+    exact ⟨x, hx, hxeq⟩
+  have hx₁pos : 0 < x₁ := by
+    rcases lt_or_eq_of_le hx₁mem.1 with h | h
+    · exact h
+    · exfalso; rw [← h] at hx₁0; rw [hN0] at hx₁0; norm_num at hx₁0
+  have hNneg : ∀ x : ℝ, 0 < x → x < x₁ → N x < 0 := by
+    intro x hx hxx₁
+    have := hNmono (Set.mem_Ici.mpr hx.le) (Set.mem_Ici.mpr hx₁pos.le) hxx₁
+    rw [hx₁0] at this; exact this
+  have hNpos : ∀ x : ℝ, x₁ < x → 0 < N x := by
+    intro x hxx₁
+    have := hNmono (Set.mem_Ici.mpr hx₁pos.le) (Set.mem_Ici.mpr (by linarith : (0:ℝ) ≤ x)) hxx₁
+    rw [hx₁0] at this; exact this
+  have hden : ∀ x : ℝ, 0 < x → 0 < x * (x + 1) * (x + 2) * (x + 3) := by
+    intro x hx; positivity
+  have hLcont1 : ContinuousOn L (Set.Ioo 0 x₁) :=
+    fun x hx => (hLderiv x hx.1).continuousAt.continuousWithinAt
+  have hLanti : StrictAntiOn L (Set.Ioo 0 x₁) := by
+    apply strictAntiOn_of_deriv_neg (convex_Ioo 0 x₁) hLcont1
+    rw [interior_Ioo]
+    intro x hx
+    rw [(hLderiv x hx.1).deriv]
+    exact div_neg_of_neg_of_pos (hNneg x hx.1 hx.2) (hden x hx.1)
+  have hLcont2 : ContinuousOn L (Set.Ici x₁) :=
+    fun x hx => (hLderiv x (lt_of_lt_of_le hx₁pos hx)).continuousAt.continuousWithinAt
+  have hLmono : StrictMonoOn L (Set.Ici x₁) := by
+    apply strictMonoOn_of_deriv_pos (convex_Ici x₁) hLcont2
+    rw [interior_Ici]
+    intro x hx
+    rw [(hLderiv x (lt_trans hx₁pos hx)).deriv]
+    exact div_pos (hNpos x hx) (hden x (lt_trans hx₁pos hx))
+  have hLtend0 : Tendsto L atTop (𝓝 0) := by
+    have key : ∀ a b : ℝ,
+        Tendsto (fun x : ℝ => Real.log (x + a) - Real.log (x + b)) atTop (𝓝 0) := by
+      intro a b
+      have hr : Tendsto (fun x : ℝ => (x + a) / (x + b)) atTop (𝓝 1) := by
+        have h0 : Tendsto (fun x : ℝ => (a - b) / (x + b)) atTop (𝓝 0) :=
+          Tendsto.div_atTop tendsto_const_nhds
+            (tendsto_atTop_add_const_right atTop b tendsto_id)
+        have h1 : Tendsto (fun x : ℝ => 1 + (a - b) / (x + b)) atTop (𝓝 1) := by
+          simpa using h0.const_add 1
+        refine h1.congr' ?_
+        filter_upwards [eventually_gt_atTop (-b)] with x hx
+        have hxb : x + b ≠ 0 := ne_of_gt (by linarith)
+        field_simp; ring
+      have hc := (Real.continuousAt_log (by norm_num : (1:ℝ) ≠ 0)).tendsto.comp hr
+      rw [Real.log_one] at hc
+      refine hc.congr' ?_
+      filter_upwards [eventually_gt_atTop (max (-a) (-b))] with x hx
+      rw [max_lt_iff] at hx
+      exact Real.log_div (ne_of_gt (by linarith [hx.1] : (0:ℝ) < x + a))
+        (ne_of_gt (by linarith [hx.2] : (0:ℝ) < x + b))
+    have hA : Tendsto (fun x : ℝ => Real.log (x + 3) - Real.log x) atTop (𝓝 0) := by
+      refine (key 3 0).congr (fun x => ?_); rw [add_zero]
+    have hB := ((key 1 2).const_mul qr)
+    have := hA.add hB
+    simp only [mul_zero, add_zero] at this
+    exact this.congr (fun x => by simp only [hL])
+  have hLneg : ∀ x : ℝ, x₁ ≤ x → L x < 0 := by
+    intro x hx
+    have h1 : L x < L (x + 1) :=
+      hLmono (Set.mem_Ici.mpr hx) (Set.mem_Ici.mpr (by linarith)) (by linarith)
+    have h2 : L (x + 1) ≤ 0 := by
+      refine ge_of_tendsto hLtend0 ?_
+      filter_upwards [eventually_ge_atTop (x + 1)] with y hy
+      exact hLmono.monotoneOn (Set.mem_Ici.mpr (by linarith)) (Set.mem_Ici.mpr (by linarith)) hy
+    linarith
+  -- `x₀` is the unique crossing, hence `x₀ < x₁`.
+  have hLx₀ : L x₀ = 0 := (hf1 x₀ hx₀).mp hfx₀
+  have hx₀x₁ : x₀ < x₁ := by
+    by_contra h; push_neg at h; exact absurd hLx₀ (ne_of_lt (hLneg x₀ h))
+  refine ⟨x₁, hx₀x₁, ?_, ?_⟩
+  · -- StrictAntiOn (f q) (Ioo 0 x₁)
+    intro a ha b hb hab
+    rw [hfexp a ha.1, hfexp b hb.1]
+    exact Real.exp_lt_exp.mpr (hLanti ha hb hab)
+  · -- f < 1 on (x₀, ∞)
+    intro x hx
+    have hxpos : 0 < x := lt_trans hx₀ hx
+    have hLx : L x < 0 := by
+      rcases lt_or_ge x x₁ with hlt | hge
+      · have := hLanti (Set.mem_Ioo.mpr ⟨hx₀, hx₀x₁⟩) (Set.mem_Ioo.mpr ⟨hxpos, hlt⟩) hx
+        rwa [hLx₀] at this
+      · exact hLneg x hge
+    rw [hfexp x hxpos]
+    calc Real.exp (L x) < Real.exp 0 := Real.exp_lt_exp.mpr hLx
+      _ = 1 := Real.exp_zero
+
 /-- Lower geometric margin for `c`: below `(x₀ - ε/2)·n` the term ratio
 `c(j+1)/c(j)` (given exactly by `c_ratio`) exceeds `1 + δ`, because
 `f(j/n)² ≥ f(x₀-ε/2)² > 1` on `(0, x₀)` and `ρ → f²`. -/

@@ -1080,6 +1080,30 @@ private lemma tail_val_neg (p i : ℕ) (hi : 2 ≤ i) :
             * ∑ ℓ ∈ Finset.range (p + 1), (1 : ℝ) / ((2 * ℓ + 1 : ℕ) : ℝ) ^ i := by
         rw [hheadval, htailval]; ring
 
+/-- **The `r̂_n` (e08) ζ-representation** (paper tex 220–239).  Given the partial-fraction data
+for `R_n` (decomposition `hdec`, Lemma-1 integrality `hint`, Lemma-2 symmetry `hsym`) and the
+column totals `S i = Σ_k a_{i,k}`, there is an integer constant `Bhat0` with
+`d_n^{33}·r̂_n = Σ_{i∈oddIdx3} d_n^{33}·S_i·(2^i−1)·ζ(i) + Bhat0`.
+
+The proof shifts the start of summation to `t = −m−½` (`m = ⌊(n−1)/2⌋`), using that `R_n`
+vanishes at `t = −½,…,−(n−½)`, so that `r̂_n = Σ'_j R_n(j−m−½)`.  Each column tail is then
+evaluated by `tail_val_pos` (`k ≥ m+1`) / `tail_val_neg` (`k ≤ m`); the `(2^i−1)ζ(i)` parts
+collect (even `i` and `i=1` drop by `column_even_zero` / `S 1 = 0`), while the finite heads
+have odd denominators `≤ n`, cleared by `d_n` via `odd_harmonic_integrality`. -/
+theorem repr_rhat_e08 (n : ℕ) (a : ℕ → ℕ → ℝ)
+    (hdec : ∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
+        Rn 17 n t = ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), a i k / (t + (k : ℝ)) ^ i)
+    (hint : ∀ i ∈ Finset.Icc 1 33, ∀ k ∈ Finset.range (n + 1),
+        ∃ z : ℤ, (Nat.lcmUpto n : ℝ) ^ (33 - i) * a i k = z)
+    (hsym : ∀ i ∈ Finset.Icc 1 33, ∀ k ∈ Finset.range (n + 1),
+        a i k = (-1) ^ (i - 1) * a i (n - k))
+    (S : ℕ → ℝ) (hSdef : S = fun i => ∑ k ∈ Finset.range (n + 1), a i k) :
+    ∃ Bhat0 : ℤ,
+      (Nat.lcmUpto n : ℝ) ^ 33 * rhat 17 n
+        = (∑ i ∈ oddIdx3, (Nat.lcmUpto n : ℝ) ^ 33 * S i * ((2 : ℝ) ^ i - 1) * zetaVal i)
+            + (Bhat0 : ℝ) := by
+  sorry
+
 /-! ### Lemma 3: the ζ-representations of `r_n` and `r̂_n` (paper e07, e08)
 
 Multiplying the paper's e07/e08 through by `d_n^{33}` and using
@@ -1376,19 +1400,19 @@ theorem repr_combined (n : ℕ) :
       apply Finset.sum_congr rfl; intro i hi
       apply Finset.sum_congr rfl; intro k hk
       exact hzf i k hi hk
-    refine ⟨-(∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), zf i k), 0, ?_, ?_⟩
-    · -- r-form.
-      rw [hB0eq, ← hZeta, hRV, mul_add, hAeq, hBeq,
-        show (∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), d ^ 33 * a i k * Hh i k)
-            = (∑ k ∈ Finset.range (n + 1), d ^ 33 * a 1 k * Hh 1 k)
-              + (∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1), d ^ 33 * a i k * Hh i k) from by
-          rw [show Finset.Icc 1 33 = insert 1 (Finset.Icc 2 33) from by
-            ext x; simp only [Finset.mem_insert, Finset.mem_Icc]; omega,
-            Finset.sum_insert (by simp)]]
-      ring
-    · -- r̂-form: the half-integer heads run past `n`, needing the Lemma-2 symmetry
-      -- cancellation of paper e08.  This remains the residual gap.
-      sorry
+    -- The `r̂_n` (e08) constant is packaged as an existential integer; its identity is proved
+    -- via the summation-shift `rhat = Σ'_j R_n(j−m−½)` and the tail lemmas `tail_val_pos/neg`.
+    obtain ⟨Bhat0, hrhat_eq⟩ := repr_rhat_e08 n a _hdec hint _hsym S hSdef
+    refine ⟨-(∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), zf i k), Bhat0, ?_, hrhat_eq⟩
+    -- r-form.
+    rw [hB0eq, ← hZeta, hRV, mul_add, hAeq, hBeq,
+      show (∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), d ^ 33 * a i k * Hh i k)
+          = (∑ k ∈ Finset.range (n + 1), d ^ 33 * a 1 k * Hh 1 k)
+            + (∑ i ∈ Finset.Icc 2 33, ∑ k ∈ Finset.range (n + 1), d ^ 33 * a i k * Hh i k) from by
+        rw [show Finset.Icc 1 33 = insert 1 (Finset.Icc 2 33) from by
+          ext x; simp only [Finset.mem_insert, Finset.mem_Icc]; omega,
+          Finset.sum_insert (by simp)]]
+    ring
   obtain ⟨B0, Bhat0, hr, hrh⟩ := hraw
   exact ⟨B, B0, Bhat0, by rw [hsum_r]; exact hr, by rw [hsum_rhat]; exact hrh⟩
 

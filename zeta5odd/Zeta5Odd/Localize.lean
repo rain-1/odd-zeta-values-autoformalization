@@ -492,24 +492,23 @@ private lemma localize_general
 
 /-! ### Analytic cores for `c` (term ratio ≈ f(k/n)²)
 
-These four `sorry`s are the *only* remaining gaps.  Each reduces, via the exact
-identity `c_ratio` (and `chat`'s analogue), to a bound on the term ratio
-`ρ(j,n) := c q n (j+1) / c q n j
-   = (6n+2j+4)(6n+2j+3)/((2j+3)(2j+2)) · ((n+j+1)/(2n+j+2))^(2q)`,
-which tends to `f(j/n)²` as `n → ∞` (uniformly on `j/n` in compact subsets of
-`(0,∞)`).  Two analytic inputs are needed:
+Each core reduces, via the exact identity `c_ratio` (and `chat_ratio`), to a bound
+on the term ratio `ρ(j,n) := c q n (j+1) / c q n j`, which tends to `f(j/n)²`.
+Two analytic inputs are used:
 
-* **Profile shape** (reproduce from `Basic.existsUnique_x0`'s internal `L`,`N`
-  machinery): `f q x > 1` for `0 < x < x₀` and `f q x < 1` for `x > x₀`
-  (here `x₀` is *the* unique positive crossing by `existsUnique_x0` + `hfx₀`).
-* **Ratio ≈ profile²**: `ρ(j,n) = f(j/n)²·(1 + O(1/n))` with the `O(1/n)`
-  uniform on `j/n ∈ [x_min, x_max]` (bounded away from `0`).  For the far-tail
-  telescoping bound the exponent `2q ≥ 8` and `q ≥ 4` are what make the `B`-power
-  decay beat the `A`-growth so that `ρ ≤ ((j+2n+2)/(j+2n+3))²` above `(x₀+ε/2)n`.
+* **Profile shape** (`f_shape`, reproducing `Basic.existsUnique_x0`'s `L`/`N`
+  machinery): `f q x > 1` for `0 < x < x₀` and `f q x < 1` for `x > x₀`, plus
+  strict antitonicity on `(0, x₁)` with `x₀ < x₁`.
+* **Ratio ↔ profile²** via one-sided rational bridges (`bridge_A`/`bridge_B` and
+  their reciprocal/upper variants).  The far-tail telescoping bound
+  `ρ ≤ ((j+2n+2)/(j+2n+3))²` for `j ≥ 20qn` is proved WITHOUT f-asymptotics: the
+  reciprocal-Bernoulli bound `(1-t)^m ≤ 1/(1+mt)` linearizes the `2q`-th power,
+  turning it into a rational polynomial inequality closed by substitution +
+  `ring_nf` + `positivity` (the `q ≥ 4` margin gives all-nonneg coefficients).
 
-The lower core gives a uniform *constant* margin (min of `f²` on `(0,x₀-ε/2]`);
+The lower core gives a uniform *constant* margin (min of `f²` below the peak);
 the upper core gives both a constant margin on `[(x₀+ε/2)n,(x₀+ε)n]` and the
-telescoping square-ratio majorant that controls `k ≫ n` where the margin decays. -/
+telescoping square-ratio majorant that controls `k ≫ n`. -/
 
 /-- Shape of the profile `f`: there is a turning point `x₁ > x₀` with `f`
 strictly decreasing on `(0, x₁)`, and `f < 1` on all of `(x₀, ∞)`.  (Reproduces

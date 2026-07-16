@@ -21,11 +21,13 @@ STATUS (this pass):
       e.g. `Rn 0 0 2 = 1 ≠ 2 = c 0 0 1`).  These theorems are only ever applied at `q = 17`.
   * `Rn_wellPoised` — PROVED: the well-poised functional equation `R_n(-t-n) = -R_n(t)`
       (paper Lemma 2 proof, tex 166), directly from the product definition by reindexing.
-  * `partialFraction_exists` — PROVED modulo two clearly-named helper `sorry`s:
-      - `pf_decomp` (e04 decomposition + Lemma 1 integrality — the analytic heart), and
-      - `pf_unique` (uniqueness of the partial-fraction coefficients).
-      The Lemma 2 SYMMETRY conjunct is fully DERIVED here from `Rn_wellPoised` + `pf_unique`
-      (paper tex 165–176); only decomposition/integrality remain as `pf_decomp`.
+  * `partialFraction_exists` — FULLY PROVED (sorry-free).  `pf_decomp` is ASSEMBLED from
+      `pf_prod` (built on the inductive step `pf_mul_simple`, PROVED: coefficient collection via
+      `pf_two_pole` + integrality) and `Rn_as_simpleProd` (PROVED: general partial-fraction lemma
+      `pf_general` via polynomial interpolation, six residue identities `f1_id`..`f6_id`, and the
+      recombination `prod_3n_split`); `pf_unique` is PROVED by residue peeling.  The Lemma 2
+      SYMMETRY conjunct is DERIVED from `Rn_wellPoised` + `pf_unique`.
+  * THE ENTIRE FILE IS NOW `sorry`-FREE.
   * `Rn`, `repr_combined` — the `r_n` (e07) representation is PROVED (Lemma 3 assembly:
       reindexing, `S 1 = 0` via harmonic divergence, even-column vanishing, tail-to-ζ,
       interchange, integer constant).  The `r̂_n` (e08) representation `repr_rhat_e08` is now
@@ -511,7 +513,9 @@ paper Lemma 1, tex 138–153).  If `G` decomposes as `Σ_{i≤L} Σ_k a_{i,k}/(t
 `d_n^{L-i} a_{i,k} ∈ ℤ`, then `simpleFn c · G` decomposes to order `L+1` with
 `d_n^{L+1-i} a'_{i,k} ∈ ℤ`.  The new coefficients arise from `pf_two_pole` applied to each
 cross term `1/[(t+m)(t+k)^i]`; the extra `d_n` powers are absorbed by `d_n/(m-k) ∈ ℤ`
-(`dvd_lcmUpto`, since `|m-k| ≤ n`).  [PROOF: `sorry` — the coefficient-collection algebra.] -/
+(`dvd_lcmUpto`, since `|m-k| ≤ n`).  [PROVED: coefficient collection via `pf_two_pole`, with
+diagonal terms vanishing (`0^{≥1}=0`); integrality by splitting `d_n^{L+1-i}` and clearing
+`(k'-k)^p` with `d_n/(k'-k) ∈ ℤ`.] -/
 private theorem pf_mul_simple (n L : ℕ) (hL : 1 ≤ L) (c : ℕ → ℤ) (G : ℝ → ℝ)
     (a : ℕ → ℕ → ℝ)
     (hdec : ∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
@@ -919,16 +923,491 @@ into the denominator power), followed by `f2, f3, f4, f5, f6`.  See `Rn_as_simpl
 private def pfList (n : ℕ) : List (ℕ → ℤ) :=
   List.replicate 28 (pfC1 n) ++ [pfC2 n, pfC3 n, pfC4 n, pfC5 n, pfC6 n]
 
+private lemma prod_erase_neg (n k0 : ℕ) (hk0 : k0 ≤ n) :
+    ∏ j ∈ (Finset.range (n + 1)).erase k0, (-(k0 : ℝ) + (j : ℝ))
+      = (-1 : ℝ) ^ k0 * (k0 ! : ℝ) * ((n - k0)! : ℝ) := by
+  have hsplit : (Finset.range (n + 1)).erase k0 = Finset.range k0 ∪ Finset.Ioc k0 n := by
+    ext x; simp only [Finset.mem_erase, Finset.mem_range, Finset.mem_union, Finset.mem_Ioc]; omega
+  have hdisj : Disjoint (Finset.range k0) (Finset.Ioc k0 n) := by
+    rw [Finset.disjoint_left]; intro x hx hx2
+    simp only [Finset.mem_range] at hx; simp only [Finset.mem_Ioc] at hx2; omega
+  rw [hsplit, Finset.prod_union hdisj]
+  have h1 : ∏ j ∈ Finset.range k0, (-(k0 : ℝ) + (j : ℝ)) = (-1 : ℝ) ^ k0 * (k0 ! : ℝ) := by
+    have hc : ∀ j ∈ Finset.range k0, -(k0 : ℝ) + (j : ℝ) = (-1) * ((k0 - j : ℕ) : ℝ) := by
+      intro j hj; rw [Finset.mem_range] at hj; rw [Nat.cast_sub (by omega)]; ring
+    rw [Finset.prod_congr rfl hc, Finset.prod_mul_distrib, Finset.prod_const, Finset.card_range]
+    congr 1
+    rw [← Nat.cast_prod]
+    congr 1
+    rw [← Finset.prod_range_add_one_eq_factorial k0,
+      ← Finset.prod_range_reflect (fun j => j + 1) k0]
+    apply Finset.prod_congr rfl; intro j hj; rw [Finset.mem_range] at hj; omega
+  have h2 : ∏ j ∈ Finset.Ioc k0 n, (-(k0 : ℝ) + (j : ℝ)) = ((n - k0)! : ℝ) := by
+    have hc : ∀ j ∈ Finset.Ioc k0 n, -(k0 : ℝ) + (j : ℝ) = ((j - k0 : ℕ) : ℝ) := by
+      intro j hj; rw [Finset.mem_Ioc] at hj; rw [Nat.cast_sub (by omega)]; ring
+    rw [Finset.prod_congr rfl hc,
+      show Finset.Ioc k0 n = Finset.Ico (k0 + 1) (n + 1) from by
+        ext x; rw [Finset.mem_Ioc, Finset.mem_Ico]; omega,
+      Finset.prod_Ico_eq_prod_range, ← Nat.cast_prod,
+      show n + 1 - (k0 + 1) = n - k0 from by omega,
+      ← Finset.prod_range_add_one_eq_factorial (n - k0)]
+    congr 1
+    apply Finset.prod_congr rfl; intro i hi; omega
+  rw [h1, h2]
+
+-- General partial fraction lemma.
+
+open Polynomial in
+private theorem pf_general (n : ℕ) (coef : ℕ → ℤ) (Np : ℝ[X])
+    (hdeg : Np.natDegree ≤ n)
+    (hres : ∀ k ∈ Finset.range (n + 1),
+        (coef k : ℝ) * ((-1) ^ k * (k ! : ℝ) * ((n - k)! : ℝ)) = Np.eval (-(k : ℝ)))
+    (t : ℝ) (ht : ∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) :
+    simpleFn n coef t = Np.eval t / ∏ j ∈ Finset.range (n + 1), (t + (j : ℝ)) := by
+  classical
+  -- The cleared polynomial.
+  set Lp : ℝ[X] := ∑ k ∈ Finset.range (n + 1),
+      C (coef k : ℝ) * ∏ j ∈ (Finset.range (n + 1)).erase k, (X + C (j : ℝ)) with hLp
+  -- eval of Lp at any x
+  have hLpeval : ∀ x : ℝ, Lp.eval x
+      = ∑ k ∈ Finset.range (n + 1), (coef k : ℝ) * ∏ j ∈ (Finset.range (n + 1)).erase k, (x + (j : ℝ)) := by
+    intro x
+    rw [hLp, eval_finset_sum]
+    apply Finset.sum_congr rfl; intro k _
+    rw [eval_mul, eval_C, eval_prod]
+    congr 1
+    apply Finset.prod_congr rfl; intro j _
+    rw [eval_add, eval_X, eval_C]
+  -- degree bound on Lp
+  have hLpdeg : Lp.natDegree ≤ n := by
+    rw [hLp]
+    apply Polynomial.natDegree_sum_le_of_forall_le
+    intro k hk
+    apply le_trans (Polynomial.natDegree_C_mul_le _ _)
+    apply le_trans (Polynomial.natDegree_prod_le _ _)
+    apply le_trans (Finset.sum_le_sum (g := fun _ => 1) (fun j _ => by
+      apply le_trans (Polynomial.natDegree_add_le _ _); simp))
+    simp only [Finset.sum_const, smul_eq_mul, mul_one]
+    rw [Finset.card_erase_of_mem hk]
+    simp
+  -- Lp = Np via interpolation on the n+1 points {-k}
+  have hLN : Lp = Np := by
+    apply Polynomial.eq_of_natDegree_lt_card_of_eval_eq Lp Np
+      (f := fun i : Fin (n + 1) => -((i : ℕ) : ℝ))
+    · intro a b hab
+      simp only [neg_inj, Nat.cast_inj, Fin.val_inj] at hab; exact hab
+    · intro i
+      show Lp.eval (-((i : ℕ) : ℝ)) = Np.eval (-((i : ℕ) : ℝ))
+      rw [hLpeval]
+      rw [Finset.sum_eq_single (i : ℕ)]
+      · rw [prod_erase_neg n (i : ℕ) (by have := i.isLt; omega)]
+        exact hres (i : ℕ) (Finset.mem_range.mpr i.isLt)
+      · intro k _ hkk0
+        apply mul_eq_zero_of_right
+        apply Finset.prod_eq_zero (i := (i : ℕ))
+          (Finset.mem_erase.mpr ⟨fun h => hkk0 h.symm, Finset.mem_range.mpr i.isLt⟩)
+        ring
+      · intro h; exact absurd (Finset.mem_range.mpr i.isLt) h
+    · rw [Fintype.card_fin]; omega
+  -- conclude
+  rw [simpleFn]
+  have hPfac : ∀ k ∈ Finset.range (n + 1),
+      (coef k : ℝ) / (t + (k : ℝ))
+        = ((coef k : ℝ) * (∏ j ∈ (Finset.range (n + 1)).erase k, (t + (j : ℝ))))
+            / (∏ j ∈ Finset.range (n + 1), (t + (j : ℝ))) := by
+    intro k hk
+    have hprodne : (∏ j ∈ (Finset.range (n + 1)).erase k, (t + (j : ℝ))) ≠ 0 := by
+      apply Finset.prod_ne_zero_iff.mpr
+      intro j hj; exact ht j (Finset.mem_of_mem_erase hj)
+    rw [← Finset.mul_prod_erase (Finset.range (n + 1)) (fun j => t + (j : ℝ)) hk,
+      mul_div_mul_right _ _ hprodne]
+  rw [Finset.sum_congr rfl hPfac, ← Finset.sum_div, ← hLpeval, hLN]
+
+-- ============ THE SIX IDENTITIES ============
+
+open Polynomial in
+private theorem f1_id (n : ℕ) (t : ℝ) (ht : ∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) :
+    simpleFn n (pfC1 n) t = (n ! : ℝ) / ∏ j ∈ Finset.range (n + 1), (t + (j : ℝ)) := by
+  have h := pf_general n (pfC1 n) (C (n ! : ℝ)) (by simp) ?_ t ht
+  · simpa [eval_C] using h
+  · intro k hk
+    rw [Finset.mem_range] at hk
+    rw [eval_C, pfC1]
+    push_cast
+    rw [show ((-1:ℝ)^k * (n.choose k : ℝ)) * ((-1)^k * (k ! : ℝ) * ((n-k)! : ℝ))
+          = ((-1:ℝ)^k * (-1)^k) * ((n.choose k : ℝ) * (k ! : ℝ) * ((n-k)! : ℝ)) from by ring]
+    rw [← pow_add, ← two_mul, pow_mul]
+    norm_num
+    rw [← Nat.cast_mul, ← Nat.cast_mul, Nat.choose_mul_factorial_mul_factorial (by omega)]
+
+-- ascending product helper: ∏_{i<n}(k+1+i) = (k+n)!/k !
+
+private lemma prod_asc (k n : ℕ) : ∏ i ∈ Finset.range n, ((k + 1 + i : ℕ) : ℝ) = ((k + n)! : ℝ) / (k ! : ℝ) := by
+  have hk : (k ! : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero k)
+  induction n with
+  | zero => simp [div_self hk]
+  | succ m ih =>
+    rw [Finset.prod_range_succ, ih]
+    have hfac : ((k + (m + 1))! : ℝ) = ((k + m + 1 : ℕ) : ℝ) * ((k + m)! : ℝ) := by
+      rw [show k + (m + 1) = (k + m) + 1 from rfl, Nat.factorial_succ]; push_cast; ring
+    rw [hfac]; field_simp; push_cast; ring
+
+-- helper: ∏_{j∈Icc 1 n} ((a+j : ℕ):ℝ) = (a+n)!/a!
+
+private lemma prod_Icc_asc (a n : ℕ) : ∏ j ∈ Finset.Icc 1 n, ((a + j : ℕ) : ℝ) = ((a + n)! : ℝ) / (a ! : ℝ) := by
+  rw [show Finset.Icc 1 n = Finset.Ico 1 (n + 1) from by ext x; rw [Finset.mem_Icc, Finset.mem_Ico]; omega,
+    Finset.prod_Ico_eq_prod_range]
+  rw [show n + 1 - 1 = n from by omega]
+  rw [← prod_asc a n]
+  apply Finset.prod_congr rfl; intro i _; congr 1; omega
+
+-- f2
+
+open Polynomial in
+private theorem f2_id (n : ℕ) (t : ℝ) (ht : ∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) :
+    simpleFn n (pfC2 n) t
+      = (∏ j ∈ Finset.Icc 1 n, (t - (j : ℝ))) / ∏ j ∈ Finset.range (n + 1), (t + (j : ℝ)) := by
+  have h := pf_general n (pfC2 n) (∏ j ∈ Finset.Icc 1 n, (X - C (j : ℝ)))
+    ?deg ?res t ht
+  · rw [h]; congr 1; rw [eval_prod]; apply Finset.prod_congr rfl; intro j _; rw [eval_sub, eval_X, eval_C]
+  case deg =>
+    apply le_trans (Polynomial.natDegree_prod_le _ _)
+    apply le_trans (Finset.sum_le_sum (g := fun _ => 1) (fun j _ => by
+      apply le_trans (Polynomial.natDegree_sub_le _ _); simp))
+    simp
+  case res =>
+    intro k hk
+    rw [Finset.mem_range] at hk
+    rw [eval_prod]
+    have hev : ∏ j ∈ Finset.Icc 1 n, eval (-(k : ℝ)) (X - C (j : ℝ))
+        = (-1 : ℝ) ^ n * (((n + k)! : ℝ) / (k ! : ℝ)) := by
+      have : ∀ j ∈ Finset.Icc 1 n, eval (-(k : ℝ)) (X - C (j : ℝ)) = (-1) * ((k + j : ℕ) : ℝ) := by
+        intro j hj; rw [eval_sub, eval_X, eval_C]; push_cast; ring
+      rw [Finset.prod_congr rfl this, Finset.prod_mul_distrib, Finset.prod_const, Nat.card_Icc,
+        prod_Icc_asc k n, Nat.add_comm k n]
+      simp
+    rw [hev, pfC2]
+    push_cast
+    have hkfac : (k ! : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero k)
+    have hc1 : (n.choose k : ℝ) * (k ! : ℝ) * ((n - k)! : ℝ) = (n ! : ℝ) := by
+      rw [← Nat.cast_mul, ← Nat.cast_mul, Nat.choose_mul_factorial_mul_factorial (by omega : k ≤ n)]
+    have hsign : (-1 : ℝ) ^ (n + k) * (-1) ^ k = (-1) ^ n := by
+      rw [← pow_add, show n + k + k = n + 2 * k from by ring, pow_add, pow_mul]; norm_num
+    have hkn : ((n + k).choose n : ℝ) * (n ! : ℝ) = ((n + k)! : ℝ) / (k ! : ℝ) := by
+      rw [eq_div_iff hkfac, ← Nat.cast_mul, ← Nat.cast_mul,
+        show k ! = (n + k - n)! from by congr 1; omega,
+        Nat.choose_mul_factorial_mul_factorial (by omega : n ≤ n + k)]
+    rw [show ((-1:ℝ)^(n+k) * ((n+k).choose n : ℝ) * (n.choose k : ℝ)) * ((-1)^k * (k ! : ℝ) * ((n-k)! : ℝ))
+          = ((-1:ℝ)^(n+k) * (-1)^k) * (((n+k).choose n : ℝ) * ((n.choose k : ℝ) * (k ! : ℝ) * ((n-k)! : ℝ))) from by ring,
+       hsign, hc1, hkn]
+
+-- f3
+
+open Polynomial in
+private theorem f3_id (n : ℕ) (t : ℝ) (ht : ∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) :
+    simpleFn n (pfC3 n) t
+      = (∏ j ∈ Finset.Icc 1 n, (t + (n : ℝ) + (j : ℝ))) / ∏ j ∈ Finset.range (n + 1), (t + (j : ℝ)) := by
+  have h := pf_general n (pfC3 n) (∏ j ∈ Finset.Icc 1 n, (X + C ((n : ℝ) + (j : ℝ)))) ?deg ?res t ht
+  · rw [h]; congr 1; rw [eval_prod]; apply Finset.prod_congr rfl; intro j _
+    rw [eval_add, eval_X, eval_C]; ring
+  case deg =>
+    apply le_trans (Polynomial.natDegree_prod_le _ _)
+    apply le_trans (Finset.sum_le_sum (g := fun _ => 1) (fun j _ => (natDegree_X_add_C _).le))
+    simp
+  case res =>
+    intro k hk
+    rw [Finset.mem_range] at hk
+    rw [eval_prod]
+    have hkfac : ((n - k)! : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero _)
+    have hev : ∏ j ∈ Finset.Icc 1 n, eval (-(k : ℝ)) (X + C ((n : ℝ) + (j : ℝ)))
+        = ((2 * n - k)! : ℝ) / ((n - k)! : ℝ) := by
+      have hc : ∀ j ∈ Finset.Icc 1 n, eval (-(k : ℝ)) (X + C ((n : ℝ) + (j : ℝ))) = (((n - k) + j : ℕ) : ℝ) := by
+        intro j hj; rw [eval_add, eval_X, eval_C, Nat.cast_add, Nat.cast_sub (by omega)]; push_cast; ring
+      rw [Finset.prod_congr rfl hc, prod_Icc_asc (n - k) n,
+        show (n - k) + n = 2 * n - k from by omega]
+    rw [hev, pfC3]
+    push_cast
+    have hc1 : (n.choose k : ℝ) * (k ! : ℝ) * ((n - k)! : ℝ) = (n ! : ℝ) := by
+      rw [← Nat.cast_mul, ← Nat.cast_mul, Nat.choose_mul_factorial_mul_factorial (by omega : k ≤ n)]
+    have hkn : ((2 * n - k).choose n : ℝ) * (n ! : ℝ) = ((2 * n - k)! : ℝ) / ((n - k)! : ℝ) := by
+      rw [eq_div_iff hkfac, ← Nat.cast_mul, ← Nat.cast_mul,
+        show (n - k)! = (2 * n - k - n)! from by congr 1; omega,
+        Nat.choose_mul_factorial_mul_factorial (by omega : n ≤ 2 * n - k)]
+    rw [show ((-1:ℝ)^k * ((2*n-k).choose n : ℝ) * (n.choose k : ℝ)) * ((-1)^k * (k ! : ℝ) * ((n-k)! : ℝ))
+          = ((-1:ℝ)^k * (-1)^k) * (((2*n-k).choose n : ℝ) * ((n.choose k : ℝ) * (k ! : ℝ) * ((n-k)! : ℝ))) from by ring]
+    rw [← pow_add, ← two_mul, pow_mul]
+    norm_num
+    rw [hc1, hkn]
+
+-- odd product helper (copied from Forms)
+
+open Polynomial in
+private theorem f4_id (n : ℕ) (t : ℝ) (ht : ∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) :
+    simpleFn n (pfC4 n) t
+      = ((2:ℝ)^(2*n) * ∏ j ∈ Finset.Icc 1 n, (t + 1/2 - (j : ℝ))) / ∏ j ∈ Finset.range (n + 1), (t + (j : ℝ)) := by
+  have h := pf_general n (pfC4 n)
+    (C ((2:ℝ)^(2*n)) * ∏ j ∈ Finset.Icc 1 n, (X - C ((j : ℝ) - 1/2))) ?deg ?res t ht
+  · rw [h]; congr 1
+    rw [eval_mul, eval_C, eval_prod]; congr 1
+    apply Finset.prod_congr rfl; intro j _; rw [eval_sub, eval_X, eval_C]; ring
+  case deg =>
+    apply le_trans (Polynomial.natDegree_C_mul_le _ _)
+    apply le_trans (Polynomial.natDegree_prod_le _ _)
+    apply le_trans (Finset.sum_le_sum (g := fun _ => 1) (fun j _ => (natDegree_X_sub_C _).le))
+    simp
+  case res =>
+    intro k hk
+    rw [Finset.mem_range] at hk
+    rw [eval_mul, eval_C, eval_prod]
+    have h2n : ((2*k)! : ℝ) ≠ 0 := by exact_mod_cast Nat.factorial_ne_zero _
+    have hkn : ((k+n)! : ℝ) ≠ 0 := by exact_mod_cast Nat.factorial_ne_zero _
+    have hev : (2:ℝ)^(2*n) * ∏ j ∈ Finset.Icc 1 n, eval (-(k:ℝ)) (X - C ((j:ℝ) - 1/2))
+        = (-1)^n * ((2*k+2*n)! : ℝ) * (k ! : ℝ) / (((k+n)! : ℝ) * ((2*k)! : ℝ)) := by
+      have hc : ∀ j ∈ Finset.Icc 1 n, eval (-(k:ℝ)) (X - C ((j:ℝ) - 1/2)) = (-1/2) * ((2*k+2*j-1 : ℕ):ℝ) := by
+        intro j hj; rw [Finset.mem_Icc] at hj; rw [eval_sub, eval_X, eval_C, Nat.cast_sub (by omega)]; push_cast; ring
+      rw [Finset.prod_congr rfl hc, Finset.prod_mul_distrib, Finset.prod_const, Nat.card_Icc]
+      have hodd : ∏ j ∈ Finset.Icc 1 n, ((2*k+2*j-1 : ℕ):ℝ) = ∏ i ∈ Finset.range n, ((2*k+2*i+1 : ℕ):ℝ) := by
+        rw [show Finset.Icc 1 n = Finset.Ico 1 (n+1) from by ext x; rw [Finset.mem_Icc, Finset.mem_Ico]; omega,
+          Finset.prod_Ico_eq_prod_range, show n+1-1 = n from by omega]
+        apply Finset.prod_congr rfl; intro i _; congr 1; omega
+      rw [hodd, prod_range_odd k n, show n + 1 - 1 = n from by omega,
+        show (-1/2 : ℝ) = -(2⁻¹) from by norm_num, neg_pow, inv_pow,
+        show (2:ℝ)^(2*n) = 2^n * 2^n from by rw [← pow_add]; congr 1; ring]
+      have h2 : (2:ℝ)^n ≠ 0 := by positivity
+      field_simp
+    rw [hev, pfC4]
+    push_cast
+    have hsign : (-1:ℝ)^(n+k) * (-1)^k = (-1)^n := by
+      rw [← pow_add, show n + k + k = n + 2*k from by ring, pow_add, pow_mul]; norm_num
+    have hbN : (2*k+2*n).choose (2*n) * (2*n).choose (n+k) * (n-k)! * (k+n)! * (2*k)! = (2*k+2*n)! := by
+      have e2 : (2*n).choose (n+k) * (n+k)! * (n-k)! = (2*n)! := by
+        have h := Nat.choose_mul_factorial_mul_factorial (show n + k ≤ 2 * n by omega)
+        rwa [show 2*n-(n+k) = n-k from by omega] at h
+      have e1 : (2*k+2*n).choose (2*n) * (2*n)! * (2*k)! = (2*k+2*n)! := by
+        have h := Nat.choose_mul_factorial_mul_factorial (show 2 * n ≤ 2 * k + 2 * n by omega)
+        rwa [show 2*k+2*n-2*n = 2*k from by omega] at h
+      calc (2*k+2*n).choose (2*n) * (2*n).choose (n+k) * (n-k)! * (k+n)! * (2*k)!
+          = (2*k+2*n).choose (2*n) * ((2*n).choose (n+k) * (n+k)! * (n-k)!) * (2*k)! := by
+            rw [Nat.add_comm k n]; ring
+        _ = (2*k+2*n).choose (2*n) * (2*n)! * (2*k)! := by rw [e2]
+        _ = (2*k+2*n)! := e1
+    have hbNr : ((2*k+2*n).choose (2*n) : ℝ) * ((2*n).choose (n+k) : ℝ) * ((n-k)! : ℝ) * ((k+n)! : ℝ) * ((2*k)! : ℝ)
+        = ((2*k+2*n)! : ℝ) := by exact_mod_cast hbN
+    rw [show ((-1:ℝ)^(n+k) * ((2*n+2*k).choose (2*n) : ℝ) * ((2*n).choose (n+k) : ℝ)) * ((-1)^k * (k ! : ℝ) * ((n-k)! : ℝ))
+          = ((-1:ℝ)^(n+k) * (-1)^k) * (((2*n+2*k).choose (2*n) : ℝ) * ((2*n).choose (n+k) : ℝ) * ((n-k)! : ℝ) * (k ! : ℝ)) from by ring,
+       hsign, show (2*n+2*k = 2*k+2*n) from by ring]
+    rw [eq_div_iff (mul_ne_zero hkn h2n)]
+    linear_combination ((-1:ℝ)^n * (k ! : ℝ)) * hbNr
+
+private lemma prod_odd0 (m : ℕ) : ∏ i ∈ Finset.range m, ((2*i+1 : ℕ):ℝ) = ((2*m)! : ℝ) / (2^m * (m ! : ℝ)) := by
+  have := prod_range_odd 0 m
+  simp only [Nat.mul_zero, Nat.zero_add, Nat.factorial_zero, Nat.cast_one, mul_one] at this
+  exact this
+
+-- f5
+
+open Polynomial in
+private theorem f5_id (n : ℕ) (t : ℝ) (ht : ∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) :
+    simpleFn n (pfC5 n) t
+      = ((2:ℝ)^(2*n) * ∏ j ∈ Finset.Icc 1 n, (t - 1/2 + (j : ℝ))) / ∏ j ∈ Finset.range (n + 1), (t + (j : ℝ)) := by
+  have h := pf_general n (pfC5 n)
+    (C ((2:ℝ)^(2*n)) * ∏ j ∈ Finset.Icc 1 n, (X + C ((j : ℝ) - 1/2))) ?deg ?res t ht
+  · rw [h]; congr 1
+    rw [eval_mul, eval_C, eval_prod]; congr 1
+    apply Finset.prod_congr rfl; intro j _; rw [eval_add, eval_X, eval_C]; ring
+  case deg =>
+    apply le_trans (Polynomial.natDegree_C_mul_le _ _)
+    apply le_trans (Polynomial.natDegree_prod_le _ _)
+    apply le_trans (Finset.sum_le_sum (g := fun _ => 1) (fun j _ => (natDegree_X_add_C _).le))
+    simp
+  case res =>
+    intro k hk
+    rw [Finset.mem_range] at hk
+    rw [eval_mul, eval_C, eval_prod]
+    have hkfac : ((k)! : ℝ) ≠ 0 := by exact_mod_cast Nat.factorial_ne_zero _
+    have hnkfac : ((n-k)! : ℝ) ≠ 0 := by exact_mod_cast Nat.factorial_ne_zero _
+    have hev : (2:ℝ)^(2*n) * ∏ j ∈ Finset.Icc 1 n, eval (-(k:ℝ)) (X + C ((j:ℝ) - 1/2))
+        = (-1)^k * ((2*k)! : ℝ) * ((2*n-2*k)! : ℝ) / (((k)! : ℝ) * ((n-k)! : ℝ)) := by
+      have hsplit : Finset.Icc 1 n = Finset.Icc 1 k ∪ Finset.Ioc k n := by
+        ext x; simp only [Finset.mem_Icc, Finset.mem_union, Finset.mem_Ioc]; omega
+      have hdisj : Disjoint (Finset.Icc 1 k) (Finset.Ioc k n) := by
+        rw [Finset.disjoint_left]; intro x h1 h2
+        simp only [Finset.mem_Icc] at h1; simp only [Finset.mem_Ioc] at h2; omega
+      rw [hsplit, Finset.prod_union hdisj]
+      have hP1 : ∏ j ∈ Finset.Icc 1 k, eval (-(k:ℝ)) (X + C ((j:ℝ) - 1/2))
+          = (-1)^k * (((2*k)! : ℝ) / (2^(2*k) * (k ! : ℝ))) := by
+        have hc : ∀ j ∈ Finset.Icc 1 k, eval (-(k:ℝ)) (X + C ((j:ℝ) - 1/2)) = (-1/2) * ((2*(k-j)+1 : ℕ):ℝ) := by
+          intro j hj; rw [Finset.mem_Icc] at hj
+          rw [eval_add, eval_X, eval_C, show (2*(k-j)+1 : ℕ) = 2*k+1-2*j from by omega,
+            Nat.cast_sub (show 2*j ≤ 2*k+1 by omega)]; push_cast; ring
+        rw [Finset.prod_congr rfl hc, Finset.prod_mul_distrib, Finset.prod_const, Nat.card_Icc,
+          show k + 1 - 1 = k from by omega]
+        have hodd : ∏ j ∈ Finset.Icc 1 k, ((2*(k-j)+1 : ℕ):ℝ) = ∏ i ∈ Finset.range k, ((2*i+1 : ℕ):ℝ) := by
+          rw [show Finset.Icc 1 k = Finset.Ico 1 (k+1) from by ext x; rw [Finset.mem_Icc, Finset.mem_Ico]; omega,
+            Finset.prod_Ico_eq_prod_range, show k+1-1 = k from by omega,
+            ← Finset.prod_range_reflect (fun i => ((2*i+1 : ℕ):ℝ)) k]
+          apply Finset.prod_congr rfl; intro i hi; rw [Finset.mem_range] at hi; congr 2; omega
+        rw [hodd, prod_odd0 k, show (-1/2 : ℝ) = -(2⁻¹) from by norm_num, neg_pow, inv_pow]
+        have h2 : (2:ℝ)^k ≠ 0 := by positivity
+        rw [show (2:ℝ)^(2*k) = 2^k * 2^k from by rw [← pow_add]; congr 1; ring]
+        field_simp
+      have hP2 : ∏ j ∈ Finset.Ioc k n, eval (-(k:ℝ)) (X + C ((j:ℝ) - 1/2))
+          = ((2*n-2*k)! : ℝ) / (2^(2*(n-k)) * ((n-k)! : ℝ)) := by
+        have hc : ∀ j ∈ Finset.Ioc k n, eval (-(k:ℝ)) (X + C ((j:ℝ) - 1/2)) = (1/2) * ((2*(j-k-1)+1 : ℕ):ℝ) := by
+          intro j hj; rw [Finset.mem_Ioc] at hj
+          rw [eval_add, eval_X, eval_C, show (2*(j-k-1)+1 : ℕ) = 2*j-(2*k+1) from by omega,
+            Nat.cast_sub (show 2*k+1 ≤ 2*j by omega)]; push_cast; ring
+        rw [Finset.prod_congr rfl hc, Finset.prod_mul_distrib, Finset.prod_const, Nat.card_Ioc]
+        have hodd : ∏ j ∈ Finset.Ioc k n, ((2*(j-k-1)+1 : ℕ):ℝ) = ∏ i ∈ Finset.range (n-k), ((2*i+1 : ℕ):ℝ) := by
+          rw [show Finset.Ioc k n = Finset.Ico (k+1) (n+1) from by ext x; rw [Finset.mem_Ioc, Finset.mem_Ico]; omega,
+            Finset.prod_Ico_eq_prod_range, show n+1-(k+1) = n-k from by omega]
+          apply Finset.prod_congr rfl; intro i hi; congr 2; omega
+        rw [hodd, prod_odd0 (n-k), one_div, inv_pow,
+          show ((2*(n-k))! : ℝ) = ((2*n-2*k)! : ℝ) from by rw [show 2*(n-k)=2*n-2*k from by omega],
+          show (2:ℝ)^(2*(n-k)) = 2^(n-k) * 2^(n-k) from by rw [← pow_add]; congr 1; ring]
+        have h2 : (2:ℝ)^(n-k) ≠ 0 := by positivity
+        field_simp
+      rw [hP1, hP2]
+      rw [show (2:ℝ)^(2*n) = 2^(2*k) * 2^(2*(n-k)) from by rw [← pow_add]; congr 1; omega]
+      have h2a : (2:ℝ)^(2*k) ≠ 0 := by positivity
+      have h2b : (2:ℝ)^(2*(n-k)) ≠ 0 := by positivity
+      field_simp
+    rw [hev, pfC5]
+    push_cast
+    have hbN : (2*k).choose k * (2*n-2*k).choose (n-k) * k ! * (n-k)! * (k ! * (n-k)!) = (2*k)! * (2*n-2*k)! := by
+      have e1 : (2*k).choose k * k ! * k ! = (2*k)! := by
+        have h := Nat.choose_mul_factorial_mul_factorial (show k ≤ 2 * k by omega)
+        rwa [show 2*k-k = k from by omega] at h
+      have e2 : (2*n-2*k).choose (n-k) * (n-k)! * (n-k)! = (2*n-2*k)! := by
+        have h := Nat.choose_mul_factorial_mul_factorial (show n - k ≤ 2 * n - 2 * k by omega)
+        rwa [show 2*n-2*k-(n-k) = n-k from by omega] at h
+      calc (2*k).choose k * (2*n-2*k).choose (n-k) * k ! * (n-k)! * (k ! * (n-k)!)
+          = ((2*k).choose k * k ! * k !) * ((2*n-2*k).choose (n-k) * (n-k)! * (n-k)!) := by ring
+        _ = (2*k)! * (2*n-2*k)! := by rw [e1, e2]
+    have hbNr : ((2*k).choose k : ℝ) * ((2*n-2*k).choose (n-k) : ℝ) * (k ! : ℝ) * ((n-k)! : ℝ) * ((k ! : ℝ) * ((n-k)! : ℝ))
+        = ((2*k)! : ℝ) * ((2*n-2*k)! : ℝ) := by exact_mod_cast hbN
+    rw [eq_div_iff (mul_ne_zero hkfac hnkfac)]
+    linear_combination ((-1:ℝ)^k) * hbNr
+
+open Polynomial in
+private theorem f6_id (n : ℕ) (t : ℝ) (ht : ∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) :
+    simpleFn n (pfC6 n) t
+      = ((2:ℝ)^(2*n) * ∏ j ∈ Finset.Icc 1 n, (t + (n:ℝ) - 1/2 + (j : ℝ))) / ∏ j ∈ Finset.range (n + 1), (t + (j : ℝ)) := by
+  have h := pf_general n (pfC6 n)
+    (C ((2:ℝ)^(2*n)) * ∏ j ∈ Finset.Icc 1 n, (X + C ((n:ℝ) - 1/2 + (j : ℝ)))) ?deg ?res t ht
+  · rw [h]; congr 1
+    rw [eval_mul, eval_C, eval_prod]; congr 1
+    apply Finset.prod_congr rfl; intro j _; rw [eval_add, eval_X, eval_C]; ring
+  case deg =>
+    apply le_trans (Polynomial.natDegree_C_mul_le _ _)
+    apply le_trans (Polynomial.natDegree_prod_le _ _)
+    apply le_trans (Finset.sum_le_sum (g := fun _ => 1) (fun j _ => (natDegree_X_add_C _).le))
+    simp
+  case res =>
+    intro k hk
+    rw [Finset.mem_range] at hk
+    rw [eval_mul, eval_C, eval_prod]
+    have h2nk : ((2*n-k)! : ℝ) ≠ 0 := by exact_mod_cast Nat.factorial_ne_zero _
+    have h2n2k : ((2*n-2*k)! : ℝ) ≠ 0 := by exact_mod_cast Nat.factorial_ne_zero _
+    have hev : (2:ℝ)^(2*n) * ∏ j ∈ Finset.Icc 1 n, eval (-(k:ℝ)) (X + C ((n:ℝ) - 1/2 + (j:ℝ)))
+        = ((4*n-2*k)! : ℝ) * ((n-k)! : ℝ) / (((2*n-k)! : ℝ) * ((2*n-2*k)! : ℝ)) := by
+      have hc : ∀ j ∈ Finset.Icc 1 n, eval (-(k:ℝ)) (X + C ((n:ℝ) - 1/2 + (j:ℝ))) = (1/2) * ((2*(n-k)+2*j-1 : ℕ):ℝ) := by
+        intro j hj; rw [Finset.mem_Icc] at hj
+        rw [eval_add, eval_X, eval_C, show (2*(n-k)+2*j-1 : ℕ) = 2*n+2*j-(2*k+1) from by omega,
+          Nat.cast_sub (show 2*k+1 ≤ 2*n+2*j by omega)]; push_cast; ring
+      rw [Finset.prod_congr rfl hc, Finset.prod_mul_distrib, Finset.prod_const, Nat.card_Icc,
+        show n + 1 - 1 = n from by omega]
+      have hodd : ∏ j ∈ Finset.Icc 1 n, ((2*(n-k)+2*j-1 : ℕ):ℝ) = ∏ i ∈ Finset.range n, ((2*(n-k)+2*i+1 : ℕ):ℝ) := by
+        rw [show Finset.Icc 1 n = Finset.Ico 1 (n+1) from by ext x; rw [Finset.mem_Icc, Finset.mem_Ico]; omega,
+          Finset.prod_Ico_eq_prod_range, show n+1-1 = n from by omega]
+        apply Finset.prod_congr rfl; intro i _; congr 1; omega
+      rw [hodd, prod_range_odd (n-k) n, one_div, inv_pow,
+        show ((2*(n-k)+2*n)! : ℝ) = ((4*n-2*k)! : ℝ) from by rw [show 2*(n-k)+2*n=4*n-2*k from by omega],
+        show (((n-k)+n)! : ℝ) = ((2*n-k)! : ℝ) from by rw [show (n-k)+n=2*n-k from by omega],
+        show ((2*(n-k))! : ℝ) = ((2*n-2*k)! : ℝ) from by rw [show 2*(n-k)=2*n-2*k from by omega],
+        show (2:ℝ)^(2*n) = 2^n * 2^n from by rw [← pow_add]; congr 1; ring]
+      have h2 : (2:ℝ)^n ≠ 0 := by positivity
+      field_simp
+    rw [hev, pfC6]
+    push_cast
+    have hsign : (-1:ℝ)^k * (-1)^k = 1 := by rw [← pow_add, ← two_mul, pow_mul]; norm_num
+    have hbN : (4*n-2*k).choose (2*n) * (2*n).choose k * k ! * (2*n-k)! * (2*n-2*k)! = (4*n-2*k)! := by
+      have e1 : (2*n).choose k * k ! * (2*n-k)! = (2*n)! := by
+        have h := Nat.choose_mul_factorial_mul_factorial (show k ≤ 2 * n by omega)
+        exact h
+      have e2 : (4*n-2*k).choose (2*n) * (2*n)! * (2*n-2*k)! = (4*n-2*k)! := by
+        have h := Nat.choose_mul_factorial_mul_factorial (show 2*n ≤ 4*n-2*k by omega)
+        rwa [show 4*n-2*k-2*n = 2*n-2*k from by omega] at h
+      calc (4*n-2*k).choose (2*n) * (2*n).choose k * k ! * (2*n-k)! * (2*n-2*k)!
+          = (4*n-2*k).choose (2*n) * ((2*n).choose k * k ! * (2*n-k)!) * (2*n-2*k)! := by ring
+        _ = (4*n-2*k).choose (2*n) * (2*n)! * (2*n-2*k)! := by rw [e1]
+        _ = (4*n-2*k)! := e2
+    have hbNr : ((4*n-2*k).choose (2*n) : ℝ) * ((2*n).choose k : ℝ) * (k ! : ℝ) * ((2*n-k)! : ℝ) * ((2*n-2*k)! : ℝ)
+        = ((4*n-2*k)! : ℝ) := by exact_mod_cast hbN
+    rw [show ((-1:ℝ)^k * ((4*n-2*k).choose (2*n) : ℝ) * ((2*n).choose k : ℝ)) * ((-1)^k * (k ! : ℝ) * ((n-k)! : ℝ))
+          = ((-1:ℝ)^k * (-1)^k) * (((4*n-2*k).choose (2*n) : ℝ) * ((2*n).choose k : ℝ) * (k ! : ℝ)) * ((n-k)! : ℝ) from by ring,
+       hsign, one_mul]
+    rw [eq_div_iff (mul_ne_zero h2nk h2n2k)]
+    linear_combination ((n-k)! : ℝ) * hbNr
+
+-- ===== ASSEMBLY =====
+
+private lemma prod_3n_split (n : ℕ) (t : ℝ) :
+    (∏ j ∈ Finset.Icc 1 n, (t + 1/2 - (j:ℝ))) * (∏ j ∈ Finset.Icc 1 n, (t - 1/2 + (j:ℝ)))
+      * (∏ j ∈ Finset.Icc 1 n, (t + (n:ℝ) - 1/2 + (j:ℝ)))
+      = ∏ j ∈ Finset.Icc 1 (3*n), (t - (n:ℝ) - 1/2 + (j:ℝ)) := by
+  have hsplit : Finset.Icc 1 (3*n)
+      = Finset.Icc 1 n ∪ (Finset.Icc (n+1) (2*n) ∪ Finset.Icc (2*n+1) (3*n)) := by
+    ext x; simp only [Finset.mem_Icc, Finset.mem_union]; omega
+  have hd1 : Disjoint (Finset.Icc 1 n) (Finset.Icc (n+1) (2*n) ∪ Finset.Icc (2*n+1) (3*n)) := by
+    rw [Finset.disjoint_left]; intro x h1 h2
+    simp only [Finset.mem_Icc, Finset.mem_union] at h1 h2; omega
+  have hd2 : Disjoint (Finset.Icc (n+1) (2*n)) (Finset.Icc (2*n+1) (3*n)) := by
+    rw [Finset.disjoint_left]; intro x h1 h2; simp only [Finset.mem_Icc] at h1 h2; omega
+  rw [hsplit, Finset.prod_union hd1, Finset.prod_union hd2]
+  have b1 : ∏ j ∈ Finset.Icc 1 n, (t + 1/2 - (j:ℝ)) = ∏ j ∈ Finset.Icc 1 n, (t - (n:ℝ) - 1/2 + (j:ℝ)) := by
+    apply Finset.prod_nbij' (fun j => n+1-j) (fun j => n+1-j)
+    · intro a ha; rw [Finset.mem_Icc] at ha ⊢; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha ⊢; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha; rw [Nat.cast_sub (show a ≤ n+1 by omega)]; push_cast; ring
+  have b2 : ∏ j ∈ Finset.Icc 1 n, (t - 1/2 + (j:ℝ)) = ∏ j ∈ Finset.Icc (n+1) (2*n), (t - (n:ℝ) - 1/2 + (j:ℝ)) := by
+    apply Finset.prod_nbij' (fun j => j+n) (fun j => j-n)
+    · intro a ha; rw [Finset.mem_Icc] at ha ⊢; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha ⊢; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha; push_cast; ring
+  have b3 : ∏ j ∈ Finset.Icc 1 n, (t + (n:ℝ) - 1/2 + (j:ℝ)) = ∏ j ∈ Finset.Icc (2*n+1) (3*n), (t - (n:ℝ) - 1/2 + (j:ℝ)) := by
+    apply Finset.prod_nbij' (fun j => j+2*n) (fun j => j-2*n)
+    · intro a ha; rw [Finset.mem_Icc] at ha ⊢; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha ⊢; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha; omega
+    · intro a ha; rw [Finset.mem_Icc] at ha; push_cast; ring
+  rw [b1, b2, b3]; ring
+
 /-- **`R_n` as a product of the six `simple` integer functions** (tex 115–119):
 `R_n(t) = f1(t)^{28}·f2(t)·f3(t)·f4(t)·f5(t)·f6(t)`, i.e. `simpleProd n (pfList n) t`, using the
-six partial-fraction identities of tex 96–114.  [PROOF: `sorry` — the six single-power
-identities (each provable by clearing denominators at the `n+1` points `t=-k`) plus the
-product-of-factorials bookkeeping that matches `n!^{28}`, `2^{6n}` and the `33` denominator
-power, analogous to `Rn_eq_c`.] -/
+six partial-fraction identities of tex 96–114.  [PROVED via the general partial-fraction lemma
+`pf_general` (polynomial interpolation at the `n+1` points `t=-k`,
+`Polynomial.eq_of_natDegree_lt_card_of_eval_eq`), the six residue identities `f1_id`..`f6_id`,
+the half-integer recombination `prod_3n_split`, and the `n!^{28}`/`2^{6n}`/`P^{33}` bookkeeping.] -/
 private theorem Rn_as_simpleProd (n : ℕ) (t : ℝ)
     (ht : ∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) :
     Rn 17 n t = simpleProd n (pfList n) t := by
-  sorry
+
+  have hP : (∏ j ∈ Finset.range (n+1), (t + (j:ℝ))) ≠ 0 :=
+    Finset.prod_ne_zero_iff.mpr (fun j hj => ht j hj)
+  rw [simpleProd, pfList]
+  simp only [List.map_append, List.map_replicate, List.map_cons, List.map_nil,
+    List.prod_append, List.prod_replicate, List.prod_cons, List.prod_nil, mul_one]
+  rw [f1_id n t ht, f2_id n t ht, f3_id n t ht, f4_id n t ht, f5_id n t ht, f6_id n t ht]
+  rw [Rn, show (2*17-6) = 28 from rfl, show (2*17-1) = 33 from rfl,
+    Finset.prod_pow, ← prod_3n_split n t,
+    show (6*n) = 2*n+2*n+2*n from by ring, pow_add, pow_add]
+  field_simp
 
 /-! ### Partial fractions with the coefficients `a_{i,k}` (paper e04 + Lemmas 1, 2) -/
 

@@ -38,8 +38,13 @@ Full build GREEN. Glue lemmas `tendsto_seven_root` (Main) and `exists_common_den
 **Forms.lean** — `elim_integer` PROVED from `repr_combined`; `dvd_lcmUpto`, `harmonic_integrality`, `oddIdx3`, bridges `Rn_eq_c`/`Rn_eq_chat` (with `1≤q` hyp) all PROVED sorry-free. Remaining:
   - `partialFraction_exists` (e04 + Lemma 1 integrality + Lemma 2 symmetry) — **worker running (round 3)** — hardest piece
   - `repr_combined` (e07/e08 Lemma-3 assembly; consumes partialFraction + harmonic_integrality) — queued (blocked: same file as partialFraction worker)
-**DnBound.lean** — Hanson divisibility half FULLY PROVED sorry-free; `hansonC_le_three_pow` REDUCED sorry-free to log-sum inequality `hansonC_log_bound`; sharp Stirling `log_factorial_le/ge` proved. Remaining:
-  - `hansonC_log_bound` (`log n! ≤ n·log3 + Σ log⌊n/aᵢ⌋!`; thin margin 0.016/n, two-regime: symbolic large-n + finite check n<N₀) — **worker running (round 3)**
+**DnBound.lean** — **FULLY PROVED sorry-free.** `lcmUpto_le_three_pow : d_n ≤ 3^n` complete;
+axioms `[propext, Classical.choice, Quot.sound]`. Divisibility (Sylvester/Legendre), finite regime
+(`decide` to n<1600), and large-n Stirling (certified `Σ(log aᵢ)/aᵢ<log3` + self-bootstrapping
+`hanson_key` induction, N₀=1600) all done.
+
+**Only Forms.lean remains** — 2 lemmas: `pf_decomp` (partial-fraction + Lemma-1 integrality;
+unassigned) and `hraw` (repr_combined's Lemma-3 series identity; worker running).
 **Numeric.lean** — `g_small` (`3^33·g(x₀)<1`) — **DONE (sorry-free)**, bracket b=1/40, quadratic-Bernoulli + log-g monotonicity + exact rational `64·121⁶·41³⁴·40²⁸ < 3²³⁹`.
 
 Workers auto-merge to master on completion (harness handles worktree→master).

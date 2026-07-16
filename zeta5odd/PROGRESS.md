@@ -35,12 +35,11 @@ Public API (all in `namespace Zeta5Odd`, parametrized by `q`, with `s = 2q-1`, `
 Full build GREEN. Glue lemmas `tendsto_seven_root` (Main) and `exists_common_denom` (ZetaValues) proven.
 
 ### Detailed sub-lemma status (6 real sorries)
-**Forms.lean** — `elim_integer` PROVED from `repr_combined`; `dvd_lcmUpto`, `harmonic_integrality`, `oddIdx3` bookkeeping PROVED. Remaining:
-  - `Rn_eq_c`, `Rn_eq_chat` (bridge R_n↔c/chat, factorial algebra) — **worker running (round 2)**
-  - `partialFraction_exists` (e04 + Lemma 1 integrality + Lemma 2 symmetry) — NOT yet assigned (hardest)
-  - `repr_combined` (e07/e08 Lemma-3 assembly; consumes the two above) — NOT yet assigned
-**DnBound.lean** — Hanson divisibility half FULLY PROVED sorry-free (`lcmUpto_dvd_hansonC` via Sylvester seq + `core_sum_le` + Legendre). Remaining:
-  - `hansonC_le_three_pow` (size bound `C n ≤ 3^n`, `Σ(log aᵢ)/aᵢ=1.083<log3`) — **worker running (round 2)**
+**Forms.lean** — `elim_integer` PROVED from `repr_combined`; `dvd_lcmUpto`, `harmonic_integrality`, `oddIdx3`, bridges `Rn_eq_c`/`Rn_eq_chat` (with `1≤q` hyp) all PROVED sorry-free. Remaining:
+  - `partialFraction_exists` (e04 + Lemma 1 integrality + Lemma 2 symmetry) — **worker running (round 3)** — hardest piece
+  - `repr_combined` (e07/e08 Lemma-3 assembly; consumes partialFraction + harmonic_integrality) — queued (blocked: same file as partialFraction worker)
+**DnBound.lean** — Hanson divisibility half FULLY PROVED sorry-free; `hansonC_le_three_pow` REDUCED sorry-free to log-sum inequality `hansonC_log_bound`; sharp Stirling `log_factorial_le/ge` proved. Remaining:
+  - `hansonC_log_bound` (`log n! ≤ n·log3 + Σ log⌊n/aᵢ⌋!`; thin margin 0.016/n, two-regime: symbolic large-n + finite check n<N₀) — **worker running (round 3)**
 **Numeric.lean** — `g_small` (`3^33·g(x₀)<1`) — **DONE (sorry-free)**, bracket b=1/40, quadratic-Bernoulli + log-g monotonicity + exact rational `64·121⁶·41³⁴·40²⁸ < 3²³⁹`.
 
 Workers auto-merge to master on completion (harness handles worktree→master).

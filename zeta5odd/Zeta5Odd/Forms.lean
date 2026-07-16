@@ -470,12 +470,12 @@ private theorem pf_decomp (n : ℕ) :
   sorry
 
 open Filter Topology in
-/-- **Uniqueness of the (e04) partial-fraction coefficients.**  [Proof is `sorry`.]
+/-- **Uniqueness of the (e04) partial-fraction coefficients.**  [PROVED.]
 Two coefficient arrays inducing the same value off the `n+1` poles agree on the grid
-`1 ≤ i ≤ 33`, `0 ≤ k ≤ n`.  (Clear denominators: the difference is a polynomial of degree
-`< 33(n+1)` vanishing at infinitely many `t`, hence identically zero, forcing all
-coefficients equal.)  Used only to transport the well-poised symmetry through the
-decomposition; the symmetry reduction itself (below) is fully proved. -/
+`1 ≤ i ≤ 33`, `0 ≤ k ≤ n`.  Proof by residue peeling: near each pole `-k₀` the difference
+`Σ (a-b)_{i,k}/(t+k)^i` vanishes, so scaling by `(t+k₀)^P` and taking the punctured limit
+`t → -k₀` extracts the top coefficient `(a-b)_{P,k₀}` (downward induction `P = 33,…,1`),
+forcing it to `0`.  Used to transport the well-poised symmetry through the decomposition. -/
 private theorem pf_unique (n : ℕ) (a b : ℕ → ℕ → ℝ)
     (h : ∀ t : ℝ, (∀ k ∈ Finset.range (n + 1), t + (k : ℝ) ≠ 0) →
         ∑ i ∈ Finset.Icc 1 33, ∑ k ∈ Finset.range (n + 1), a i k / (t + (k : ℝ)) ^ i
@@ -711,7 +711,60 @@ theorem repr_combined (n : ℕ) :
       ∧ (Nat.lcmUpto n : ℝ) ^ 33 * rhat 17 n
           = (∑ i ∈ oddIdx3, (Nat.lcmUpto n : ℝ) ^ i * (B i : ℝ) * ((2 : ℝ) ^ i - 1) * zetaVal i)
               + (Bhat0 : ℝ) := by
-  sorry
+  classical
+  -- Partial-fraction data (e04 decomposition, Lemma-1 integrality, Lemma-2 symmetry).
+  obtain ⟨a, _hdec, hint, _hsym⟩ := partialFraction_exists n
+  -- Column totals `S i = Σ_k a_{i,k}` (paper's `a_i`, `â_i` — they coincide across the two forms).
+  set S : ℕ → ℝ := fun i => ∑ k ∈ Finset.range (n + 1), a i k with hSdef
+  -- Integrality of the totals: `d_n^{33-i} · S i ∈ ℤ` (sum Lemma 1 over `k`).
+  have hSint : ∀ i, ∃ z : ℤ, i ∈ Finset.Icc 1 33 →
+      (Nat.lcmUpto n : ℝ) ^ (33 - i) * S i = z := by
+    intro i
+    by_cases hi : i ∈ Finset.Icc 1 33
+    · have hzk : ∀ k, ∃ z : ℤ, k ∈ Finset.range (n + 1) →
+          (Nat.lcmUpto n : ℝ) ^ (33 - i) * a i k = z := by
+        intro k
+        by_cases hk : k ∈ Finset.range (n + 1)
+        · obtain ⟨z, hz⟩ := hint i hi k hk; exact ⟨z, fun _ => hz⟩
+        · exact ⟨0, fun h => absurd h hk⟩
+      choose zc hzc using hzk
+      refine ⟨∑ k ∈ Finset.range (n + 1), zc k, fun _ => ?_⟩
+      simp only [hSdef, Finset.mul_sum, Int.cast_sum]
+      exact Finset.sum_congr rfl (fun k hk => hzc k hk)
+    · exact ⟨0, fun h => absurd h hi⟩
+  -- The integer coefficients `B i` with `d_n^{33} · S i = d_n^i · B i` for `i ≤ 33`.
+  choose B hB using hSint
+  have hBrel : ∀ i ∈ oddIdx3, (Nat.lcmUpto n : ℝ) ^ i * (B i : ℝ)
+      = (Nat.lcmUpto n : ℝ) ^ 33 * S i := by
+    intro i hi
+    have hi' : i ∈ Finset.Icc 1 33 := by
+      have hi3 : i ∈ Finset.Icc 3 33 := by
+        have := hi; rw [oddIdx3, Finset.mem_filter] at this; exact this.1
+      rw [Finset.mem_Icc] at hi3 ⊢; omega
+    have h1 := hB i hi'
+    have hpow : (Nat.lcmUpto n : ℝ) ^ 33
+        = (Nat.lcmUpto n : ℝ) ^ i * (Nat.lcmUpto n : ℝ) ^ (33 - i) := by
+      rw [← pow_add]; congr 1; rw [Finset.mem_Icc] at hi'; omega
+    rw [hpow, mul_assoc, h1]
+  -- Fold the integer coefficients back into the two ζ-sums.
+  have hsum_r : (∑ i ∈ oddIdx3, (Nat.lcmUpto n : ℝ) ^ i * (B i : ℝ) * zetaVal i)
+      = ∑ i ∈ oddIdx3, (Nat.lcmUpto n : ℝ) ^ 33 * S i * zetaVal i :=
+    Finset.sum_congr rfl (fun i hi => by rw [hBrel i hi])
+  have hsum_rhat :
+      (∑ i ∈ oddIdx3, (Nat.lcmUpto n : ℝ) ^ i * (B i : ℝ) * ((2 : ℝ) ^ i - 1) * zetaVal i)
+      = ∑ i ∈ oddIdx3, (Nat.lcmUpto n : ℝ) ^ 33 * S i * ((2 : ℝ) ^ i - 1) * zetaVal i :=
+    Finset.sum_congr rfl (fun i hi => by rw [hBrel i hi])
+  -- ANALYTIC HEART (paper Lemma 3, e07/e08): the two series representations in terms of the
+  -- column totals `S i`.  Proving this is the remaining `sorry`; see report for the exact gap.
+  have hraw : ∃ B0 Bhat0 : ℤ,
+      (Nat.lcmUpto n : ℝ) ^ 33 * r 17 n
+        = (∑ i ∈ oddIdx3, (Nat.lcmUpto n : ℝ) ^ 33 * S i * zetaVal i) + (B0 : ℝ)
+      ∧ (Nat.lcmUpto n : ℝ) ^ 33 * rhat 17 n
+        = (∑ i ∈ oddIdx3, (Nat.lcmUpto n : ℝ) ^ 33 * S i * ((2 : ℝ) ^ i - 1) * zetaVal i)
+            + (Bhat0 : ℝ) := by
+    sorry
+  obtain ⟨B0, Bhat0, hr, hrh⟩ := hraw
+  exact ⟨B, B0, Bhat0, by rw [hsum_r]; exact hr, by rw [hsum_rhat]; exact hrh⟩
 
 /-! ### The ζ(3)-elimination -/
 

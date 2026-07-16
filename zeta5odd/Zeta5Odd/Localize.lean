@@ -986,6 +986,68 @@ private lemma c_ratio_far (q j n : ℕ) (hq : 4 ≤ q) (hn : 1 ≤ n) (hj : 20 *
   ring_nf
   positivity
 
+/-- Upper bound for the `B`-part: `B ≤ g₂` (the exact base is below the profile
+base, `(n+j+1)/(2n+j+2) ≤ (n+j)/(2n+j)`). -/
+private lemma bridge_B_ub (q j n : ℕ) (hn : 1 ≤ n) :
+    (((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ)) ^ (2 * q)
+      ≤ (((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ)) ^ (2 * q) := by
+  have hg2d : (0 : ℝ) < ((2 * n + j : ℕ) : ℝ) := by exact_mod_cast (by omega : 0 < 2 * n + j)
+  have hbd : (0 : ℝ) < ((2 * n + j + 2 : ℕ) : ℝ) := by positivity
+  apply pow_le_pow_left₀ (by positivity)
+  rw [div_le_div_iff₀ hbd hg2d]
+  have hd : ((n + j : ℕ) : ℝ) * ((2 * n + j + 2 : ℕ) : ℝ)
+      - ((n + j + 1 : ℕ) : ℝ) * ((2 * n + j : ℕ) : ℝ) = (j : ℝ) := by push_cast; ring
+  linarith [hd, show (0 : ℝ) ≤ (j : ℝ) from Nat.cast_nonneg j]
+
+/-- Upper bound for the `A`-part: `A ≤ (1 + 3/(2n))·g₁`. -/
+private lemma bridge_A_ub (j n : ℕ) (hj : 1 ≤ j) (hn : 1 ≤ n) :
+    (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)
+        / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2))
+      ≤ (1 + 3 / (2 * (n : ℝ))) * (((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2) := by
+  have hjR : (1 : ℝ) ≤ j := by exact_mod_cast hj
+  have hnR : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  have hjne : (j : ℝ) ≠ 0 := by linarith
+  have hnne : (n : ℝ) ≠ 0 := by linarith
+  rw [← sub_nonneg]
+  have hEq : (1 + 3 / (2 * (n : ℝ))) * (((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2)
+        - (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)
+            / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2))
+      = ((2 * (n : ℝ) + 3) * ((j : ℝ) + 3 * n) ^ 2 * ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2))
+          - 2 * (n : ℝ) * (j : ℝ) ^ 2 * ((6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)))
+        / (2 * (n : ℝ) * (j : ℝ) ^ 2 * ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2))) := by
+    field_simp
+  rw [hEq]
+  apply div_nonneg _ (by positivity)
+  set a : ℝ := (n : ℝ) - 1 with ha_def
+  set c : ℝ := (j : ℝ) - 1 with hc_def
+  have ha : 0 ≤ a := by rw [ha_def]; linarith
+  have hc : 0 ≤ c := by rw [hc_def]; linarith
+  have hn_eq : (n : ℝ) = a + 1 := by rw [ha_def]; ring
+  have hj_eq : (j : ℝ) = c + 1 := by rw [hc_def]; ring
+  rw [hn_eq, hj_eq]; ring_nf; positivity
+
+/-- Combined upper bound for the term ratio: `c(j+1)/c(j) ≤ (1+3/(2n))·f(j/n)²`. -/
+private lemma c_ratio_ub (q j n : ℕ) (hj : 1 ≤ j) (hn : 1 ≤ n) :
+    c q n (j + 1) / c q n j ≤ (1 + 3 / (2 * (n : ℝ))) * f q ((j : ℝ) / n) ^ 2 := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hjR : (0 : ℝ) < j := by exact_mod_cast hj
+  set g1 : ℝ := ((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2 with hg1
+  set g2 : ℝ := (((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ)) ^ (2 * q) with hg2
+  have e1 : ((j : ℝ) / n + 3) / ((j : ℝ) / n) = ((j : ℝ) + 3 * n) / (j : ℝ) := by field_simp
+  have e2 : ((j : ℝ) / n + 1) / ((j : ℝ) / n + 2) = ((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ) := by
+    push_cast; field_simp; ring
+  have hfeval : f q ((j : ℝ) / n) ^ 2 = g1 * g2 := by
+    unfold f
+    rw [e1, e2, mul_pow, ← pow_mul, mul_comm q 2, div_pow, hg1, hg2]
+  rw [hfeval, c_ratio]
+  calc (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)
+          / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2))
+          * (((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ)) ^ (2 * q)
+      ≤ ((1 + 3 / (2 * (n : ℝ))) * g1) * g2 :=
+        mul_le_mul (bridge_A_ub j n hj hn) (hg2 ▸ bridge_B_ub q j n hn) (by positivity)
+          (by rw [hg1]; positivity)
+    _ = (1 + 3 / (2 * (n : ℝ))) * (g1 * g2) := by ring
+
 /-- Upper margins for `c`: a `1 - δ` middle margin on `[(x₀+ε/2)n, (x₀+ε)n]`
 and the telescoping square-ratio majorant above `(x₀+ε/2)n`.
 

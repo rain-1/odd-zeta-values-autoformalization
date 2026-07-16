@@ -87,3 +87,19 @@ Pipeline: `audit.py` (exact Q via the paper's double sum; J via the
 Data: `audit_map_results.jsonl`, `tiamat_results.jsonl`, `symmetric_growth.log`.
 Analysis: `explore_findings.py` and the excess-distribution snippets in the
 session log.
+
+
+## Addendum 2 (same day, later): scan + growth verdicts
+
+* Boundary-prime recurrence scan: 0/40 fresh trigger-condition points
+  (m₁ prime ∈ {5,7,11,13}, ν_{m₁} ≥ 1) show any p = m₁ excess. The p=7
+  orbit re-audited at n=2 flips to slack (−2) at BOTH partner points,
+  orbit-coherently. Verdict: the p ≥ 5 effect is a single-orbit, n=1-only
+  fluctuation — rare and non-persistent, not structural.
+* Growth series (n up to 5 at the anomalous points, n=8 symmetric):
+  all slack trajectories are bounded wobble (outlier: −6,−5,−4,−5,−3);
+  excesses decay rather than compound; the symmetric 2-adic +2 law holds
+  through n=8 with the 3-adic ceiling attained there. **No measured cell
+  or direction shows growing slack** — the divisible-class program's
+  exponential-upside question is answered negatively on all data so far
+  (~215 cells).

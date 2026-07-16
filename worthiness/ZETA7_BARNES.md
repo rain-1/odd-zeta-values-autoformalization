@@ -22,9 +22,13 @@ series was derived and verified (reproduces I₀,I₁,I₂), but it converges on
 **algebraically** (needs 10^{72–100} terms for PSLQ-grade precision; ε-acceleration
 gains ~1.5 digits) — a hard **precision wall** that is the analytic shadow of the
 same rigidity. **I′₃ is not reached**: the exact route needs HyperInt or creative
-telescoping on the (now machine-verified) J-form, tooling absent here — exactly
-BZ's stated limitation at this weight. Every identity/table below is
-machine-verified.
+telescoping on the (now machine-verified) J-form. A full creative-telescoping
+campaign in SageMath/ore_algebra (§5g) **validated the guess-pipeline on BZ's M₀,₈
+Q_n** (recovering their exact recurrence and characteristic polynomial) but
+**cannot close M₀,₁₀**: ore_algebra offers no multivariate CT, the summand is
+non-hypergeometric, and the order-4 recurrence is undetermined by the three known
+values — exactly BZ's stated limitation at this weight, now fully mapped. Every
+identity/table below is machine-verified.
 
 Scripts: `zeta7_barnes_stage1.py`, `zeta7_barnes_stage2.py`,
 `zeta7_barnes_jform.py`, `zeta7_barnes_stage3.py`, `zeta7_barnes_series_n0.py`,
@@ -483,6 +487,71 @@ shadow of the dihedral rigidity (§5). The decisive next step is a HyperInt or
 creative-telescoping run on the verified J-form (Stage 2), for which the exact
 integrand is now in hand and machine-checked.
 
+## 5g. CREATIVE-TELESCOPING CAMPAIGN (SageMath + ore_algebra) — tooling-gap map
+
+With SageMath 10.9 / ore_algebra available, executed the coordinator's CT campaign.
+Result: the **guess-pipeline is validated on M₀,₈**, but both attacks on M₀,₁₀ are
+blocked by a precisely-located tooling+structure gap.
+
+**Methodology VALIDATED [VERIFIED — `zeta7_ct_guess_apery.sage`,
+`zeta7_ct_guess_Q8.sage`].**
+* ore_algebra `guess` recovers Apéry's ζ(3) order-2 recurrence from 30 terms.
+* Fed BZ's **explicit M₀,₈ leading coefficient** Q_n = Σ_{k₁,k₂}
+  C(n+k₁,n)C(n,k₁)²·C(n+k₂,n)C(n,k₂)²·C(n+k₁+k₂,n) (= 1,21,2989,…, computable),
+  `guess` on 70 terms returns the **exact order-3, degree-9 recurrence**, whose
+  characteristic polynomial is **41218·(4λ³−2368λ²−188λ+1)** with roots
+  **{0.00500378, −0.08438432, 592.07938}** — *identical* to BZ's printed
+  λ₁,λ₂,λ₃ (paper §2). So: *given a computable sequence, guess delivers the exact
+  recurrence + characteristic polynomial (asymptotic rates).*
+
+**ATTACK 2 (recurrence in n) — blocked: no data, no computable sequence.**
+* The M₀,₁₀ family underlies a **rank-4** motive ⇒ its Apéry-type recurrence is
+  **order ≈ 4**. An order-r recurrence needs r+1 consecutive values to pin down;
+  we have only n=0,1,2 (**3** consecutive). Verified (`order_check.py`): the four
+  coefficient sequences q,s,P,P̂ at n=0,1,2 admit **no** order-2 recurrence, and
+  order-4 is **undetermined** — q₃ is exactly the unknown. Guess cannot fire.
+* To feed guess one needs a *computable* M₀,₁₀ sequence — the analogue of BZ's
+  `sumQ` multi-sum for q_n. **None is known:** the `ZETA7_DUAL.md` §3.5 search over
+  triple-sum / subset-coupling product-weight families found nothing matching
+  1,61,52921, and the genuine object would come from the **residues of the 4-fold
+  Barnes** — the derivation §5f shows is itself blocked.
+
+**ATTACK 1 (telescope indices at fixed n) — blocked: no multivariate CT tool, and
+the summand is non-hypergeometric.**
+* **ore_algebra has no multivariate creative telescoping.** Its public API
+  (`zeta7_ct_api_probe.sage`) exposes `guess`, `guess_raw`, D-finite *closure*
+  (`UnivariateDFiniteSequence`, `DFiniteFunctionRing`) and `OreAlgebra` — but **no
+  `ct`/Zeilberger/telescoper method**; the bivariate shift algebra even fails to
+  build usable operators (Singular rejects the multivariate base). Multivariate CT
+  is Koutschan's *HolonomicFunctions* (Mathematica) — the very tool BZ used and
+  that remains **absent** here (as `ZETA7_FAMILY.md` §2c already noted).
+* Even with such a tool, the J-form summand is **not hypergeometric**: the
+  pair-couplings are
+  G₂(p)=B(n+1,n+1)²·₃F₂(−p,n+1,n+1;2n+2,2n+2;1) — a terminating ₃F₂(1) that is
+  **not** Saalschützian/Watson/Whipple, so no closed form — and H₂ is an Appell
+  block. Single-variable Zeilberger does not apply; the pure-hypergeometric
+  reduction is a **7-fold** sum (only the y₇-index collapses to a Beta,
+  Σ_r(−1)^rC(d,r)B(n+q+r+1,n+1)=B(n+q+1,n+d+1); the p- and q-couplings do **not**
+  collapse), leaving a 6-fold multivariate CT — strictly heavier than BZ's M₀,₈
+  order-3 telescoping.
+
+**The tooling-gap map (what Koutschan-class tooling would need).** Exact I′₃ is
+one of two computations, both outside this environment:
+1. **HolonomicFunctions-style multivariate CT** of the 6-fold non-hypergeometric
+   J-form summand → the order-≈4 recurrence + a certificate; then propagate exact
+   I₃,I₄,… from I₀,I₁,I₂ *plus the recurrence* (note: order 4 ⇒ three values do
+   **not** bootstrap I₃ alone; one needs the operator). Blowup risk: BZ's M₀,₈
+   certificate was already substantial at order 3; the M₀,₁₀ one is heavier.
+2. **The eq-`sumQ` analogue for M₀,₁₀** (leading-coefficient multi-sum for q_n),
+   which — once derived from the 4-fold Barnes — is computable and would let the
+   **validated guess-pipeline** (above) return the recurrence and q₃ immediately.
+
+Both routes reduce to the *same* missing derivation: the 4-fold Barnes residue
+decomposition (§5f), which the dihedral rigidity (§5b) prevents from simplifying
+to BZ's tractable low-Barnes form. **ore_algebra is functional and the pipeline is
+validated, but it cannot substitute for the multivariate-CT / Barnes-residue step
+that this weight-7 cell requires.**
+
 ## 6. Reproduction / honesty ledger
 
 * Stage 1 identity, general n: **[VERIFIED exact]** `zeta7_barnes_stage1.py`
@@ -514,12 +583,21 @@ integrand is now in hand and machine-checked.
   `zeta7_barnes_num1.py` (matches I₀,I₁,I₂). Convergence exponents and the
   10^{72–100}-term / ε-acceleration cost: **[VERIFIED]** `zeta7_barnes_num_accel.py`,
   `rate.py`.
+* §5g CT campaign: **[VERIFIED / MAPPED]** — guess-pipeline validated on Apéry and
+  on BZ's M₀,₈ Q_n (`zeta7_ct_guess_apery.sage`, `zeta7_ct_guess_Q8.sage`:
+  reproduces BZ's order-3 recurrence and char poly 41218·(4λ³−2368λ²−188λ+1),
+  roots = BZ's λ₁,λ₂,λ₃). ore_algebra has no multivariate CT (API probe
+  `zeta7_ct_api_probe.sage`); M₀,₁₀ recurrence is order-4, undetermined by 3 values
+  (`order_check.py`); the summand is non-hypergeometric (₃F₂/Appell couplings).
 * Stages 4 (residue decomposition, reproduce I₀,I₁,I₂ from a Barnes form) and 5
-  (I′₃, denominator audit): **[NOT REACHED — precision wall, §5f]**. The clean
-  symbolic route is gated on a symmetric orientation that §5b proves does not
-  exist; the numeric route is blocked by algebraic convergence (§5f); the exact
-  route needs HyperInt or creative telescoping on the (verified) J-form — tooling
-  not in this environment. I′₃ remains open, as BZ anticipated for this weight.
+  (I′₃, denominator audit): **[NOT REACHED]**. Every route reduces to the same
+  missing 4-fold-Barnes residue decomposition: the clean symbolic route needs a
+  symmetric orientation that §5b **proves does not exist**; numeric evaluation hits
+  the algebraic-convergence wall (§5f); creative telescoping needs Koutschan-class
+  multivariate CT of a non-hypergeometric summand, which ore_algebra does not
+  provide (§5g). I′₃ remains **open**, as BZ anticipated for this weight — but the
+  obstruction is now fully mapped and the guess-pipeline is validated and ready
+  should the M₀,₁₀ leading-coefficient multi-sum be derived.
 
 **Deliverable status:** the change-of-variables half of route (a) is *done and
 exact* (a new, clean 4-coupled-factor J-form for the M₀,₁₀ ζ(7) integral,

@@ -511,6 +511,316 @@ The lower core gives a uniform *constant* margin (min of `f²` on `(0,x₀-ε/2]
 the upper core gives both a constant margin on `[(x₀+ε/2)n,(x₀+ε)n]` and the
 telescoping square-ratio majorant that controls `k ≫ n` where the margin decays. -/
 
+/-- Shape of the profile `f`: there is a turning point `x₁ > x₀` with `f`
+strictly decreasing on `(0, x₁)`, and `f < 1` on all of `(x₀, ∞)`.  (Reproduces
+the `L`/`N` log-derivative analysis of `Basic.existsUnique_x0` and pins `x₀` to
+the unique crossing via that theorem.) -/
+private lemma f_shape (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
+    (hfx₀ : f q x₀ = 1) :
+    ∃ x₁ : ℝ, x₀ < x₁ ∧ StrictAntiOn (f q) (Set.Ioo 0 x₁) ∧
+      (∀ x : ℝ, x₀ < x → f q x < 1) := by
+  set qr : ℝ := (q : ℝ) with hqr
+  have hqr4 : (4 : ℝ) ≤ qr := by rw [hqr]; exact_mod_cast hq
+  set N : ℝ → ℝ := fun x => (qr - 3) * x ^ 2 + 3 * (qr - 3) * x - 6 with hN
+  set L : ℝ → ℝ := fun x =>
+    Real.log (x + 3) - Real.log x + qr * (Real.log (x + 1) - Real.log (x + 2)) with hL
+  have hfpos : ∀ x : ℝ, 0 < x → 0 < f q x := by
+    intro x hx
+    have : (0:ℝ) < (x+1)/(x+2) := by positivity
+    unfold f; positivity
+  have hLlog : ∀ x : ℝ, 0 < x → Real.log (f q x) = L x := by
+    intro x hx
+    unfold f
+    rw [Real.log_mul (by positivity) (by positivity), Real.log_div (by positivity) (by positivity),
+      Real.log_pow, Real.log_div (by positivity) (by positivity), hL]
+  have hfexp : ∀ x : ℝ, 0 < x → f q x = Real.exp (L x) := by
+    intro x hx; rw [← hLlog x hx, Real.exp_log (hfpos x hx)]
+  have hf1 : ∀ x : ℝ, 0 < x → (f q x = 1 ↔ L x = 0) := by
+    intro x hx
+    rw [← hLlog x hx]
+    constructor
+    · intro h; rw [h]; exact Real.log_one
+    · intro h; exact Real.eq_one_of_pos_of_log_eq_zero (hfpos x hx) h
+  have hLderiv : ∀ x : ℝ, 0 < x →
+      HasDerivAt L (N x / (x * (x + 1) * (x + 2) * (x + 3))) x := by
+    intro x hx
+    have e3 : HasDerivAt (fun y : ℝ => Real.log (y + 3)) (1 / (x + 3)) x := by
+      have := ((hasDerivAt_id x).add_const (3:ℝ)).log (by positivity); simpa using this
+    have e0 : HasDerivAt (fun y : ℝ => Real.log y) (1 / x) x := by
+      simpa using (Real.hasDerivAt_log (by positivity : x ≠ 0))
+    have e1 : HasDerivAt (fun y : ℝ => Real.log (y + 1)) (1 / (x + 1)) x := by
+      have := ((hasDerivAt_id x).add_const (1:ℝ)).log (by positivity); simpa using this
+    have e2 : HasDerivAt (fun y : ℝ => Real.log (y + 2)) (1 / (x + 2)) x := by
+      have := ((hasDerivAt_id x).add_const (2:ℝ)).log (by positivity); simpa using this
+    have hd := (e3.sub e0).add ((e1.sub e2).const_mul qr)
+    have heq : 1 / (x + 3) - 1 / x + qr * (1 / (x + 1) - 1 / (x + 2))
+        = N x / (x * (x + 1) * (x + 2) * (x + 3)) := by rw [hN]; field_simp; ring
+    rw [heq] at hd; exact hd
+  have hNmono : StrictMonoOn N (Set.Ici 0) := by
+    intro a ha b hb hab
+    simp only [Set.mem_Ici] at ha hb
+    simp only [hN]
+    nlinarith [mul_pos (mul_pos (show (0:ℝ) < qr - 3 by linarith)
+      (show (0:ℝ) < b - a by linarith)) (show (0:ℝ) < b + a + 3 by linarith)]
+  have hNcont : Continuous N := by rw [hN]; fun_prop
+  have hN0 : N 0 = -6 := by rw [hN]; ring
+  have hN3 : 0 < N 3 := by simp only [hN]; nlinarith [hqr4]
+  obtain ⟨x₁, hx₁mem, hx₁0⟩ : ∃ x ∈ Set.Icc (0:ℝ) 3, N x = 0 := by
+    have hmem : (0:ℝ) ∈ Set.Icc (N 0) (N 3) := by
+      rw [Set.mem_Icc, hN0]; exact ⟨by norm_num, hN3.le⟩
+    obtain ⟨x, hx, hxeq⟩ := intermediate_value_Icc (by norm_num : (0:ℝ) ≤ 3)
+      hNcont.continuousOn hmem
+    exact ⟨x, hx, hxeq⟩
+  have hx₁pos : 0 < x₁ := by
+    rcases lt_or_eq_of_le hx₁mem.1 with h | h
+    · exact h
+    · exfalso; rw [← h] at hx₁0; rw [hN0] at hx₁0; norm_num at hx₁0
+  have hNneg : ∀ x : ℝ, 0 < x → x < x₁ → N x < 0 := by
+    intro x hx hxx₁
+    have := hNmono (Set.mem_Ici.mpr hx.le) (Set.mem_Ici.mpr hx₁pos.le) hxx₁
+    rw [hx₁0] at this; exact this
+  have hNpos : ∀ x : ℝ, x₁ < x → 0 < N x := by
+    intro x hxx₁
+    have := hNmono (Set.mem_Ici.mpr hx₁pos.le) (Set.mem_Ici.mpr (by linarith : (0:ℝ) ≤ x)) hxx₁
+    rw [hx₁0] at this; exact this
+  have hden : ∀ x : ℝ, 0 < x → 0 < x * (x + 1) * (x + 2) * (x + 3) := by
+    intro x hx; positivity
+  have hLcont1 : ContinuousOn L (Set.Ioo 0 x₁) :=
+    fun x hx => (hLderiv x hx.1).continuousAt.continuousWithinAt
+  have hLanti : StrictAntiOn L (Set.Ioo 0 x₁) := by
+    apply strictAntiOn_of_deriv_neg (convex_Ioo 0 x₁) hLcont1
+    rw [interior_Ioo]
+    intro x hx
+    rw [(hLderiv x hx.1).deriv]
+    exact div_neg_of_neg_of_pos (hNneg x hx.1 hx.2) (hden x hx.1)
+  have hLcont2 : ContinuousOn L (Set.Ici x₁) :=
+    fun x hx => (hLderiv x (lt_of_lt_of_le hx₁pos hx)).continuousAt.continuousWithinAt
+  have hLmono : StrictMonoOn L (Set.Ici x₁) := by
+    apply strictMonoOn_of_deriv_pos (convex_Ici x₁) hLcont2
+    rw [interior_Ici]
+    intro x hx
+    rw [(hLderiv x (lt_trans hx₁pos hx)).deriv]
+    exact div_pos (hNpos x hx) (hden x (lt_trans hx₁pos hx))
+  have hLtend0 : Tendsto L atTop (𝓝 0) := by
+    have key : ∀ a b : ℝ,
+        Tendsto (fun x : ℝ => Real.log (x + a) - Real.log (x + b)) atTop (𝓝 0) := by
+      intro a b
+      have hr : Tendsto (fun x : ℝ => (x + a) / (x + b)) atTop (𝓝 1) := by
+        have h0 : Tendsto (fun x : ℝ => (a - b) / (x + b)) atTop (𝓝 0) :=
+          Tendsto.div_atTop tendsto_const_nhds
+            (tendsto_atTop_add_const_right atTop b tendsto_id)
+        have h1 : Tendsto (fun x : ℝ => 1 + (a - b) / (x + b)) atTop (𝓝 1) := by
+          simpa using h0.const_add 1
+        refine h1.congr' ?_
+        filter_upwards [eventually_gt_atTop (-b)] with x hx
+        have hxb : x + b ≠ 0 := ne_of_gt (by linarith)
+        field_simp; ring
+      have hc := (Real.continuousAt_log (by norm_num : (1:ℝ) ≠ 0)).tendsto.comp hr
+      rw [Real.log_one] at hc
+      refine hc.congr' ?_
+      filter_upwards [eventually_gt_atTop (max (-a) (-b))] with x hx
+      rw [max_lt_iff] at hx
+      exact Real.log_div (ne_of_gt (by linarith [hx.1] : (0:ℝ) < x + a))
+        (ne_of_gt (by linarith [hx.2] : (0:ℝ) < x + b))
+    have hA : Tendsto (fun x : ℝ => Real.log (x + 3) - Real.log x) atTop (𝓝 0) := by
+      refine (key 3 0).congr (fun x => ?_); rw [add_zero]
+    have hB := ((key 1 2).const_mul qr)
+    have := hA.add hB
+    simp only [mul_zero, add_zero] at this
+    exact this.congr (fun x => by simp only [hL])
+  have hLneg : ∀ x : ℝ, x₁ ≤ x → L x < 0 := by
+    intro x hx
+    have h1 : L x < L (x + 1) :=
+      hLmono (Set.mem_Ici.mpr hx) (Set.mem_Ici.mpr (by linarith)) (by linarith)
+    have h2 : L (x + 1) ≤ 0 := by
+      refine ge_of_tendsto hLtend0 ?_
+      filter_upwards [eventually_ge_atTop (x + 1)] with y hy
+      exact hLmono.monotoneOn (Set.mem_Ici.mpr (by linarith)) (Set.mem_Ici.mpr (by linarith)) hy
+    linarith
+  -- `x₀` is the unique crossing, hence `x₀ < x₁`.
+  have hLx₀ : L x₀ = 0 := (hf1 x₀ hx₀).mp hfx₀
+  have hx₀x₁ : x₀ < x₁ := by
+    by_contra h; push_neg at h; exact absurd hLx₀ (ne_of_lt (hLneg x₀ h))
+  refine ⟨x₁, hx₀x₁, ?_, ?_⟩
+  · -- StrictAntiOn (f q) (Ioo 0 x₁)
+    intro a ha b hb hab
+    rw [hfexp a ha.1, hfexp b hb.1]
+    exact Real.exp_lt_exp.mpr (hLanti ha hb hab)
+  · -- f < 1 on (x₀, ∞)
+    intro x hx
+    have hxpos : 0 < x := lt_trans hx₀ hx
+    have hLx : L x < 0 := by
+      rcases lt_or_ge x x₁ with hlt | hge
+      · have := hLanti (Set.mem_Ioo.mpr ⟨hx₀, hx₀x₁⟩) (Set.mem_Ioo.mpr ⟨hxpos, hlt⟩) hx
+        rwa [hLx₀] at this
+      · exact hLneg x hge
+    rw [hfexp x hxpos]
+    calc Real.exp (L x) < Real.exp 0 := Real.exp_lt_exp.mpr hLx
+      _ = 1 := Real.exp_zero
+
+/-- Bernoulli bridge for the `2q`-th power (`B`-part of the term ratio): the exact
+base `(n+j+1)/(2n+j+2)` beats the profile base `(n+j)/(2n+j)` up to a `1 - 2q/n`
+factor. -/
+private lemma bridge_B (q j n : ℕ) (hn : 1 ≤ n) :
+    (1 - 2 * (q : ℝ) / n) * (((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ)) ^ (2 * q)
+      ≤ (((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ)) ^ (2 * q) := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hnj1 : (0 : ℝ) < ((n + j : ℕ) : ℝ) := by exact_mod_cast (by omega : 0 < n + j)
+  have hd1 : (0 : ℝ) < ((2 * n + j : ℕ) : ℝ) := by exact_mod_cast (by omega : 0 < 2 * n + j)
+  have hd2 : (0 : ℝ) < ((2 * n + j + 2 : ℕ) : ℝ) := by
+    exact_mod_cast (by omega : 0 < 2 * n + j + 2)
+  have hnj2 : (0 : ℝ) < ((n + j + 1 : ℕ) : ℝ) := by exact_mod_cast (by omega : 0 < n + j + 1)
+  set bB : ℝ := ((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ) with hbB
+  set bg : ℝ := ((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ) with hbg
+  have hbg_pos : 0 < bg := by rw [hbg]; exact div_pos hnj1 hd1
+  -- r := bB / bg ≥ 1 - 1/n
+  set r : ℝ := bB / bg with hr
+  have hbBr : bB = r * bg := by rw [hr]; field_simp
+  have hkey : (1 - 1 / (n : ℝ)) * bg ≤ bB := by
+    rw [← sub_nonneg, hbB, hbg]
+    have expand : ((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ)
+          - (1 - 1 / (n : ℝ)) * (((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ))
+        = ((j : ℝ) ^ 2 + 2 * (n : ℝ) * (j : ℝ) + 2 * (j : ℝ) + 2 * (n : ℝ) ^ 2 + 2 * (n : ℝ))
+          / ((n : ℝ) * ((2 * n + j : ℕ) : ℝ) * ((2 * n + j + 2 : ℕ) : ℝ)) := by
+      rw [eq_div_iff (by positivity)]
+      field_simp
+      push_cast
+      ring
+    rw [expand]
+    positivity
+  have hr_lb : 1 - 1 / (n : ℝ) ≤ r := by rw [hr]; exact (le_div_iff₀ hbg_pos).mpr hkey
+  have h1n : (0 : ℝ) ≤ 1 - 1 / (n : ℝ) := by
+    rw [sub_nonneg, div_le_one hnR]; exact_mod_cast hn
+  -- r^(2q) ≥ (1-1/n)^(2q) ≥ 1 - 2q/n
+  have hpow1 : (1 - 1 / (n : ℝ)) ^ (2 * q) ≤ r ^ (2 * q) :=
+    pow_le_pow_left₀ h1n hr_lb (2 * q)
+  have hbern : 1 - 2 * (q : ℝ) / n ≤ (1 - 1 / (n : ℝ)) ^ (2 * q) := by
+    have hH : (-2 : ℝ) ≤ -(1 / (n : ℝ)) := by
+      have : (1 : ℝ) / n ≤ 1 := by rw [div_le_one hnR]; exact_mod_cast hn
+      linarith
+    have := one_add_mul_le_pow hH (2 * q)
+    have hrw : (1 : ℝ) + (2 * q : ℕ) * (-(1 / (n : ℝ))) = 1 - 2 * (q : ℝ) / n := by
+      push_cast; ring
+    have hrw2 : (1 : ℝ) + -(1 / (n : ℝ)) = 1 - 1 / (n : ℝ) := by ring
+    rw [hrw, hrw2] at this
+    exact this
+  have hr2q : 1 - 2 * (q : ℝ) / n ≤ r ^ (2 * q) := le_trans hbern hpow1
+  calc (1 - 2 * (q : ℝ) / n) * bg ^ (2 * q)
+      ≤ r ^ (2 * q) * bg ^ (2 * q) :=
+        mul_le_mul_of_nonneg_right hr2q (by positivity)
+    _ = (r * bg) ^ (2 * q) := by rw [mul_pow]
+    _ = bB ^ (2 * q) := by rw [← hbBr]
+
+/-- Rational bridge for the `A`-part of the term ratio: it beats the profile
+`g₁(j/n) = ((j+3n)/j)²` up to a `1 - 4/j` factor (`j ≥ 1`). -/
+private lemma bridge_A (j n : ℕ) (hj : 1 ≤ j) :
+    (1 - 4 / (j : ℝ)) * (((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2)
+      ≤ (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)
+          / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2)) := by
+  have hjR : (0 : ℝ) < j := by exact_mod_cast hj
+  have hnR : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+  have hden : (0 : ℝ) < 2 * (j : ℝ) ^ 2 + 5 * j + 3 := by positivity
+  set g1 : ℝ := ((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2 with hg1
+  have hg1nn : 0 ≤ g1 := by rw [hg1]; positivity
+  set A : ℝ := (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)
+      / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2)) with hA
+  set D : ℝ := 2 * (j : ℝ) ^ 2 / (2 * (j : ℝ) ^ 2 + 5 * j + 3) with hD
+  have step2 : 1 - 4 / (j : ℝ) ≤ D := by
+    rw [hD, ← sub_nonneg]
+    have hEq : 2 * (j : ℝ) ^ 2 / (2 * (j : ℝ) ^ 2 + 5 * j + 3) - (1 - 4 / (j : ℝ))
+        = (3 * (j : ℝ) ^ 2 + 17 * j + 12) / ((j : ℝ) * (2 * (j : ℝ) ^ 2 + 5 * j + 3)) := by
+      field_simp; ring
+    rw [hEq]; positivity
+  have step1 : D * g1 ≤ A := by
+    rw [← sub_nonneg, hA, hD, hg1]
+    have hEq : (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)
+            / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2))
+          - 2 * (j : ℝ) ^ 2 / (2 * (j : ℝ) ^ 2 + 5 * j + 3)
+              * (((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2)
+        = (42 * (n : ℝ) + 14 * j + 12) / (2 * (2 * (j : ℝ) ^ 2 + 5 * j + 3)) := by
+      field_simp; ring
+    rw [hEq]; positivity
+  calc (1 - 4 / (j : ℝ)) * g1 ≤ D * g1 := mul_le_mul_of_nonneg_right step2 hg1nn
+    _ ≤ A := step1
+
+/-- Combined lower bound for the term ratio (`c_ratio` × `bridge_A` × `bridge_B`):
+`c(j+1)/c(j) ≥ (1-4/j)(1-2q/n)·f(j/n)²`. -/
+private lemma c_ratio_lb (q j n : ℕ) (hj : 1 ≤ j) (hn : 1 ≤ n) (hn2q : 2 * q ≤ n) :
+    (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * f q ((j : ℝ) / n) ^ 2
+      ≤ c q n (j + 1) / c q n j := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hjR : (0 : ℝ) < j := by exact_mod_cast hj
+  set g1 : ℝ := ((j : ℝ) + 3 * n) ^ 2 / (j : ℝ) ^ 2 with hg1
+  set g2 : ℝ := (((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ)) ^ (2 * q) with hg2
+  have hg1nn : 0 ≤ g1 := by rw [hg1]; positivity
+  have hg2nn : 0 ≤ g2 := by rw [hg2]; positivity
+  have e1 : ((j : ℝ) / n + 3) / ((j : ℝ) / n) = ((j : ℝ) + 3 * n) / (j : ℝ) := by
+    field_simp
+  have e2 : ((j : ℝ) / n + 1) / ((j : ℝ) / n + 2) = ((n + j : ℕ) : ℝ) / ((2 * n + j : ℕ) : ℝ) := by
+    push_cast; field_simp; ring
+  have hfeval : f q ((j : ℝ) / n) ^ 2 = g1 * g2 := by
+    unfold f
+    rw [e1, e2, mul_pow, ← pow_mul, mul_comm q 2, div_pow, hg1, hg2]
+  rw [hfeval]
+  have hA := bridge_A j n hj
+  have hB := bridge_B q j n hn
+  rw [c_ratio]
+  have h2qn : 0 ≤ 1 - 2 * (q : ℝ) / n := by
+    rw [sub_nonneg, div_le_one hnR]; exact_mod_cast hn2q
+  rcases le_or_gt 0 (1 - 4 / (j : ℝ)) with h4 | h4
+  · calc (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * (g1 * g2)
+        = ((1 - 4 / (j : ℝ)) * g1) * ((1 - 2 * (q : ℝ) / n) * g2) := by ring
+      _ ≤ _ := mul_le_mul hA hB (mul_nonneg h2qn hg2nn) (le_trans (by positivity) hA)
+  · have hLneg : (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * (g1 * g2) ≤ 0 := by
+      have : (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) ≤ 0 :=
+        mul_nonpos_of_nonpos_of_nonneg (le_of_lt h4) h2qn
+      exact mul_nonpos_of_nonpos_of_nonneg this (mul_nonneg hg1nn hg2nn)
+    exact le_trans hLneg (by positivity)
+
+/-- Small-index regime: for `j ≤ J₀` the term ratio blows up (`≥ 36n²·4⁻q /
+((2J₀+3)(2J₀+2))`), hence eventually dominates any `M`. -/
+private lemma c_ratio_smallj (q J₀ : ℕ) (M : ℝ) :
+    ∀ᶠ n : ℕ in atTop, ∀ j : ℕ, j ≤ J₀ → M ≤ c q n (j + 1) / c q n j := by
+  have hCbound : ∀ n : ℕ, 1 ≤ n → ∀ j : ℕ, j ≤ J₀ →
+      36 * (n : ℝ) ^ 2 / (((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2)) * 4 ^ q)
+        ≤ c q n (j + 1) / c q n j := by
+    intro n hn j hj
+    rw [c_ratio]
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+    have hjR : (0 : ℝ) ≤ j := Nat.cast_nonneg j
+    have hjJ : (j : ℝ) ≤ J₀ := by exact_mod_cast hj
+    have hAp : 36 * (n : ℝ) ^ 2 / ((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2))
+        ≤ (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3)
+            / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2)) := by
+      have hnum : 36 * (n : ℝ) ^ 2
+          ≤ (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3) := by
+        have : (6 * (n : ℝ) + 2 * j + 4) * (6 * (n : ℝ) + 2 * j + 3) - 36 * (n : ℝ) ^ 2
+            = 24 * n * j + 42 * n + 4 * (j : ℝ) ^ 2 + 14 * j + 12 := by ring
+        nlinarith [this, hjR, hnR.le, sq_nonneg (j : ℝ), mul_nonneg hnR.le hjR]
+      calc 36 * (n : ℝ) ^ 2 / ((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2))
+          ≤ 36 * (n : ℝ) ^ 2 / ((2 * (j : ℝ) + 3) * (2 * (j : ℝ) + 2)) := by
+            gcongr <;> linarith
+        _ ≤ _ := by gcongr
+    have hBp : (1 : ℝ) / 4 ^ q
+        ≤ (((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ)) ^ (2 * q) := by
+      have hbase : (1 : ℝ) / 2 ≤ ((n + j + 1 : ℕ) : ℝ) / ((2 * n + j + 2 : ℕ) : ℝ) := by
+        rw [le_div_iff₀ (by positivity)]; push_cast; linarith [hjR]
+      have hp := pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 1/2) hbase (2 * q)
+      rwa [show ((1:ℝ)/2)^(2*q) = 1/4^q from by
+        rw [div_pow, one_pow, pow_mul]; norm_num] at hp
+    calc 36 * (n : ℝ) ^ 2 / (((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2)) * 4 ^ q)
+        = (36 * (n : ℝ) ^ 2 / ((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2))) * (1 / 4 ^ q) := by
+          rw [mul_comm ((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2)) (4 ^ q), ← div_div]; ring
+      _ ≤ _ := mul_le_mul hAp hBp (by positivity) (le_trans (by positivity) hAp)
+  have htend : Tendsto
+      (fun n : ℕ => 36 * (n : ℝ) ^ 2 / (((2 * (J₀ : ℝ) + 3) * (2 * J₀ + 2)) * 4 ^ q))
+      atTop atTop := by
+    apply Filter.Tendsto.atTop_div_const (by positivity)
+    exact Filter.Tendsto.const_mul_atTop (by norm_num : (0:ℝ) < 36)
+      ((tendsto_pow_atTop (n := 2) (by norm_num)).comp (tendsto_natCast_atTop_atTop (R := ℝ)))
+  filter_upwards [htend.eventually_ge_atTop M, eventually_ge_atTop 1] with n hM hn j hj
+  exact le_trans hM (hCbound n hn j hj)
+
 /-- Lower geometric margin for `c`: below `(x₀ - ε/2)·n` the term ratio
 `c(j+1)/c(j)` (given exactly by `c_ratio`) exceeds `1 + δ`, because
 `f(j/n)² ≥ f(x₀-ε/2)² > 1` on `(0, x₀)` and `ρ → f²`. -/
@@ -518,10 +828,103 @@ private lemma c_lower_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x�
     (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :
     ∃ δ : ℝ, 0 < δ ∧ ∀ᶠ n : ℕ in atTop, ∀ j : ℕ,
       (j : ℝ) ≤ (x₀ - ε / 2) * n → (1 + δ) * c q n j ≤ c q n (j + 1) := by
-  sorry
+  obtain ⟨x₁, hx₀x₁, hanti, _hflt⟩ := f_shape q hq hx₀ hfx₀
+  rcases le_or_gt (x₀ - ε / 2) 0 with hxle | hxpos
+  · -- window degenerate: only `j = 0` can qualify
+    refine ⟨1, one_pos, ?_⟩
+    filter_upwards [c_ratio_smallj q 0 2, eventually_ge_atTop 1] with n hsmall hn1 j hj
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn1
+    have hj0 : j = 0 := by
+      by_contra h
+      have hj1 : (1 : ℝ) ≤ (j : ℝ) := by exact_mod_cast Nat.one_le_iff_ne_zero.mpr h
+      have hxn : (x₀ - ε / 2) * (n : ℝ) ≤ 0 := mul_nonpos_of_nonpos_of_nonneg hxle hnR.le
+      linarith [hj]
+    subst hj0
+    rw [← le_div_iff₀ (c_pos q n 0)]
+    have := hsmall 0 (le_refl 0)
+    linarith
+  · -- main case: `x_ = x₀ - ε/2 ∈ (0, x₀)`
+    set x_ : ℝ := x₀ - ε / 2 with hx_
+    have hx_lt : x_ < x₀ := by rw [hx_]; linarith
+    have hx_x1 : x_ < x₁ := lt_trans hx_lt hx₀x₁
+    have hx_mem : x_ ∈ Set.Ioo 0 x₁ := ⟨hxpos, hx_x1⟩
+    have hx0_mem : x₀ ∈ Set.Ioo 0 x₁ := ⟨hx₀, hx₀x₁⟩
+    set M : ℝ := f q x_ with hM
+    have hM1 : 1 < M := by
+      rw [hM]; have := hanti hx_mem hx0_mem hx_lt; rwa [hfx₀] at this
+    have hMpos : 0 < M := by linarith
+    have hM2 : 1 < M ^ 2 := by nlinarith [hM1]
+    have hM2pos : 0 < M ^ 2 := pow_pos hMpos 2
+    have hM2m1 : 0 < M ^ 2 - 1 := by linarith
+    set δ : ℝ := (M ^ 2 - 1) / 4 with hδ
+    have hδpos : 0 < δ := by rw [hδ]; linarith
+    refine ⟨δ, hδpos, ?_⟩
+    set J₀ : ℕ := ⌈8 * M ^ 2 / (M ^ 2 - 1)⌉₊ with hJ0
+    have hev_n2 : ∀ᶠ n : ℕ in atTop, (M ^ 2 + 3) / (2 * (M ^ 2 + 1)) ≤ 1 - 2 * (q : ℝ) / n := by
+      have htz : Tendsto (fun n : ℕ => 2 * (q : ℝ) / n) atTop (𝓝 0) :=
+        tendsto_const_div_atTop_nhds_zero_nat (2 * (q : ℝ))
+      have ht1 : Tendsto (fun n : ℕ => 1 - 2 * (q : ℝ) / n) atTop (𝓝 1) := by
+        have := (tendsto_const_nhds (x := (1 : ℝ))).sub htz; simpa using this
+      have hclt : (M ^ 2 + 3) / (2 * (M ^ 2 + 1)) < 1 := by
+        rw [div_lt_one (by positivity)]; nlinarith
+      exact ht1.eventually (eventually_ge_nhds hclt)
+    filter_upwards [c_ratio_smallj q J₀ (1 + δ), hev_n2, eventually_ge_atTop (2 * q),
+      eventually_ge_atTop 1] with n hsmall hn2thr hn2q hn1 j hj
+    have hnR : (0 : ℝ) < n := by exact_mod_cast hn1
+    rcases le_or_gt j J₀ with hjle | hjgt
+    · rw [← le_div_iff₀ (c_pos q n j)]; exact hsmall j hjle
+    · have hj1 : 1 ≤ j := by omega
+      have hjRpos : (0 : ℝ) < (j : ℝ) :=
+        lt_of_lt_of_le one_pos (by exact_mod_cast hj1 : (1 : ℝ) ≤ (j : ℝ))
+      have hlb := c_ratio_lb q j n hj1 hn1 hn2q
+      -- (M²+1)/(2M²) ≤ 1 - 4/j
+      have hjge : 8 * M ^ 2 / (M ^ 2 - 1) ≤ (j : ℝ) :=
+        le_trans (Nat.le_ceil _) (by exact_mod_cast hjgt.le)
+      have h8 : 8 * M ^ 2 ≤ (M ^ 2 - 1) * (j : ℝ) := by
+        rw [div_le_iff₀ hM2m1] at hjge; linarith
+      have hj4 : (M ^ 2 + 1) / (2 * M ^ 2) ≤ 1 - 4 / (j : ℝ) := by
+        rw [← sub_nonneg]
+        have heq : 1 - 4 / (j : ℝ) - (M ^ 2 + 1) / (2 * M ^ 2)
+            = ((M ^ 2 - 1) * (j : ℝ) - 8 * M ^ 2) / (2 * M ^ 2 * (j : ℝ)) := by
+          field_simp; ring
+        rw [heq]; exact div_nonneg (by linarith) (by positivity)
+      -- f(j/n)² ≥ M²
+      have hjnpos : (0 : ℝ) < (j : ℝ) / n := div_pos hjRpos hnR
+      have hjnle : (j : ℝ) / n ≤ x_ := by rw [div_le_iff₀ hnR, hx_]; exact hj
+      have hjnlt1 : (j : ℝ) / n < x₁ := lt_of_le_of_lt hjnle hx_x1
+      have hfge : M ≤ f q ((j : ℝ) / n) := by
+        rw [hM]; exact hanti.antitoneOn ⟨hjnpos, hjnlt1⟩ hx_mem hjnle
+      have hf2 : M ^ 2 ≤ f q ((j : ℝ) / n) ^ 2 := pow_le_pow_left₀ hMpos.le hfge 2
+      -- combine the three lower bounds
+      have hlb1pos : 0 < (M ^ 2 + 1) / (2 * M ^ 2) := div_pos (by positivity) (by positivity)
+      have hbpos : 0 < 1 - 4 / (j : ℝ) := lt_of_lt_of_le hlb1pos hj4
+      have hlb2pos : 0 < (M ^ 2 + 3) / (2 * (M ^ 2 + 1)) := div_pos (by positivity) (by positivity)
+      have hdpos : 0 < 1 - 2 * (q : ℝ) / n := lt_of_lt_of_le hlb2pos hn2thr
+      have hab : (M ^ 2 + 1) / (2 * M ^ 2) * ((M ^ 2 + 3) / (2 * (M ^ 2 + 1)))
+          ≤ (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) :=
+        mul_le_mul hj4 hn2thr hlb2pos.le hbpos.le
+      have hfin : (M ^ 2 + 1) / (2 * M ^ 2) * ((M ^ 2 + 3) / (2 * (M ^ 2 + 1))) * M ^ 2
+          ≤ (1 - 4 / (j : ℝ)) * (1 - 2 * (q : ℝ) / n) * f q ((j : ℝ) / n) ^ 2 :=
+        mul_le_mul hab hf2 hM2pos.le (mul_nonneg hbpos.le hdpos.le)
+      have heq : (M ^ 2 + 1) / (2 * M ^ 2) * ((M ^ 2 + 3) / (2 * (M ^ 2 + 1))) * M ^ 2
+          = (M ^ 2 + 3) / 4 := by field_simp; ring
+      have hδeq : 1 + δ = (M ^ 2 + 3) / 4 := by rw [hδ]; ring
+      rw [← le_div_iff₀ (c_pos q n j), hδeq]
+      linarith [hlb, hfin, heq.le, heq.ge]
 
 /-- Upper margins for `c`: a `1 - δ` middle margin on `[(x₀+ε/2)n, (x₀+ε)n]`
-and the telescoping square-ratio majorant above `(x₀+ε/2)n`. -/
+and the telescoping square-ratio majorant above `(x₀+ε/2)n`.
+
+REMAINING.  The first conjunct (middle margin) is the mirror of `c_lower_core`:
+an *upper* combined bound `ρ(j,n) ≤ (1+4/(3n))(f(j/n)²)` (note `bridge_B` already
+gives the clean `B ≤ g₂` since `(n+j+1)/(2n+j+2) ≤ (n+j)/(2n+j)`) together with
+`f(j/n)² ≤ sup_{[x₀+ε/2,x₀+ε]} f² < 1` (f is a valley: decreasing on `(0,x₁)`,
+increasing on `(x₁,∞)`, so the max on an interval is at an endpoint — extend
+`f_shape` to also return `StrictMonoOn (f q) (Ici x₁)`).
+The second conjunct (far-tail telescoping) is the genuinely hard piece: it needs
+`f(j/n)² · (1 + O(1/n)) ≤ ((j+2n+2)/(j+2n+3))²` for ALL `j ≥ (x₀+ε/2)n`, i.e. a
+quantitative statement that `f(x)² ≤ (1 - 1/(x·-scale))²` — `f → 1⁻` at rate
+`(q-3)/x` (this is where `q ≥ 4` enters). -/
 private lemma c_upper_core (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) {ε : ℝ} (hε : 0 < ε) :
     ∃ δ : ℝ, 0 < δ ∧ δ < 1 ∧

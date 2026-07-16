@@ -316,18 +316,70 @@ Barnes analysis), and (H2) a normalization of the integral Betti
 lattice---one obtains $24\,\Dnu\,I'\in\Z\zeta(5)+\Z$, with the constant
 improving by the lattice index. The measured sharp constants then
 \emph{measure} that index: $12=24/2$ for $P$ (equivalently, cost $2$ on
-the natural coefficient $2P$), and $2$ for $\hat P$. At the totally
-symmetric point the location of the index-$2$ refinement is now
-\emph{computed}: all seven iterated residues of the integrand along the
-transverse codimension-$2$ strata carrying $\mathrm{gr}^W_4$ equal
-$\pm1$ exactly, so the integral de Rham class is primitive and the
-factor $2$ is a genuine refinement of the integral Betti lattice
-($\gamma_2/2\in L$; index $1$ at $p=3$, consistent with the discharged
-$3$-part), localized --- via the $2$-torsion-freeness of the polar
-arrangement's integral combinatorics --- in the $B$-relative cellular
-structure of the boundary strata. One computation (the $B$-relative
-boundary signs) separates this from a fully measurement-independent
-derivation. To our knowledge
+the natural coefficient $2P$), and $2$ for $\hat P$.
+
+\subsection{The lattice index at the symmetric point: locating the
+factor $2$}\label{sec:p2}
+
+At the totally symmetric point the ambiguity left open by the
+measurement --- the constant $12=24/2$ fixes only the \emph{product} of
+the Betti lattice index and the de Rham normalization of the integrand
+--- can be resolved by explicit computation. Full details, scripts, and
+a convention-risk register appear in the companion notes
+(\texttt{H2\_LATTICE.md}); we summarize the three inputs and the
+conclusion.
+
+\emph{Setup.} The singular divisor of the symmetric integrand is
+$A=\{\delta_{24},\delta_{14},\delta_{57},\delta_{35},
+\delta_{36}\}$ (matching the exponent subscripts of the family's
+defining integral), $B$ is the associahedron boundary
+($A\cap B=\emptyset$), and the rank-one piece
+$\mathrm{gr}^W_4\cong\Q(-2)$ of the motive is carried by the seven
+transverse codimension-$2$ strata inside $A$. Ambient ranks were
+cross-checked against Keel's formulas ($b_2(\overline{\mathcal
+M}_{0,8})=99$; Betti string $1,99,626,626,99,1$), and the involution
+$\mathfrak i_1$ acts as $+1$ on $\mathrm{gr}^W_4$ (forced by
+functoriality and $\hat P\neq0$), which already pins any lattice
+anomaly to the prime $2$: no order-$3$ symmetry is available.
+
+\emph{Input 1 (de Rham side, exact).} The iterated residues of the
+symmetric log-form $\omega$ along all seven strata, computed exactly
+with tracked orientation signs, are all equal to $\pm1$. Hence
+$\omega$ restricts to a \emph{primitive} integral cellular form on
+each stratum: the integral de Rham class in $\mathrm{gr}^W_4$ carries
+no factor of $2$ (nor of $3$). This refutes the alternative reading in
+which the measured $2$ is a de Rham normalization effect.
+
+\emph{Input 2 (arrangement combinatorics, exact).} The incidence chain
+complex of the polar arrangement ($5$ divisors, $7$ transverse
+codimension-$2$ strata, $2$ codimension-$3$ triples), assembled as
+integer boundary matrices, has Smith normal form with all elementary
+divisors $1$ ($H_0=\Z$, $H_1=\Z$, $H_2=0$): the arrangement
+contributes no $2$-torsion and no divisibility.
+
+\emph{Input 3 (measurement).} $\ord_2$ of the clearing constant is
+$1$ on the natural coefficient (\S\ref{sec:conjecture}).
+
+\emph{Conclusion.} Valuations add along the period pairing, so
+$v_2(\text{Betti index})=v_2(\text{measured})-v_2(\text{de Rham})
+=1-0=1$: \textbf{the factor $2$ is a genuine refinement of the
+integral Betti lattice} ($\gamma_2/2\in L$; index $1$ at $p=3$,
+consistent with the discharged $3$-part), and Inputs 1--2 localize it
+in the $B$-relative cellular structure of the seven boundary strata
+(products involving $\overline{\mathcal M}_{0,6}$). To our knowledge
+this is the first computed integral-lattice invariant of a period of
+$\overline{\mathcal M}_{0,8}$ of this kind.
+
+\emph{Honest scope.} The attribution is rigorous given the measured
+product; what remains for a fully measurement-\emph{independent}
+derivation of the index is one finite computation (the boundary signs
+of the $B$-relative cellular complex of the seven strata), which we
+state as an open task rather than guess: an incorrectly chosen sign
+convention could manufacture agreement, and we have deliberately not
+done so. With that computation and hypothesis (H1), the mechanism's
+account of the constant $12$ at the symmetric point --- Bernoulli $24$
+from Lemma~\ref{lem:cost}, divided by a computed Betti index $2$, with
+the $3$-part exact --- would be a theorem. To our knowledge
 these are the first experimentally measured integral-lattice invariants
 of periods of $\overline{\mathcal M}_{0,8}$; the literature contains the
 $\Q$-theory \cite{DG,BrownMTZ,BrownM08} and an empirical

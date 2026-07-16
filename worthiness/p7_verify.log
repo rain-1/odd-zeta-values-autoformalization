@@ -1,0 +1,4 @@
+den(P) default dps = 2^7·3^4·5^2·7
+stable under dps+80: True
+p=7 ledger: req=1 dprod=1 nu=1 excess=1
+m = [7, 6, 6, 6, 6]  h max5 = [6, 6, 6, 6, 7]

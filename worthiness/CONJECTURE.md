@@ -1,6 +1,16 @@
 # Conjecture: exact denominators for Brown–Zudilin ζ(5) linear forms
 
-**Status:** empirical, 103 verified (a, n) cells, 2026-07-16. No counterexample.
+**Status:** empirical; 164 verified (a, n) cells as of 2026-07-16 late.
+**AMENDED after one verified exception — see the addendum at the bottom.**
+The {2,3} ceilings hold at every cell (excess₂ ≤ +2 attained 46×, excess₃
+≤ +1 attained 30×). The clause "no excess at p ≥ 5" is FALSIFIED as
+stated: one verified cell (a = (6,2,6,1,6,4,5,5), n = 1) has excess +1 at
+p = 7 = m₁ against the ν-sharpened prediction (den(P) = 2⁷·3⁴·5²·7,
+stable under precision changes; ν₇ = 1 claimed by the orbit bound, not
+realized). Note p = m₁ is the boundary prime of the multiset — the
+mechanism appears to be an orbit-transfer of a partner-point failure
+(under direct verification). The conjecture below should be read with
+this amendment; the original text is preserved for the record.
 
 ## Setup
 

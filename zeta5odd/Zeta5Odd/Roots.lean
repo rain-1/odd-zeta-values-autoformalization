@@ -293,11 +293,21 @@ private lemma tendsto_ceil_div (x₀ : ℝ) (hx₀ : 0 < x₀) :
           (Nat.ceil_lt_add_one (show (0 : ℝ) ≤ x₀ * n by positivity)).le
       _ = (x₀ + 1 / n) * n := by field_simp
 
-/-! ### Upper bound (localization) -/
+/-! ### Upper bound (localization)
 
-/-- UPPER: `(1/n) log (r n)` is asymptotically at most `log (g x₀)`.  The whole
-sum `r n` is a subexponential multiple of its peak term, by the εn-localization
-`sum_localizes` and unimodality of `c`. -/
+REMAINING SUB-SORRY (analytic).  `logRoot_r_upper` is the only missing input to
+`tendsto_logRoot_r`; the lower bound and the whole exp/squeeze wrapper are proven.
+
+Intended proof (needs the concurrently-developed `sum_localizes` as a black box):
+fix `ε>0` and choose `δ>0` with `H` continuous at `x₀` giving `H(x) ≤ H(x₀)+ε`
+on `[x₀-δ,x₀+δ]`, where `H(x) = Σ coeffᵢ αᵢ(x) log αᵢ(x)` is the profile of
+`tendsto_logRoot_peak` (`H(x₀) = log g x₀`).  Then:
+  * `sum_localizes q hq hx₀ hfx₀ (ε:=δ)` ⇒ eventually `r n ≤ 2·∑_{window} c q n k`;
+  * `∑_{window} c ≤ (2δn+2)·max_{window} c`, with `(2δn+2)` subexponential;
+  * a *uniform-over-window* version of the `tendsto_facTerm` bound gives
+    `(1/n) log (max_{window} c) ≤ H(x₀)+ε + o(1)`.
+The last item (uniformity of the Stirling remainder over the window) is the real
+content still to formalize; everything else is bookkeeping. -/
 private lemma logRoot_r_upper (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) :
     ∀ ε > 0, ∀ᶠ n : ℕ in atTop, Real.log (r q n) / n ≤ Real.log (g q x₀) + ε := by
@@ -354,10 +364,26 @@ theorem tendsto_root_r (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
   exact tendsto_root_of_logRoot hg (fun n => r q n) (fun n => r_pos q n hq)
     (tendsto_logRoot_r q hq hx₀ hfx₀)
 
+/-- The `r̂` analogue of `tendsto_logRoot_r`.
+
+REMAINING SUB-SORRY (analytic).  Same skeleton as `tendsto_logRoot_r`: a lower
+bound from the peak term `ĉ_{κ n}` and an upper bound from `sum_localizes_chat`.
+The `ĉ` peak asymptotic reduces to `tendsto_facTerm` after writing the odd-index
+product of `chat` (Basic.lean) as factorials and powers of `2`, OR is transferred
+from the `c` peak via the two-sided subexponential ratio bound `c/ĉ` (paper (e10),
+`centralBinom_two_sided`), which is constant-factor and hence invisible under the
+`1/n` root.  Its limit is again `log g x₀` because `f x₀ = 1`. -/
+private lemma tendsto_logRoot_rhat (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
+    (hfx₀ : f q x₀ = 1) :
+    Tendsto (fun n : ℕ => Real.log (rhat q n) / n) atTop (𝓝 (Real.log (g q x₀))) := by
+  sorry
+
 /-- Lemma 4, first claim for `r̂`. -/
 theorem tendsto_root_rhat (q : ℕ) (hq : 4 ≤ q) {x₀ : ℝ} (hx₀ : 0 < x₀)
     (hfx₀ : f q x₀ = 1) :
     Tendsto (fun n : ℕ => rhat q n ^ (1 / (n : ℝ))) atTop (𝓝 (g q x₀)) := by
-  sorry
+  have hg : 0 < g q x₀ := by unfold g; positivity
+  exact tendsto_root_of_logRoot hg (fun n => rhat q n) (fun n => rhat_pos q n hq)
+    (tendsto_logRoot_rhat q hq hx₀ hfx₀)
 
 end Zeta5Odd

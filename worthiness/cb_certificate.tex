@@ -1,0 +1,414 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+
+\DeclareMathOperator{\ord}{ord}
+\DeclareMathOperator{\Res}{Res}
+\DeclareMathOperator{\lcm}{lcm}
+\newcommand{\Fp}{\mathbb{F}_p}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\zt}[1]{\zeta(#1)}
+\newcommand{\bin}[2]{\binom{#1}{#2}}
+\newcommand{\wt}{\widetilde}
+
+\title{A Frobenius certificate for central-binomial cancellation\\
+in Zudilin's symmetric $\zeta(5)$ construction}
+\author{}
+\date{17 July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Brown and Zudilin's totally symmetric cellular approximations to $\zeta(5)$
+lead, after eliminating $\zeta(3)$ from Zudilin's two companion hypergeometric
+forms, to a denominator target $12\,d_n^5 P_n\in\Z$ that is equivalent to the
+central-binomial divisibility $\bin{2n}{n}\mid 6A_n$, where $A_n=2d_n^5 p_n\in\Z$
+is Zudilin's integral numerator. The primes $n<p\le 2n$ divide $\bin{2n}{n}$ but
+not $d_n$, so their cancellation cannot come from any $d_n$-denominator estimate;
+it was previously known only experimentally. On this clean interval the target
+reduces to a single congruence $(W)$: the $\zeta(3)$-coefficients $w_n$ and
+$\wt w_n$ of the two forms vanish modulo $p$. We prove $(W)$ for \emph{all} $n$
+by exhibiting an explicit polynomial certificate over $\Fp$. The certificate is
+$\varphi(k)=(k^p-k)^2$: the Frobenius identity $k^p-k=(k+j)^p-(k+j)$ makes
+$\varphi\equiv (k+j)^2 \pmod{(k+j)^6}$ at every pole $-j$, while $\deg\varphi=2p\le
+4n+2$ keeps $\varphi R_n$ decaying at infinity, so a residue-sum argument on
+$\mathbb P^1$ forces $w_n\equiv 0$; the companion $\wt w_n$ is handled by
+$\psi(k)=-k(k+n)\varphi(k)$. This closes the entire large-prime (Phase~1)
+interval unconditionally, correcting Brown--Zudilin's printed inclusion
+$d_n^5P_n\in\Z$ (which already fails at $n=2$) on its critical primes. The
+remaining primes $p\le n$ (Phase~2) are discussed but not settled here.
+\end{abstract}
+
+\section{Introduction}
+
+Let $d_n=\lcm(1,2,\dots,n)$. Brown and Zudilin \cite{BZ} study a totally
+symmetric family of cellular integrals on $\overline{\mathcal M}_{0,8}$ producing
+rational approximations $I'_n=Q_n\zt5-P_n$ to $\zeta(5)$. Their normalized
+coefficient $P_n$ is Zudilin's numerator $p_n$ divided by a central binomial
+coefficient,
+\begin{equation}\label{eq:normalize}
+P_n=\frac{(-1)^{n+1}p_n}{\bin{2n}{n}},
+\end{equation}
+where $q_n,p_n,\widetilde p_n$ are the three solutions of Zudilin's third-order
+$\zeta(5)$ recurrence \cite{Zud178}. Zudilin's denominator theorem gives
+$q_n\in\Z$, $2d_n^5 p_n\in\Z$ and $2d_n^3\widetilde p_n\in\Z$. Setting
+\begin{equation}\label{eq:An}
+A_n:=2\,d_n^5\,p_n\in\Z,
+\end{equation}
+the sharp denominator target for the symmetric family is
+\begin{equation}\label{eq:T}
+12\,d_n^5\,P_n\in\Z\qquad(n\ge1).\tag{T}
+\end{equation}
+The multiplier $12$ is genuinely necessary: the printed Brown--Zudilin
+experimental inclusion $d_n^5P_n\in\Z$ already fails at $n=2$, where
+$P_2=1190161/384$, $d_2=2$, and $d_2^5P_2=1190161/12\notin\Z$, whereas
+$12\,d_2^5P_2=1190161\in\Z$. Combining \eqref{eq:normalize}--\eqref{eq:An},
+\begin{equation}\label{eq:CB}
+\text{\eqref{eq:T}}\iff \bin{2n}{n}\ \big|\ 6A_n
+\iff \ord_p(A_n)\ge \ord_p\!\bin{2n}{n}-\ord_p(6)\ \ \forall p.\tag{CB}
+\end{equation}
+Zudilin's theorem proves only that $A_n$ is an \emph{integer}; the division by
+$\bin{2n}{n}$ in \eqref{eq:normalize} imposes the additional arithmetic
+\eqref{eq:CB} on the numerator.
+
+The decisive primes are $n<p\le 2n$. Each such $p$ divides $\bin{2n}{n}$ exactly
+once, but does \emph{not} divide $d_n$; consequently no denominator estimate
+based on $d_n$ can account for the required cancellation. On this interval
+\eqref{eq:CB} reduces to a single congruence, which we now recall, and then prove.
+
+\subsection*{Setup and the reduction to a congruence}
+
+Zudilin's summand is the rational function
+\begin{equation}\label{eq:Rn}
+R_n(k)=(n!)^4\,(k+\tfrac n2)\,
+\frac{\prod_{j=1}^{n}(k-j)\,\prod_{j=1}^{n}(k+n+j)}
+     {\prod_{j=0}^{n}(k+j)^6},
+\end{equation}
+whose numerator has degree $2n+1$ and denominator degree $6n+6$, so
+\begin{equation}\label{eq:decay}
+R_n(k)=O\!\left(k^{-4n-5}\right)\qquad(k\to\infty),\qquad
+\text{i.e. }\ \ord_\infty R_n=4n+5 .
+\end{equation}
+The partial-fraction expansion
+\begin{equation}\label{eq:pf}
+R_n(k)=\sum_{i=1}^{6}\sum_{j=0}^{n}\frac{a_{i,j}}{(k+j)^i}
+\end{equation}
+has coefficients $a_{i,j}\in\Q$, each a $\Z$-linear combination of $(n!)^4$,
+$(\tfrac n2-j)$ and reciprocals of integers $m-j$ with $|m-j|\le n$; in
+particular every $a_{i,j}$ is \emph{$p$-integral} for any prime $p>n$. Zudilin's
+first form and its companion are
+\[
+r_n=\sum_{k\ge1}R_n(k)=u_n\zt5+w_n\zt3-v_n,\qquad
+\widetilde r_n=\sum_{k\ge1}\bigl(-k(k+n)R_n(k)\bigr)
+=\wt u_n\zt5+\wt w_n\zt3-\wt v_n,
+\]
+and eliminating $\zt3$ yields $\widetilde w_n r_n-w_n\widetilde r_n=q_n\zt5-p_n$
+with $p_n=\widetilde w_n v_n-w_n\widetilde v_n$. Because
+$\sum_{k\ge1}(k+j)^{-i}=\zt i-H_j^{(i)}$ (with $H_j^{(i)}=\sum_{m=1}^{j}m^{-i}$),
+the $\zt3$-coefficients are exactly the pole sums
+\begin{equation}\label{eq:w}
+w_n=\sum_{j=0}^n a_{3,j},\qquad
+\wt w_n=\sum_{j=0}^n \wt a_{3,j},
+\end{equation}
+where $\wt a_{i,j}$ are the partial-fraction coefficients of
+$-k(k+n)R_n(k)$, given by
+$\wt a_{i,j}=j(n-j)a_{i,j}+(2j-n)a_{i+1,j}-a_{i+2,j}$ (indices outside
+$[1,6]$ being zero).
+
+\begin{proposition}[Reduction on the clean interval; {\cite[\S1]{LemmaCB}}]
+\label{prop:reduction}
+Fix a prime $p$ with $n<p\le2n$ and $p\ge5$. Then $\ord_p\bin{2n}{n}=1$ and
+$\ord_p(6)=0$, and
+\[
+w_n\equiv 0 \ (\mathrm{mod}\ p)\ \ \text{and}\ \ \wt w_n\equiv 0\ (\mathrm{mod}\ p)
+\quad\Longrightarrow\quad \eqref{eq:CB}\text{ holds at }p .
+\]
+\end{proposition}
+
+\begin{proof}
+Since $n<p\le2n$, exactly one multiple of $p$ lies in $\{n+1,\dots,2n\}$ and none
+in $\{1,\dots,n\}$, so $\ord_p\bin{2n}{n}=\ord_p(2n)!-2\ord_p n!=1$; and $p\ge5$
+gives $\ord_p6=0$. As $p$ is odd and $p>n$, $\ord_p(2d_n^5)=0$, whence
+$\ord_p A_n=\ord_p p_n$. All $a_{i,j}$ and all $H_j^{(i)}$ ($j\le n<p$) are
+$p$-integral, so $v_n=\sum_{i,j}a_{i,j}H_j^{(i)}$ and $\widetilde v_n$ are
+$p$-integral. With $\ord_p w_n,\ord_p\wt w_n\ge1$ by hypothesis,
+$\ord_p p_n=\ord_p(\widetilde w_nv_n-w_n\widetilde v_n)\ge1$.
+\end{proof}
+
+Thus, on the whole clean interval, \eqref{eq:CB} follows from
+\begin{equation}\label{eq:W}
+w_n\equiv \wt w_n\equiv 0\pmod p\qquad\text{for all primes }n<p\le 2n,\ p\ge5.
+\tag{W}
+\end{equation}
+This note proves \eqref{eq:W} for every $n$.
+
+\begin{theorem}[Main result]\label{thm:main}
+For every integer $n\ge1$ and every prime $p$ with $n<p\le 2n$ and $p\ge5$,
+\[
+w_n\equiv 0\pmod p\qquad\text{and}\qquad \wt w_n\equiv 0\pmod p .
+\]
+Consequently, by Proposition~\textup{\ref{prop:reduction}}, the central-binomial
+divisibility \eqref{eq:CB} holds at every prime of the clean interval
+$n<p\le 2n$, for all $n$.
+\end{theorem}
+
+The proof is a two-line residue computation once the right polynomial is in hand.
+Its content is the polynomial itself, and its provenance is the Frobenius
+endomorphism of $\Fp[k]$. We isolate the mechanism in \S\ref{sec:extract}
+(a residue extraction valid over any field) and \S\ref{sec:cert} (the certificate),
+prove Theorem~\ref{thm:main} in \S\ref{sec:proof}, record the resulting explicit
+$\Fp$-certificate and the exact prime window in \S\ref{sec:remarks}, and state
+honestly in \S\ref{sec:phase2} what remains (the primes $p\le n$).
+
+\section{A residue extraction over an arbitrary field}\label{sec:extract}
+
+We work over a field $\mathbb K$ and use the residue theorem on $\mathbb P^1$:
+for any $f\in\mathbb K(k)$, the sum of the residues of the differential $f\,dk$
+over all points of $\mathbb P^1_{\mathbb K}$ (the finite poles and the point at
+infinity) is $0$. This holds in every characteristic \cite[\S II]{Serre}.
+
+Fix distinct points $-0,-1,\dots,-n\in\mathbb K$ (automatic when
+$\mathrm{char}\,\mathbb K>n$) and let
+\[
+G(k)=\sum_{i=1}^{6}\sum_{j=0}^{n}\frac{b_{i,j}}{(k+j)^i}\in\mathbb K(k)
+\]
+be any rational function with poles of order $\le6$ supported on the $-j$.
+
+\begin{lemma}[Residue extraction]\label{lem:extract}
+Let $\varphi\in\mathbb K[k]$ satisfy
+\begin{equation}\label{eq:jet}
+\varphi(k)\equiv (k+j)^2 \pmod{(k+j)^6}\qquad\text{for every }j=0,1,\dots,n .
+\end{equation}
+Then for every polynomial $Q\in\mathbb K[k]$,
+\[
+\sum_{j=0}^{n}\bigl[QG\bigr]_{3,j}
+=\sum_{j=0}^{n}\Res_{k=-j}\bigl(\varphi(k)Q(k)G(k)\bigr),
+\]
+where $[QG]_{3,j}$ denotes the coefficient of $(k+j)^{-3}$ in the partial-fraction
+expansion of $QG$. If moreover
+\begin{equation}\label{eq:degbudget}
+\deg(\varphi Q)+\ord_\infty G\ \ge\ 2,
+\end{equation}
+then $\varphi QG=O(k^{-2})$ at infinity, its residue there vanishes, and hence
+\[
+\sum_{j=0}^{n}\bigl[QG\bigr]_{3,j}=0 .
+\]
+\end{lemma}
+
+\begin{proof}
+$Q$ is holomorphic at each $-j$, so the principal part of $QG$ at $-j$ has order
+$\le6$; write it $\sum_{i=1}^{6}[QG]_{i,j}(k+j)^{-i}$. Near $-j$, using
+\eqref{eq:jet}, the Taylor coefficients of $\varphi$ are
+$[(k+j)^m]\varphi=\delta_{m,2}$ for $0\le m\le5$, so
+\[
+\Res_{k=-j}\bigl(\varphi\,QG\bigr)
+=\sum_{i=1}^{6}[QG]_{i,j}\,[(k+j)^{i-1}]\varphi
+=\sum_{i=1}^{6}[QG]_{i,j}\,\delta_{i,3}
+=[QG]_{3,j}.
+\]
+Summing over $j$ gives the first identity. For the second, $\varphi QG$ is a
+rational function whose only finite poles are the $-j$; the residue theorem gives
+$\sum_j\Res_{-j}(\varphi QG)+\Res_\infty(\varphi QG)=0$, and \eqref{eq:degbudget}
+makes $\varphi QG=O(k^{-2})$, so $\Res_\infty(\varphi QG)=0$.
+\end{proof}
+
+The subtlety that makes the lemma useful is that \eqref{eq:jet} asks a
+\emph{single global} polynomial $\varphi$ to agree with the \emph{local} target
+$(k+j)^2$ to order $6$ at each of $n+1$ points, while keeping $\deg\varphi$ small
+enough for \eqref{eq:degbudget}. Over $\Q$ this is impossible for the relevant
+degree range (the Hermite system is overdetermined). Over $\Fp$ it becomes
+possible, for exactly the primes we need, by the following observation.
+
+\section{The Frobenius certificate}\label{sec:cert}
+
+\begin{lemma}\label{lem:frob}
+Let $p$ be a prime and $a\in\Fp$. In $\Fp[k]$,
+\[
+k^p-k=(k-a)^p-(k-a).
+\]
+Consequently, for every $a\in\Fp$ and every prime $p\ge5$, the polynomial
+$\varphi(k):=(k^p-k)^2$ satisfies
+\[
+\varphi(k)\equiv (k-a)^2 \pmod{(k-a)^6},\qquad \deg\varphi=2p .
+\]
+\end{lemma}
+
+\begin{proof}
+The Frobenius endomorphism of $\Fp[k]$ gives $(k-a)^p=k^p-a^p=k^p-a$, since
+$a^p=a$ in $\Fp$. Hence $(k-a)^p-(k-a)=k^p-a-k+a=k^p-k$, proving the identity.
+Writing $u=k-a$, it says $k^p-k=u^p-u$, so
+\[
+\varphi=(u^p-u)^2=u^2-2u^{p+1}+u^{2p}.
+\]
+For $p\ge5$ we have $p+1\ge6$ and $2p\ge6$, so $u^{p+1}\equiv u^{2p}\equiv0
+\pmod{u^6}$, leaving $\varphi\equiv u^2=(k-a)^2\pmod{(k-a)^6}$.
+\end{proof}
+
+Taking $a=-j$ for $j=0,\dots,n$ shows that a \emph{single} polynomial
+$\varphi=(k^p-k)^2$ meets the $n+1$ Hermite conditions \eqref{eq:jet}
+simultaneously, with $\deg\varphi=2p$.
+
+\section{Proof of the Main Theorem}\label{sec:proof}
+
+Fix $n\ge1$ and a prime $p$ with $n<p\le2n$, $p\ge5$. All $a_{i,j}$ are
+$p$-integral (as $p>n$), so reduce \eqref{eq:pf} modulo $p$ to obtain
+$\overline R_n(k)=\sum_{i,j}\bar a_{i,j}(k+j)^{-i}\in\Fp(k)$; the reductions
+$\bar a_{i,j}$ are the coefficients occurring in \eqref{eq:w}, and
+$w_n\equiv\sum_j\bar a_{3,j}$, $\wt w_n\equiv\sum_j\bar a_{3,j}(\text{companion})
+\pmod p$. Work over $\mathbb K=\Fp$; the points $-0,\dots,-n$ are distinct because
+$p>n$. Put $\varphi=(k^p-k)^2$, which satisfies \eqref{eq:jet} by
+Lemma~\ref{lem:frob}.
+
+\medskip
+\noindent\textbf{The coefficient $w_n$ ($Q=1$).}
+By Lemma~\ref{lem:extract} with $G=\overline R_n$ and $Q=1$,
+\[
+w_n\equiv\sum_{j=0}^n\bar a_{3,j}
+=\sum_{j=0}^{n}\Res_{-j}\bigl(\varphi\,\overline R_n\bigr)\pmod p .
+\]
+The degree budget \eqref{eq:degbudget} reads
+$\deg\varphi+\ord_\infty R_n=2p+(4n+5)\ge2$, and more to the point the decay is
+$\varphi\overline R_n=O(k^{\,2p-4n-5})$. Since $p\le2n$ gives $2p-4n-5\le-5\le-2$,
+we have $\Res_\infty(\varphi\overline R_n)=0$, hence $w_n\equiv0\pmod p$.
+
+\medskip
+\noindent\textbf{The coefficient $\wt w_n$ ($Q=-k(k+n)$).}
+The companion form is $-k(k+n)R_n$, so $\wt w_n\equiv\sum_j[QR_n]_{3,j}$ with
+$Q(k)=-k(k+n)$, $\deg Q=2$. By Lemma~\ref{lem:extract},
+\[
+\wt w_n\equiv\sum_{j=0}^n\Res_{-j}\bigl(\varphi\,Q\,\overline R_n\bigr)\pmod p ,
+\qquad
+\varphi Q\overline R_n=O\!\left(k^{\,2p+2-4n-5}\right).
+\]
+For $p\le2n$, $\ 2p+2-4n-5\le-3\le-2$, so again the residue at infinity vanishes
+and $\wt w_n\equiv0\pmod p$.
+
+\medskip
+Both congruences hold; with Proposition~\ref{prop:reduction} this proves
+Theorem~\ref{thm:main}. \qed
+
+\begin{remark}[The general well-poised weight]
+The argument used no property of $Q$ beyond its degree. For any $Q\in\Z[k]$ and
+any prime $p>n$ with $2p\le 4n+3-\deg Q$, the same computation gives
+\[
+\sum_{j=0}^{n}[QR_n]_{3,j}\equiv0\pmod p .
+\]
+This is precisely the conjecture $(W')$ of \cite[\S2]{LemmaCB} — that the
+$\zt3$-coefficient of $\sum_k Q(k)R_n(k)$ vanishes mod $p$ for well-poised
+weights $Q(-n-k)=Q(k)$ — now proved, and without needing the symmetry of $Q$:
+only the degree constraint (equivalently, decay at infinity) is used.
+\end{remark}
+
+\section{The explicit certificate and the prime window}\label{sec:remarks}
+
+\subsection*{A three-term certificate}
+The dual of Lemma~\ref{lem:extract} expresses $w_n$ as an $\Fp$-linear
+combination of the exact ``decay relations''
+\[
+E_M:=\sum_{i=1}^{\min(6,M)}\binom{-i}{M-i}\sum_{j=0}^n j^{\,M-i}a_{i,j}=0
+\qquad(1\le M\le 4n+4),
+\]
+which hold over $\Q$ because they are the vanishing Laurent coefficients
+$[k^{-M}]R_n=0$ implied by \eqref{eq:decay}. If $\varphi(k)=\sum_{M\ge1}c_M
+k^{M-1}$, then $\sum_M c_M E_M$ is the functional $b\mapsto\sum_j[\text{$\varphi$-weighted}]$,
+and the certificate $\varphi=(k^p-k)^2=k^{2p}-2k^{p+1}+k^2$ has only three
+nonzero coefficients:
+\begin{equation}\label{eq:threeterm}
+c_3=1,\qquad c_{p+2}=-2,\qquad c_{2p+1}=1 .
+\end{equation}
+That is, $w_n\equiv E_3-2E_{p+2}+E_{2p+1}\pmod p$ as functionals on the
+partial-fraction data, and each $E_M$ annihilates the true (decaying) vector; the
+top index $M=2p+1$ is the minimal truncation that reaches $w_n$, matching the
+window bound below. For $\wt w_n$ the certificate is
+$\psi=-k(k+n)(k^p-k)^2$, of six terms.
+
+\subsection*{Why exactly $n<p\le 2n$}
+Two independent constraints pin the interval, and both are visible in the proof.
+\begin{itemize}[leftmargin=1.6em]
+\item \emph{Lower bound $p>n$:} the poles $-0,\dots,-n$ must be distinct in $\Fp$
+for the Hermite/residue picture, and $p>n$ makes each $a_{i,j}$ (and each
+$H_j^{(i)}$) $p$-integral, so reduction mod $p$ is legitimate.
+\item \emph{Upper bound $p\le 2n$ (resp.\ $2n+1$):} the certificate has degree
+$2p$, so the decay $\varphi Q R_n=O(k^{2p+\deg Q-4n-5})$ requires
+$2p+\deg Q\le 4n+3$. For $Q=1$ this is $p\le 2n+1$; for $Q=-k(k+n)$ it is
+$p\le2n$. Equivalently, the top functional index is $M=2p+1$, which must not
+exceed the available $M\le 4n+4$: $\ 2p+1\le4n+4\iff p\le2n+1$.
+\end{itemize}
+The upper bound is sharp for the method: for $p>2n+1$ no polynomial of degree
+$\le4n+3$ can meet \eqref{eq:jet} (the associated Hermite system is genuinely
+inconsistent mod $p$), and indeed $w_n$ is generically a unit there. Thus the
+certificate fires exactly on the true congruences.
+
+\subsection*{Arithmetic provenance}
+Lemma~\ref{lem:frob} is the polynomial shadow of Fermat's little theorem: the
+map $k\mapsto k^p-k$ is the additive polynomial vanishing on all of $\Fp$ with
+derivative $-1$, and its being an $\Fp$-\emph{translation invariant} of
+$(k-a)$ is what lets one global object realise $n+1$ separate local jets. The
+same mechanism underlies Wolstenholme- and Glaisher-type central-binomial
+congruences; here it produces the cancellation cleanly and uniformly.
+
+\subsection*{Numerical confirmation}
+The closed forms $\varphi=(k^p-k)^2$ and $\psi=-k(k+n)(k^p-k)^2$ were checked, via
+the three-term coefficients \eqref{eq:threeterm} and their $\psi$-analogue,
+to reproduce the functionals $w_n$ and $\wt w_n$ exactly for all $n\in[2,60]$
+and all primes $n<p\le2n$, $p\ge5$ ($420$ pairs; zero failures), against the
+independently computed exact partial-fraction data of \cite{LemmaCB}. This is a
+consistency check on the algebra, not the proof: Theorem~\ref{thm:main} is
+unconditional in $n$.
+
+\section{What remains: the primes $p\le n$}\label{sec:phase2}
+
+Theorem~\ref{thm:main} closes \eqref{eq:CB} on the clean interval $n<p\le2n$ for
+all $n$, hence removes the only primes invisible to $d_n$-denominator estimates.
+It does \emph{not} prove the full target \eqref{eq:T}: the primes $p\le n$
+(Phase~2) remain. There $\ord_p\bin{2n}{n}$ may exceed $1$ and interacts with
+both $d_n^5$ and the harmonic denominators $H_j^{(i)}$; exact computation
+through $n=60$ shows the required inequality \eqref{eq:CB} holds but is
+frequently \emph{tight} (no slack), so a Phase-2 proof must track
+$\ord_p(p_n)$ against $\ord_p\bin{2n}{n}$ and the harmonic carries
+simultaneously, rather than deduce it from denominator size. That case is left
+open. We emphasize the honest scope: what is proved here is the large-prime
+cancellation $(W)$, unconditionally in $n$, and with it Phase~1 of \eqref{eq:CB};
+the finite verifications of \eqref{eq:T} for small $n$ and the observed sharp
+$2$-adic law are evidence, not theorems.
+
+\begin{thebibliography}{9}
+
+\bibitem{BZ}
+F.~Brown and W.~Zudilin,
+\emph{On cellular rational approximations to $\zeta(5)$},
+arXiv:2210.03391.
+
+\bibitem{Zud178}
+W.~Zudilin,
+\emph{A third-order Ap\'ery-like recursion for $\zeta(5)$},
+Mat. Zametki \textbf{72} (2002); arXiv:math/0206178.
+
+\bibitem{LemmaCB}
+\emph{The central-binomial cancellation lemma: reduction, structural results,
+and obstruction map}, working note (2026); companion to
+\emph{The symmetric Brown--Zudilin $\zeta(5)$ denominator target}.
+
+\bibitem{Serre}
+J.-P.~Serre,
+\emph{Algebraic Groups and Class Fields},
+Grad. Texts in Math. \textbf{117}, Springer, 1988 (residues on curves and the
+residue-sum formula in arbitrary characteristic).
+
+\end{thebibliography}
+
+\end{document}

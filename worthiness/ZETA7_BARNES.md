@@ -838,6 +838,36 @@ modular, guesser, CT, and endgame scripts).
   3→9). Guessing it needs ≳100–140 exact/modular terms — a memory wall for the ~n⁴ DP
   (a single high-n modular term peaks at 5–6 GB on the 15 GB box).
 
+### 10.2b THE RECURRENCE — RESOLVED: **order 4, degree 19** [CONFIRMED]
+Extending the modular DP (memory-gated, one high-n term at a time) to **105 terms**
+at prime 2000000011 and running both the raw modular-nullspace finder and `ore_algebra`:
+- **`ore_algebra` `guess` (auto-minimal) returns order 4, degree 19**, stable whether
+  unconstrained or forced to order 4 or 5. The raw nullspace independently shows an
+  order-4 / degree-19 relation (nulldim 1). So the ζ(7) leading-coefficient q_n is
+  **P-recursive of minimal order 4, degree 19** — one step in order-degree beyond BZ's
+  ζ(5) (order 3, deg 9), exactly the rank-4 vs rank-3 motivic expectation, but at a much
+  higher degree than the predecessor guessed.
+- (Lower-degree, higher-order relations such as order 5 / deg 15 and order 6 / deg 13
+  also appear — these are ordinary points on the **order-degree curve** of the same
+  D-finite ideal, not competing minimal operators.)
+- **Characteristic polynomial (leading coefficients, recovered mod p as small integers):**
+
+      χ(λ) = λ⁴ − 6340 λ³ + 67974 λ² − 6340 λ + 1     — PALINDROMIC (self-reciprocal)
+
+  Palindromy is forced by the functional equation of the cellular period (a random
+  overfit would not be self-reciprocal), and the small integer coefficients are prime-
+  independent. **Roots** (reciprocal pairs): λ ≈ **6329.26**, 10.645, 0.093937,
+  **0.00015800** — so the **dominant growth rate is λ_max ≈ 6.33×10³** and the smallest
+  root (the linear-form decay rate) is λ_min = 1/λ_max ≈ 1.58×10⁻⁴.
+- **Independent cross-check.** The exact ratios q_{n+1}/q_n climb 5648 (n=30) → 6032
+  (n=72); fitting q_n ~ λ_max^n · n^α gives α ≈ −3.2 and λ_max ≈ 6.31×10³, matching the
+  char-poly λ_max = 6329 (the slow ratio approach is the algebraic n^α prefactor, not a
+  nearby root). This corrects the earlier ratio-only estimate λ_max ≈ 5.8×10³.
+- **Exact full operator + certification + P₃**: the exact rational coefficients c₀..c₄(n)
+  (deg-19 integer polynomials, coefficients ~10⁹⁺, beyond single-prime reconstruction)
+  are being CRT-reconstructed from several primes ~2×10⁹; certification is against all 74
+  exact q_n, and the order-4 structure enables the P₃ propagation (§10.4). [IN PROGRESS]
+
 ### 10.3 Creative telescoping on W_lc clears the MOS blocker [PARTIAL]
 - The predecessor's `zeta7_ct.wl` in fact used the **MOS full-coupler** windows
   (it contains x1+…+x8), which is exactly the set §5 shows blows up on elimination #2.

@@ -863,10 +863,17 @@ at prime 2000000011 and running both the raw modular-nullspace finder and `ore_a
   (n=72); fitting q_n ~ λ_max^n · n^α gives α ≈ −3.2 and λ_max ≈ 6.31×10³, matching the
   char-poly λ_max = 6329 (the slow ratio approach is the algebraic n^α prefactor, not a
   nearby root). This corrects the earlier ratio-only estimate λ_max ≈ 5.8×10³.
-- **Exact full operator + certification + P₃**: the exact rational coefficients c₀..c₄(n)
-  (deg-19 integer polynomials, coefficients ~10⁹⁺, beyond single-prime reconstruction)
-  are being CRT-reconstructed from several primes ~2×10⁹; certification is against all 74
-  exact q_n, and the order-4 structure enables the P₃ propagation (§10.4). [IN PROGRESS]
+- **Exact full operator — RECONSTRUCTED AND CERTIFIED.** The exact integer operator
+  L = Σ_{k=0}^4 c_k(n) S^k (each c_k a degree-19 integer polynomial, coefficients up to
+  ~10²¹) was CRT-reconstructed from three primes (two 31-bit, one 63-bit, ~2^125) with a
+  conservative rational-reconstruction pass (61 coefficients) completed by solving the
+  remaining 39 large coefficients from the 70 exact annihilation relations Σc_k(n)q_{n+k}=0.
+  **It annihilates all 74 exact q_n (n=0…69 relations, all zero).** Full operator in
+  `worthiness/zeta7_q_recurrence.json`. Leading (n¹⁹) coefficients:
+  [c₀,c₁,c₂,c₃,c₄] = **7381728·[1, −6340, 67974, −6340, 1]** — palindromic (c_k ↔ c_{4−k}),
+  the operator's functional-equation symmetry, and the char poly's small integers are thus
+  exact. (Coefficient magnitudes ~10²¹ — far beyond the predecessor's estimate — are why
+  three primes and the exact-relation completion were both needed.)
 
 ### 10.3 Creative telescoping on W_lc clears the MOS blocker [PARTIAL]
 - The predecessor's `zeta7_ct.wl` in fact used the **MOS full-coupler** windows
@@ -884,30 +891,54 @@ at prime 2000000011 and running both the raw modular-nullspace finder and `ore_a
   is a multi-hour (plausibly multi-hour-to-day) compute; it is the definitive *exact*
   route and is gated only on dedicated CPU/RAM time.
 
-### 10.4 P₃ endgame — machinery ready, gated on the operator [READY]
-The endgame is fully prepared (`endgame.py`) against the anchors
-I′ₙ = (75/4)qₙζ₇ − 3sₙζ₅ − Pₙ and I″ₙ = −9qₙζ₅ + 2sₙζ₃ − P̂ₙ, with
-qₙ=1,61,52921, sₙ=0,300,261153, Pₙ=0,220,6021219/32, P̂ₙ=0,152,535857/4. Once the
-operator L (certified against all 74 exact q_n) is in hand:
-1. **Self-checked propagation.** At the shift n = 3−order the recurrence isolates index 3;
-   if the negative-index coefficients vanish (the standard Apéry trailing-coefficient
-   structure), q₃ is recovered from q₀,q₁,q₂ — an **empirical self-check against the known
-   q₃ = 94357501**. The *same* relation then yields s₃, P₃, P̂₃ (assuming the totally-
-   symmetric hypothesis that q,s,P,P̂ share L, as in BZ ζ(5)). If the negative-index
-   coefficients do not vanish (order ≥5), the joint smallness route (I′₃,I″₃ ~ |λ_small|³)
-   is used instead.
-2. **Independent validation.** Propagating Pₙ, sₙ forward via L and checking that
-   I′ₙ, I″ₙ actually decay like |λ_small|ⁿ (numerically, against exact qₙ to n=73) is a
-   strong test of the whole structure.
-3. **Ledger.** den(P₃) fully factored, per-prime excess vs d₃⁷ = 6⁷, and the verdict vs
-   the two-species framework (TABLE.md ROW 5): does a **3-adic Betti cost** first appear
-   at n=3, or does the ζ(7) family continue to show only its static 75/4 = 3·5²/2²
-   de Rham normalization?
+### 10.4 P₃ endgame — EXECUTED: a two-ladder asymmetry, s₃ and P̂₃ pinned, P₃ gated on I′₃
+Anchors: I′ₙ = (75/4)qₙζ₇ − 3sₙζ₅ − Pₙ (∈ span{1,ζ₅,ζ₇}) and I″ₙ = −9qₙζ₅ + 2sₙζ₃ − P̂ₙ
+(∈ span{1,ζ₃,ζ₅}); qₙ=1,61,52921, sₙ=0,300,261153, Pₙ=0,220,6021219/32, P̂ₙ=0,152,535857/4.
 
-**Net status.** The side-door diagonal is now a well-understood, doubly-represented,
-modularly-validated sequence with 74 exact terms; its minimal recurrence is proven
-*larger* than previously estimated; the low-coupling CT **passes the elimination that
-blocked the MOS route** and is the definitive exact path (checkpointed, resumable); and
-the P₃ endgame is fully scripted and self-checking. The single remaining gate is the
-dedicated compute to finish either the W_lc CT eliminations or the ≳100-term modular
-guess — [IN PROGRESS].
+**The order-4 structure permits index-3 propagation, and it self-checks on q.** The trailing
+coefficient c₀(n) vanishes at n=−1, so the recurrence at n=−1 isolates index 3 from indices
+0,1,2 (the negative index decouples). Applied to q it **recovers q₃ = 94357501 exactly from
+q₀,q₁,q₂** — a hard self-check that the propagation mechanism is valid. (Independently,
+forward-propagating q from q₀..q₃ via L reproduces all known q₄…q₇₃.)
+
+**But the ζ(7) family is NOT totally symmetric — the two ladders split under L [FINDING].**
+Testing which sequences actually satisfy L (via the forward-decay of the linear forms,
+computed to 50 digits):
+- **q, s, P̂ satisfy L.** Propagation gives **s₃ = 1396906795/3** and
+  **P̂₃ = 232175579999/972**, and the companion form **I″ₙ decays correctly**
+  (I″₀=−9.33, I″₁=−0.0392, I″₂=−7.08×10⁻⁴, propagated I″₃=−2.17×10⁻⁵ — the geometric
+  decay continues). Both denominators are **2,3-smooth** (3 = 3¹; 972 = 2²·3⁵), the hallmark
+  of genuine d_n-governed clearing.
+- **P (and the weight-7 form I′) do NOT satisfy L.** The known forms decay
+  (I′₀=18.91, I′₁=0.0645, I′₂=1.16×10⁻³) but propagating I′ (or P) through L gives
+  I′₃ = 43.71 — the dominant λ_max mode fails to cancel, i.e. I′ blows up like λ_max^n.
+  The naive-propagated "P₃" carries a spurious prime **107** in its denominator
+  (2⁵·3⁸·107), confirming it is not the true value.
+
+So L is the recurrence of the **weight-5 descent** (q, s, P̂, I″), not of the full weight-7
+period I′. This is the concrete Apéry-recurrence realization of BZ's two-ladder /
+weight-7→weight-5 residue structure (§5e): the ζ(5)-analogue's "Q,P,P̂ share one recurrence"
+does **not** carry over — only three of the four coefficient sequences do.
+
+**Consequence for P₃.** P₃ = (75/4)q₃ζ₇ − 3s₃ζ₅ − I′₃ with I′₃ the weight-7 cellular integral
+at n=3 — exactly the object §5f showed is unreachable here. The smallness of I′₃ alone does
+**not** pin P₃ (rational approximations to (75/4)q₃ζ₇ − 3s₃ζ₅ improve monotonically with
+denominator; no distinguished 2,3-smooth value emerges without an independent value of I′₃ or
+the weight-7 recurrence L̃ that I′ satisfies). **P₃ therefore remains gated on I′₃**, precisely
+as before — but the endgame has still advanced the ledger: s₃ and P̂₃ are now exact.
+
+**Two-species verdict [PARTIAL, TABLE.md ROW 5].** For the weight-5 descent objects at n=3,
+**no growing per-prime (Betti) cost appears**: den(P̂₃) = 2²·3⁵ is *slack* against d₃⁵ = 2⁵·3⁵
+(excess −3 at 2, 0 at 3 — tight-but-not-over at 3) and den(s₃)=3 is deeply slack. So the
+weight-5 side continues the n≤2 pattern (only the static 75/4 = 3·5²/2² de Rham normalization,
+no 2²·3 Betti fingerprint). Whether the **weight-7** constant P₃ first exhibits a 3-adic cost
+is the one datum still gated on I′₃.
+
+**Net status [MAIN RESULT ACHIEVED].** The ζ(7) leading-coefficient recurrence is **solved**:
+an exact, certified **order-4, degree-19** operator with **palindromic characteristic
+polynomial λ⁴ − 6340λ³ + 67974λ² − 6340λ + 1** (dominant growth **λ_max ≈ 6329.26**,
+reciprocal small root **1.58×10⁻⁴**) — the family's asymptotic rates, delivered. The P₃
+endgame executed to a precise verdict: **s₃, P̂₃ determined exactly; the family is two-ladder
+(q,s,P̂ satisfy L, P does not); P₃ stays gated on the weight-7 integral I′₃.** Reproduce with
+`worthiness/zeta7_q_recurrence.json` + `zeta7_p3_endgame.py`; term data in `zeta7_lc_terms.txt`
+(exact) and the modular fleet.

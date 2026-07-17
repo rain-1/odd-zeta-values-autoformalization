@@ -384,7 +384,18 @@ this is the first computed integral-lattice invariant of a period of
 $\overline{\mathcal M}_{0,8}$ of this kind.
 
 \emph{Honest scope.} The attribution is rigorous given the measured
-product; what remains for a fully measurement-\emph{independent}
+product. For a measurement-\emph{independent} derivation, subsequent
+computation has sharpened the gap: the $p=3$ triviality is now
+\emph{derived} (incidence entries in $\{0,\pm1\}$), the arrangement
+combinatorics is proven innocent under every orientation convention,
+and a new geometric feature was found --- a bi-arrangement
+non-transversality at $\delta_{24}\cap\delta_{36}$ and
+$\delta_{14}\cap\delta_{36}$, where $\delta_{57}$ becomes a domain
+facet --- the unique locus where the index can be born. What remains is
+the integral first-differential of the ($\Q$-only in the literature
+\cite{DupontBi}) Orlik--Solomon bicomplex at those two strata. The
+original statement of the remaining task follows for the record; what
+remained for a fully measurement-\emph{independent}
 derivation of the index is one finite computation (the boundary signs
 of the $B$-relative cellular complex of the seven strata), which we
 state as an open task rather than guess: an incorrectly chosen sign
@@ -435,6 +446,14 @@ where an earlier claimed reduction was found to be circular) and the
 $2$-adic attainment. All laws --- $12\,\dn{n}^5P_n\in\Z$, the
 $2$-adic equality $\ord_2\den(P_n)=2+5\,\ord_2\dn{n}$, and the
 $\hat P$ companion --- are verified exactly for $n\le8$.
+Subsequent work (two independently corroborating derivations) organized
+the collapse into three tiers: a \emph{proven} crude $d_{2n}^5$-level
+bound; a \emph{proven} well-poised support law --- no $p\ge5$ excess
+beyond $p\le n$ is possible, giving theorem-level backing to the
+support statement's shape --- and one named open theorem (a
+two-variable well-poised $2n\to n$ refinement) plus the Bernoulli
+constant carrying the $\{2,3\}$-part. Both obstructions are
+structurally absent from the Catalan sibling of \cite{EMN}.
 
 Moreover the $\{2,3\}$-excess enters \emph{only} through the Laurent
 coefficients $1,\tfrac16,\tfrac1{90},\dots$ of the sine kernel: the
@@ -458,7 +477,18 @@ $\dn{n}^3a_n\in\Z$ exactly (the genuine $2$ rides on the
 $\zeta(3)$-coefficient parity, not the denominator; the geometric
 interpretation of such parity vanishing is Dupont's
 \cite[Thm.~1.2]{Dupont}); our $n\le50$
-verification is a sanity check of their statement.
+verification is a sanity check of their statement. We can now say more:
+exact residue analysis shows the Rhin--Viola $2$ is a \emph{static de
+Rham period normalization} --- $J_0=2\zeta(3)$ exactly, because the
+pole exits the unit cube and $\log(xy)=\log x+\log y$ doubles a
+boundary sum --- separated from our Betti index by three invariants
+(static vs.\ growing; constant-term $2$-adic excess $-2$ vs.\ $+2$;
+de Rham vs.\ Betti). Across all measured families, two orthogonal
+species of constants emerge: static de Rham normalizations
+($2\zeta(3)$, $1\cdot\zeta(5)$, $\tfrac{75}{4}\zeta(7)$) and Betti
+elimination costs, paid only by families that eliminate an even
+period --- the Brown--Zudilin family being the unique measured
+instance.
 (ii) $\zeta(4)$: $\dn{n}^4v_n\in\Z$ for $n\le5$ in Zudilin's derived
 series (the factor $2$ retained in \cite[Th\'eor\`eme 3]{KR} is slack
 there).
@@ -479,6 +509,20 @@ examined the correction is unneeded in all computed cases, while in the
 Brown--Zudilin family---the only construction here that performs a
 $\zeta(2)$-elimination---it is provably needed (the printed values of
 \S\ref{sec:corrections} already require it).
+
+\emph{The weight-$7$ family: first data.} For the totally symmetric
+cellular family on $\overline{\mathcal M}_{0,10}$ (rank $4$;
+Brown--Zudilin print $n\le2$ and call further computation
+impractical), we established: its $\zeta(2)$-eliminated form provably
+lies outside the single-sum very-well-poised class (a sign dichotomy:
+projections carry opposite-sign adjacent zeta coefficients;
+simultaneous approximations cannot); the cell is dihedrally rigid
+(trivial stabilizer); and, via the leading-coefficient diagonal
+construction of McCarthy--Osburn--Straub \cite{MOS}, the first new
+exact value $q_3 = 94357501$ (gate-verified against the printed
+$1, 61, 52921$; thirty-one terms computed). The family's $3$-adic
+elimination-cost test awaits the recurrence, reduced to one standard
+creative-telescoping computation on the diagonal.
 
 \section{The worthiness supremum, and what the arithmetic cannot do}
 \label{sec:gamma}
@@ -515,11 +559,14 @@ sketched in \cite{BZ}. The measurement pipeline itself is portable, and
 we suggest its use as an \emph{arithmetic screen} for any future
 candidate constructions: the true denominators of a proposed family can
 now be measured in hours rather than conjectured. In a companion
-development, Lemma~4 of \cite{Zu18} (the asymptotic core of the
-elementary proof that one of $\zeta(5),\dots,\zeta(25)$ is irrational)
-has been fully formalized in Lean~4/Mathlib, with a complete
-formalization of the theorem in progress; details will appear
-separately.
+development, the full theorem of \cite{Zu18} has been formalized in
+Lean~4/Mathlib in the form: at least one of
+$\zeta(5),\zeta(7),\dots,\zeta(33)$ is irrational (the $s=33$ variant
+via Hanson's elementary $\dn{n}\le3^n$, formalized from scratch since
+Mathlib currently lacks the prime number theorem); sorry-free, kernel
+axiom set $[\texttt{propext},\texttt{Classical.choice},
+\texttt{Quot.sound}]$. Details appear in the companion paper
+accompanying the formalization.
 
 \begin{thebibliography}{99}
 \bibitem{BZ} F.~Brown, W.~Zudilin, \emph{On cellular rational
@@ -552,6 +599,8 @@ odd zeta values} (with an appendix by D.~Zagier), arXiv:1601.00950.
 bi-arrangements}, arXiv:1410.6348.
 \bibitem{EMN} [Eyre--Muller--Nieto, Catalan-constant cellular forms],
 arXiv:2510.20648. [Verify author names before submission.]
+\bibitem{MOS} D.~McCarthy, R.~Osburn, A.~Straub, \emph{Sequences,
+modular forms and cellular integrals}, arXiv:1705.05586.
 \bibitem{Keel} S.~Keel, \emph{Intersection theory of moduli space of
 stable $n$-pointed curves of genus zero}, Trans.\ Amer.\ Math.\ Soc.\
 330 (1992), 545--574.

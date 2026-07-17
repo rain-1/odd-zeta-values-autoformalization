@@ -8,3 +8,4 @@ paper/*.bbl
 paper/*.blg
 compute.txt
 sshkeypair.pem
+riscergosum-*.tgz

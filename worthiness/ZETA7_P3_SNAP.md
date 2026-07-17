@@ -30,6 +30,19 @@ Numerator factors: 5² · 60427 · 15541703 (no small structure).
 3. **Snap** to the grid (1/3359232)ℤ: lands 5.63e-14 from a grid point
    (chance alignment ≈ 2e-7).
 
+## Certification status (UPGRADED after Sol's review, 2026-07-18 ~00:45)
+
+**Conditional-rigor lemma (Sol).** The grid spacing is h = 1/(12·6⁷) = 2.977e-7.
+The integral representation gives 0 < I₃ < I₂ = 1.0531e-9 < h/2 RIGOROUSLY
+(positivity: all-positive series; monotonicity: the n+1 integrand is the n
+integrand times a factor < 1 on the open domain). Hence, GIVEN the two
+hypotheses (i) den(P₃) | 12d₃⁷ and (ii) the ladder identification (s₃, P̂₃
+exact), the snapped value is EXACTLY P₃ — no numerical precision enters the
+argument at all. The 5.6e-14 proximity below is consistency evidence for
+hypothesis (i), not the certificate.
+
+Independent reproduction: Sol (GPT-5.6) reproduced all numerics to 80 digits.
+
 ## Self-certification (three independent locks)
 
 - Residual sign: P₃_approx − P₃ = +I₃ = 5.6299224184893e-14 > 0 as the

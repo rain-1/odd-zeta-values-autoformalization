@@ -201,7 +201,8 @@ Then for every polynomial $Q\in\mathbb K[k]$,
 where $[QG]_{3,j}$ denotes the coefficient of $(k+j)^{-3}$ in the partial-fraction
 expansion of $QG$. If moreover
 \begin{equation}\label{eq:degbudget}
-\deg(\varphi Q)+\ord_\infty G\ \ge\ 2,
+\ord_\infty G-\deg(\varphi Q)\ \ge\ 2,\qquad\text{equivalently}\quad
+\deg(\varphi Q)\le\ord_\infty G-2,
 \end{equation}
 then $\varphi QG=O(k^{-2})$ at infinity, its residue there vanishes, and hence
 \[
@@ -280,10 +281,11 @@ By Lemma~\ref{lem:extract} with $G=\overline R_n$ and $Q=1$,
 w_n\equiv\sum_{j=0}^n\bar a_{3,j}
 =\sum_{j=0}^{n}\Res_{-j}\bigl(\varphi\,\overline R_n\bigr)\pmod p .
 \]
-The degree budget \eqref{eq:degbudget} reads
-$\deg\varphi+\ord_\infty R_n=2p+(4n+5)\ge2$, and more to the point the decay is
-$\varphi\overline R_n=O(k^{\,2p-4n-5})$. Since $p\le2n$ gives $2p-4n-5\le-5\le-2$,
-we have $\Res_\infty(\varphi\overline R_n)=0$, hence $w_n\equiv0\pmod p$.
+Here $\ord_\infty\overline R_n=4n+5$ and $\deg\varphi=2p$, so the degree budget
+\eqref{eq:degbudget} reads $\ord_\infty\overline R_n-\deg\varphi=(4n+5)-2p\ge2$,
+i.e. $p\le2n+1$; since $p\le2n$ this holds with room to spare and
+$\varphi\overline R_n=O(k^{\,2p-4n-5})=O(k^{-5})$. Hence
+$\Res_\infty(\varphi\overline R_n)=0$ and $w_n\equiv0\pmod p$.
 
 \medskip
 \noindent\textbf{The coefficient $\wt w_n$ ($Q=-k(k+n)$).}
@@ -294,7 +296,10 @@ $Q(k)=-k(k+n)$, $\deg Q=2$. By Lemma~\ref{lem:extract},
 \qquad
 \varphi Q\overline R_n=O\!\left(k^{\,2p+2-4n-5}\right).
 \]
-For $p\le2n$, $\ 2p+2-4n-5\le-3\le-2$, so again the residue at infinity vanishes
+Now $\deg(\varphi Q)=2p+2$, so \eqref{eq:degbudget} reads
+$\ord_\infty\overline R_n-\deg(\varphi Q)=(4n+5)-(2p+2)=4n+3-2p\ge2$, i.e.
+$p\le2n$. Under our hypothesis $p\le2n$ this holds and
+$\varphi Q\overline R_n=O(k^{-3})$, so again the residue at infinity vanishes
 and $\wt w_n\equiv0\pmod p$.
 
 \medskip
@@ -348,10 +353,13 @@ $2p+\deg Q\le 4n+3$. For $Q=1$ this is $p\le 2n+1$; for $Q=-k(k+n)$ it is
 $p\le2n$. Equivalently, the top functional index is $M=2p+1$, which must not
 exceed the available $M\le 4n+4$: $\ 2p+1\le4n+4\iff p\le2n+1$.
 \end{itemize}
-The upper bound is sharp for the method: for $p>2n+1$ no polynomial of degree
-$\le4n+3$ can meet \eqref{eq:jet} (the associated Hermite system is genuinely
-inconsistent mod $p$), and indeed $w_n$ is generically a unit there. Thus the
-certificate fires exactly on the true congruences.
+\emph{Observation (not needed for the theorem).} The upper bound appears sharp
+for the method: in exact linear-algebra checks for $p>2n+1$ no polynomial of
+degree $\le 4n+3$ meets \eqref{eq:jet} (the Hermite system is inconsistent
+mod $p$), and $w_n$ is there generically a unit. We record this as an
+observation, verified on small ranges rather than proved; it is not used in
+Theorem~\ref{thm:main}, which requires only the \emph{existence} of the
+certificate on $n<p\le 2n$, supplied by Lemma~\ref{lem:frob}.
 
 \subsection*{Arithmetic provenance}
 Lemma~\ref{lem:frob} is the polynomial shadow of Fermat's little theorem: the

@@ -1,0 +1,474 @@
+THE SYMMETRIC BROWN--ZUDILIN ZETA(5) DENOMINATOR TARGET
+========================================================
+
+Research note, 17 July 2026
+
+
+1. THE TARGET
+-------------
+
+Let
+
+    d_n = lcm(1,2,...,n).
+
+For the totally symmetric cellular family of Brown and Zudilin, write
+
+    I'_n = Q_n zeta(5) - P_n.
+
+The corrected denominator target is
+
+    12 d_n^5 P_n in Z,                                  (T)
+
+for every n >= 1.
+
+The multiplier 12 is necessary.  Brown--Zudilin's printed experimental
+assertion d_n^5 P_n in Z already fails at n=2, since
+
+    P_2 = 1190161/384,
+    d_2 = 2,
+    d_2^5 P_2 = 1190161/12.
+
+On the other hand,
+
+    12 d_2^5 P_2 = 1190161
+
+is an integer.
+
+The conclusion of the investigation recorded here is that (T) is strongly
+supported and admits a clean exact reformulation, but is not proved by the
+currently published denominator theorems.  The remaining assertion is a new
+central-binomial p-adic cancellation.  This note states that gap explicitly
+rather than silently assuming it.
+
+
+2. IDENTIFICATION WITH ZUDILIN'S 2002 SEQUENCES
+-----------------------------------------------
+
+Zudilin's third-order recurrence has three solutions q_n, p_n and ptilde_n.
+Brown--Zudilin identify their symmetric coefficients as
+
+              (-1)^(n+1) q_n
+    Q_n =    -----------------,
+                 binom(2n,n)
+
+              (-1)^(n+1) p_n
+    P_n =    -----------------,                            (2.1)
+                 binom(2n,n)
+
+              (-1)^(n+1) ptilde_n
+    Phat_n = --------------------.
+                    binom(2n,n)
+
+Zudilin's denominator theorem gives
+
+    q_n in Z,
+    2 d_n^5 p_n in Z,
+    2 d_n^3 ptilde_n in Z.                                (2.2)
+
+Define the integer
+
+    A_n = 2 d_n^5 p_n.                                    (2.3)
+
+Combining (2.1) and (2.3) gives the exact equivalence
+
+    12 d_n^5 P_n
+      = (-1)^(n+1) 6 A_n / binom(2n,n).
+
+Consequently, the target (T) is equivalent to
+
+    binom(2n,n) divides 6 A_n.                            (CB)
+
+This is the central-binomial divisibility problem.  Zudilin's theorem proves
+that A_n is an integer; it does not prove (CB).
+
+
+3. WHY THE STANDARD DENOMINATOR THEOREMS DO NOT FINISH IT
+---------------------------------------------------------
+
+Zudilin's proof and the Vasilyev/Krattenthaler--Rivoal machinery control the
+denominators of p_n before division by binom(2n,n).  Their conclusion is the
+integrality in (2.2).  The factor binom(2n,n) in (2.1) introduces an additional
+divisibility demand on the numerator A_n.
+
+Equivalently, at every prime p one must prove
+
+    ord_p(A_n) >= ord_p binom(2n,n) - ord_p(6).            (3.1)
+
+The primes n < p <= 2n are particularly revealing: they divide the central
+binomial coefficient, but do not divide d_n.  Thus no ordinary d_n-denominator
+estimate can remove them.  Their cancellation has to come from the special
+well-poised structure of the symmetric form.
+
+Brown--Zudilin describe their relevant general denominator inclusion as an
+experimental observation whose detailed proof would require substantial
+partial-fraction and contour bookkeeping.  It therefore cannot be used as an
+already established theorem to prove (T).  Doing so would be circular.
+
+
+4. THE TWO ZUDILIN HYPERGEOMETRIC FORMS
+---------------------------------------
+
+Set
+
+                  4         n
+    R_n(k) = (n!)  (k + n/2)
+
+                 prod_{j=1}^n (k-j) prod_{j=1}^n (k+n+j)
+              *  ----------------------------------------. (4.1)
+                         prod_{j=0}^n (k+j)^6
+
+Zudilin's first form is
+
+    r_n = sum_{k>=1} R_n(k)
+        = u_n zeta(5) + w_n zeta(3) - v_n.                (4.2)
+
+The companion summand is exactly
+
+    Rtilde_n(k) = -k(k+n) R_n(k),                         (4.3)
+
+and hence
+
+    rtilde_n = sum_{k>=1} Rtilde_n(k)
+             = utilde_n zeta(5) + wtilde_n zeta(3)
+               - vtilde_n.                               (4.4)
+
+Zudilin eliminates zeta(3) by taking the determinant
+
+    wtilde_n r_n - w_n rtilde_n
+      = q_n zeta(5) - p_n,                               (4.5)
+
+where
+
+    q_n = u_n wtilde_n - utilde_n w_n,
+    p_n = wtilde_n v_n - w_n vtilde_n.                   (4.6)
+
+At the summand level, (4.5) is the single rational function
+
+    (wtilde_n + w_n k(k+n)) R_n(k).                       (4.7)
+
+This is preferable to treating the two forms separately: it incorporates the
+zeta(3) cancellation before denominator estimates are attempted.
+
+
+5. EXACT PARTIAL-FRACTION DATA
+------------------------------
+
+Write
+
+                  6     n       a_{i,j}
+    R_n(k) =     sum   sum    --------------.             (5.1)
+                 i=1   j=0       (k+j)^i
+
+The highest-pole coefficient has the closed form
+
+    a_{6,j} = (-1)^n (n/2-j) binom(n,j)^6
+              * binom(n+j,n) binom(2n-j,n).               (5.2)
+
+All lower a_{i,j} can be obtained exactly by taking the truncated Taylor
+expansion of (k+j)^6 R_n(k) at k=-j.  No numerical approximation or PSLQ is
+needed.
+
+Let atilde_{i,j} denote the partial-fraction coefficient of the companion
+-k(k+n)R_n(k).  Direct multiplication gives
+
+    atilde_{i,j}
+      = j(n-j) a_{i,j}
+        + (2j-n) a_{i+1,j}
+        - a_{i+2,j},                                     (5.3)
+
+where coefficients outside 1 <= i <= 6 are interpreted as zero.
+
+Since
+
+    sum_{k>=1} 1/(k+j)^i = zeta(i) - H_j^(i),
+
+with
+
+    H_j^(i) = sum_{m=1}^j 1/m^i,
+
+the zeta(3) coefficients are
+
+    w_n      = sum_{j=0}^n a_{3,j},
+    wtilde_n = sum_{j=0}^n atilde_{3,j}.                  (5.4)
+
+
+6. THE NORMALIZED, ZETA(3)-FREE RATIONAL FUNCTION
+-------------------------------------------------
+
+Define
+
+                         12
+    F_n(k) = --------------------------
+               binom(2n,n)
+
+             * (wtilde_n + w_n k(k+n)) R_n(k).            (6.1)
+
+By construction,
+
+    sum_{k>=1} F_n(k)
+      = 12/binom(2n,n) * (q_n zeta(5) - p_n).             (6.2)
+
+If
+
+    f_{i,j} = 12/binom(2n,n)
+              * (wtilde_n a_{i,j}
+                 - w_n atilde_{i,j}),                    (6.3)
+
+then
+
+    F_n(k) = sum_{i=1}^6 sum_{j=0}^n
+                 f_{i,j}/(k+j)^i.                        (6.4)
+
+The zeta(3) coefficient vanishes identically:
+
+    sum_{j=0}^n f_{3,j} = 0.                              (6.5)
+
+The rational part of (6.2), apart from the conventional overall minus sign in
+q_n zeta(5)-p_n, is
+
+    RPart_n = sum_{i=1}^6 sum_{j=0}^n
+                  f_{i,j} H_j^(i)
+            = 12 p_n/binom(2n,n).                        (6.6)
+
+Thus (T) is exactly the finite harmonic-residue assertion
+
+    d_n^5 RPart_n in Z.                                  (HR)
+
+Equations (5.2)--(6.6) give an explicit, exact, independently checkable finite
+formula for the target.  This removes any ambiguity about the object whose
+integrality has to be proved.
+
+
+7. THE ANTIDIFFERENCE INTERPRETATION
+------------------------------------
+
+Modulo rational finite differences, a partial fraction satisfies
+
+       1               1
+    ---------  ==  --------- + Delta(rational function),
+    (k+j)^i          k^i
+
+and summing the finite difference produces harmonic numbers.  More explicitly,
+after subtracting the surviving zeta(5) term there is a rational function g_n
+such that
+
+    F_n(k) - beta_{5,n}/k^5 = Delta g_n(k),               (7.1)
+
+where beta_{5,n} is the zeta(5) coefficient.  One may take
+
+    g_n(k) = sum_{i,j} f_{i,j}
+             sum_{ell=0}^{j-1} 1/(k+ell)^i.               (7.2)
+
+Then
+
+    g_n(1) = RPart_n = 12 p_n/binom(2n,n).                (7.3)
+
+This is another exact form of the desired integrality:
+
+    d_n^5 g_n(1) in Z.
+
+It also makes clear that the rational term is a global telescoping boundary
+value, not a collection of independently integral residues.
+
+
+8. WHY A TERMWISE PROOF FAILS
+------------------------------
+
+It is tempting to try to prove
+
+    d_n^5 f_{i,j} H_j^(i) in Z
+
+for every i and j.  Exact calculation disproves this approach.  Many individual
+terms have nontrivial denominators after multiplication by d_n^5; these
+denominators cancel only after summing over different poles and different
+orders i.
+
+Therefore a valid proof must preserve at least one of the following global
+structures:
+
+  * the combined zeta(3)-free rational function (6.1);
+  * the determinant in (4.5)--(4.6);
+  * the rational antidifference (7.1)--(7.3); or
+  * an equivalent multiple-integral or well-poised binomial identity.
+
+Ordinary separate partial-fraction denominator bounds discard precisely the
+cancellation that the target needs.
+
+
+9. EXACT COMPUTATIONAL EVIDENCE
+-------------------------------
+
+The script
+
+    worthiness/symmetric_zeta5_divisibility.py
+
+implements (4.1)--(6.6) using Python Fraction arithmetic.  It:
+
+  1. constructs every a_{i,j} by exact truncated Taylor multiplication;
+  2. constructs atilde_{i,j} using (5.3);
+  3. forms the eliminated coefficients f_{i,j};
+  4. verifies the exact vanishing of the zeta(3) coefficient;
+  5. computes the rational part in (6.6); and
+  6. checks that d_n^5 times that rational part is an integer.
+
+Running
+
+    python3 worthiness/symmetric_zeta5_divisibility.py 12
+
+verifies (T) exactly for 1 <= n <= 12.  This is proof-producing rational
+arithmetic for those finitely many n, not floating-point evidence.
+
+An independent exact recurrence computation through n=150 gives the stronger
+empirical pattern
+
+        binom(2n,n)
+    --------------------  in {2,6}.                       (9.1)
+    gcd(binom(2n,n),A_n)
+
+Both values occur.  The value 6 occurs, for example, at
+
+    n = 2, 6, 8, 18, 20, 24, 26, 54, 56, 60, 62,
+        72, 74, 78, 80
+
+among n <= 150.  Hence the factor 6 in (CB), equivalently the factor 12 in
+(T), is not merely an artefact of the proof normalization: the data show that
+it is genuinely sharp.
+
+Finite verification, regardless of range, is not a proof for all n.
+
+
+10. THE PRECISE REMAINING LEMMA
+-------------------------------
+
+A complete proof of the target is now reduced to the following self-contained
+statement.
+
+Central-binomial cancellation lemma.
+
+For every n >= 1, let p_n be given by (4.6), equivalently by the explicit
+partial-fraction/harmonic formula (5.1)--(6.6), and put
+
+    A_n = 2 d_n^5 p_n in Z.
+
+Then, for every prime p,
+
+    ord_p(A_n) >= ord_p binom(2n,n) - ord_p(6).            (10.1)
+
+Equivalently,
+
+    binom(2n,n) divides 6 A_n.                            (10.2)
+
+The difficult content is not the already known integrality of A_n.  It is the
+extra congruence (10.1), caused by cancellation between the two companion
+forms after zeta(3) elimination.
+
+For primes n < p <= 2n, equation (10.1) asks for a congruence modulo p even
+though p is absent from d_n.  These primes isolate the well-poised
+central-binomial mechanism most cleanly.  For primes p <= n, the corresponding
+higher p-adic valuations must be coordinated with the harmonic denominators
+and the carries in binom(2n,n).
+
+
+11. PROMISING PROOF ROUTES
+--------------------------
+
+The investigation suggests three realistic routes.
+
+(A) A p-adic determinant congruence.
+
+Use
+
+    p_n = wtilde_n v_n - w_n vtilde_n
+
+and prove that the two vectors
+
+    (w_n,wtilde_n),  (v_n,vtilde_n)
+
+become p-adically dependent to exactly the order demanded by
+binom(2n,n)/gcd(6,binom(2n,n)).  For n < p <= 2n, exact experiments indicate
+especially strong congruences for w_n and wtilde_n.  Turning these into a
+binomial-sum identity could settle the large-prime interval first.
+
+(B) A well-poised multiple-sum representation.
+
+The Krattenthaler--Rivoal method proves denominator theorems by replacing
+derivatives of partial fractions with multiple sums whose summands are
+products of binomial coefficients.  A corresponding multiple-sum identity
+for the eliminated function (6.1), with the central binomial factor visible,
+would make (10.2) accessible termwise or orbitwise without destroying the
+global cancellation.
+
+(C) An integral lattice proof.
+
+The cellular integral naturally gives the normalized coefficients P_n, while
+the Vasilyev integral naturally gives p_n.  A direct comparison at the level
+of integral relative (co)homology could explain the division by binom(2n,n)
+and the residual index 12.  Such a proof would need an actual integral-lattice
+calculation; local residues or numerical Smith forms alone are insufficient.
+
+A naive induction using the third-order recurrence is not currently adequate:
+the leading recurrence coefficient contains polynomial factors unrelated to
+n+1, so division during the induction introduces primes not controlled by
+d_n or binom(2n,n).
+
+
+12. STATUS
+----------
+
+Proved or exactly derived here:
+
+  * Brown--Zudilin's P_n is Zudilin's p_n divided by binom(2n,n), up to sign.
+  * The corrected target is equivalent to binom(2n,n) | 6A_n.
+  * The two Zudilin summands combine into one explicit zeta(3)-free rational
+    function.
+  * Equations (5.1)--(6.6) give a finite exact formula for its rational part.
+  * The target is exactly a harmonic-residue/antidifference integrality
+    statement.
+  * Termwise integrality is false; the required cancellation is global.
+  * The target is verified by exact arithmetic for n <= 12, and the equivalent
+    divisibility has been tested by recurrence through n=150.
+
+Not proved:
+
+  * the central-binomial cancellation lemma (10.1) for arbitrary n;
+  * consequently, 12 d_n^5 P_n in Z for every n;
+  * the stronger observed 2-adic attainment law.
+
+The distinction is important.  The work reduces the original denominator
+problem to a concrete and potentially attackable p-adic congruence, but it does
+not turn finite evidence or a published experimental assertion into a theorem.
+
+
+13. PRIMARY REFERENCES
+----------------------
+
+[1] F. Brown and W. Zudilin,
+    "On cellular rational approximations to zeta(5)",
+    arXiv:2210.03391v3 (2026).
+    https://arxiv.org/abs/2210.03391
+
+[2] W. Zudilin,
+    "A third-order Apery-like recursion for zeta(5)",
+    arXiv:math/0206178 (2002).
+    https://arxiv.org/abs/math/0206178
+
+[3] W. Zudilin,
+    "Arithmetic of linear forms involving odd zeta values",
+    arXiv:math/0206176 (2002).
+
+[4] W. Zudilin,
+    "Multiple-integral representations of very-well-poised hypergeometric
+    series",
+    arXiv:math/0206177 (2002).
+    https://arxiv.org/abs/math/0206177
+
+[5] C. Krattenthaler and T. Rivoal,
+    "Hypergeometrie et fonction zeta de Riemann",
+    arXiv:math/0311114 (2003).
+    https://arxiv.org/abs/math/0311114
+
+
+Associated exact-arithmetic code:
+
+    worthiness/symmetric_zeta5_divisibility.py
+

@@ -245,6 +245,64 @@ multiple-sum (route B) is the operative next step.
 
 ---
 
+## 2.7 PROOF of (W) by an F_p-linear certificate — Phase 1 essentially closed
+
+This supersedes the "open" status of `(W)`: it is now **proved for each `n` by a
+finite exact certificate** (verified `n ≤ 32`, 130 pairs), and the general-`n`
+statement is reduced to a single clean uniform-existence lemma.
+
+**The exact relations `E_M` (provable, over ℚ).** Since
+`R_n(k) = (n!)^4 k^{−4n−5}(1+O(1/k))`, the coefficient of `k^{−M}` in the Laurent
+expansion at `∞` vanishes for `1 ≤ M ≤ 4n+4`. Using
+`(k+j)^{−i} = Σ_r C(−i,r) j^r k^{−i−r}`,
+
+    E_M := Σ_{i=1}^{min(6,M)} C(−i, M−i) · Σ_{j=0}^n j^{M−i} a_{i,j} = 0.   (R2)
+
+Verified to hold **exactly over ℚ** for all `n ≤ 32` (`lemma_cb_certificate.py`).
+(For `M=1,2,3` these are `Σa_{1,j}=0`, `Σa_{2,j}=Σj a_{1,j}`,
+`w_n = 2Σj a_{2,j} − Σj² a_{1,j}` — the ★ family of §2, now taken to full order.)
+
+**The certificate.** For each prime `n < p ≤ 2n` (`p ≥ 5`), the `F_p`-functional
+`w = Σ_j a_{3,j}` lies in the `F_p`-linear span of `{E_M mod p : 1 ≤ M ≤ 4n+4}`:
+there exist `c_M ∈ F_p` with `Σ_M c_M E_M ≡ w` as functionals mod `p`. Since every
+`a_{i,j}` is `p`-integral (`p > n`) and every `E_M(a) = 0` exactly, evaluating on
+the true coefficient vector gives
+
+    w_n = w(a) = Σ_M c_M E_M(a) ≡ 0   (mod p).
+
+The same certificate exists for `w̃ = Σ_j ã_{3,j}` (functional
+`j(n−j)a_{3,j}+(2j−n)a_{4,j}−a_{5,j}`). Both verified with **zero failures** over
+all `n ≤ 32`, `n < p ≤ 2n`, `p ≥ 5` (130 pairs). For each such `n` this is a
+finite exact `F_p` linear-algebra identity — a **genuine proof**, not sampling.
+
+**Why exactly `n < p ≤ 2n` (threshold law, verified).** The minimal truncation
+that forces `w` is `M = 2p+1`. Available relations reach `M = 4n+4`. Hence the
+certificate exists **iff `2p+1 ≤ 4n+4`, i.e. `p ≤ 2n+1`** — matching the
+central-binomial window exactly (and the harmless extra prime `p = 2n+1`, where
+indeed `ord_p(w_n) ≥ 3` though `p ∤ binom(2n,n)`).
+
+**Soundness controls (verified).** The method does **not** force what is false:
+the `ζ(5)` coefficient `u = Σ_j a_{5,j}` (a unit mod `p`) is **never** in the span;
+and for primes `p > 2n+1`, `w` is **not** forced (consistent with `w_n` being a
+unit there). So the certificate fires exactly on the true congruences.
+
+**Consequence.** Combined with Theorem A (§1), **`(CB)` on the clean interval
+`n < p ≤ 2n` is proved for every `n ≤ 32`**, with an explicit finite certificate,
+and the mechanism (`ord_∞ R_n = 4n+5` vs the threshold `2p+1`) is understood.
+
+**The single remaining Phase-1 gap** is now purely uniform-in-`n`:
+
+> **Lemma (uniform certificate) — remaining.** For all `n` and all primes
+> `n < p ≤ 2n`, the functional `Σ_j a_{3,j}` (and its `w̃` analogue) lies in the
+> `F_p`-span of `{E_M : 1 ≤ M ≤ 4n+4}`.
+
+This is a self-contained statement about the mod-`p` rank of the explicit
+`∞`-expansion matrix `[C(−i,M−i) j^{M−i}]`; the verified minimal-`M = 2p+1` law
+and Fermat wraparound (`j^{M} ≡ j^{M−(p−1)}`, active once `M > p−1`, i.e. exactly
+when `p ≤ 2n`) are the structural handles for proving it in general.
+
+---
+
 ## 3. Phase 2 — primes `p ≤ n`
 
 Here `ord_p binom(2n,n)` can exceed 1 and interacts with `d_n^5` and with the
@@ -272,8 +330,8 @@ with route (B) of the note (a well-poised multiple-sum representation exposing
 | Reflection `a_{i,n−j}=(−1)^{i+1}a_{i,j}` (P1) | **Proved** + verified |
 | Even-layer vanishing `S_1=S_2=S_4=S_6=0` (P2) | **Proved** + verified |
 | `ord_p(a_{6,j})=[j≥t]+[j≤n−t]`, window (P3) | **Proved** (Kummer) + verified |
-| Moment identities (★), `w_n=2Σj a_{2,j}−Σj²a_{1,j}` (P4) | **Proved** + verified |
-| `(W)`: `w_n≡w̃_n≡0 (mod p)`, `n<p≤2n`, `p≥5` | **Open**; verified 855 pairs, `n≤90` |
+| Moment identities (★)/`E_M` relations, exact over ℚ (P4, §2.7) | **Proved** + verified |
+| `(W)`: `w_n≡w̃_n≡0 (mod p)`, `n<p≤2n` — **F_p certificate** (§2.7) | **Proved for each `n≤32`** (finite exact certificates); general `n` = uniform-certificate lemma |
 | Phase 2 (`p≤n`) inequality | **Open**; verified `n≤60`, 206 tight |
 
 **The single remaining kernel is `(W)`** (equivalently `(W′)`). What blocks a
@@ -322,6 +380,14 @@ literature we checked.
   decomposition showing `S_mid` is a nonzero unit. Run:
   `python3 lemma_cb_wproof.py 1 20`. Middle mod-`p^2` reduction
   `a_{3,j} ≡ a_{6,j} b_1 b_2` verified separately (290 checks, 0 mismatches).
+- `lemma_cb_moment.py` — F_p-moment reduction (§2.7 precursor): verifies
+  `w_n ≡ 3 Σ_j j² a_{1,j}` and `w̃_n ≡ 3 Σ_j j² ã_{1,j}` mod `p` (residue-layer
+  form), genuineness (`ord_p(w−3X)≥1`), and the moment-parity table. Run:
+  `python3 lemma_cb_moment.py 2 40`.
+- `lemma_cb_certificate.py` — **the proof of (W)** (§2.7): checks `E_M = 0` exactly
+  over ℚ, then that `w` and `w̃` lie in the `F_p`-span of `{E_M}` for `n<p≤2n`
+  (proving `w_n≡w̃_n≡0`), with the `u`-not-forced soundness control. Run:
+  `python3 lemma_cb_certificate.py 2 32` (130 pairs, all OK).
 
 (Existing `symmetric_zeta5_divisibility.py` unchanged; it verifies the target
 integrality itself for `n ≤ 12`.)
@@ -330,11 +396,16 @@ integrality itself for `n ≤ 12`.)
 
 ## 6. Bottom line
 
-Phase 1 of the Central-Binomial Cancellation Lemma is reduced, by a complete
-proof (Theorem A) plus proved structural results (P1–P5), to the **single clean
-congruence `(W)`: `w_n ≡ w̃_n ≡ 0 (mod p)` for `n < p ≤ 2n`, `p ≥ 5`** — the
-vanishing of the two well-poised ζ(3) coefficients mod the large primes.
-`(W)` is verified without exception over 855 `(n,p)` pairs (`n ≤ 90`) but is not
-yet proved; it is the last arithmetic gap in the flagship case. Phase 2 holds on
-all tested `n ≤ 60` (206 tight cases) and remains open. Per the repo standard,
-none of the finite verification is presented as a theorem.
+Phase 1 of the Central-Binomial Cancellation Lemma reduces, by a complete proof
+(Theorem A), to the congruence `(W)`: `w_n ≡ w̃_n ≡ 0 (mod p)` for `n < p ≤ 2n`.
+`(W)` is now **proved for every `n ≤ 32` by an explicit finite `F_p`-linear
+certificate** (§2.7): the well-poised ζ(3) functionals lie in the mod-`p` span of
+the exact `∞`-expansion relations `E_M = 0` (`M ≤ 4n+4`), which forces the
+congruence precisely because `4n+4 ≥ 2p+1 ⇔ p ≤ 2n+1`. The certificate is a
+genuine per-`n` proof (not sampling), with soundness controls passing (`u = Σa_{5,j}`
+never forced; nothing forced for `p > 2n+1`). Hence **`(CB)` on the clean interval
+is a theorem for all `n ≤ 32`**, and the general-`n` case is reduced to one
+self-contained uniform-existence lemma about the mod-`p` rank of the explicit
+`∞`-expansion matrix. Phase 2 (`p ≤ n`) holds on all tested `n ≤ 60` (206 tight
+cases) and remains open. Finite certificate checks for a given `n` are exact
+proofs for that `n`; the uniform-in-`n` statement is not yet a theorem.

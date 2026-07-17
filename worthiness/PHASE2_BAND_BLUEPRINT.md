@@ -71,3 +71,20 @@ V4. If V1–V3 hold: reduce to the finite list of head-window congruences that
 - Everything else: conjecture with a concrete verification path.
 - The measured facts feeding this: universal ρ_p (1–4 digit agreement across n,
   lemma_cb_phase2_univ.py); w/u ≡ w̃/ũ mod p (dissection run); slack-0 tightness.
+
+## BREAKTHROUGH ADDENDUM (2026-07-18 ~01:10, Fable)
+
+The V3 constants are IDENTIFIED EXACTLY: ρ-unit = 29/28 = p₁/q₁ and σ-unit =
+101/84 = p̃₁/q₁ — the n=1 LADDER RATIOS (exact determinant check at n=1).
+Digit-2 prediction (n = 2p+r ⟹ constant p₂/q₂ = 24289/23424) CONFIRMED:
+5 p-adic digits at p=5 (n=11,12), 3–4 at p=11 (n=23,24). Exceptional primes =
+those dividing the digit-constant denominators (7 | 28, 84): need renormalized
+statement. The general mechanism is a DWORK CONGRUENCE:
+
+    p_n/q_n ≡ (p_a/q_a)·p^{-5}  mod p^{θ},  a = ⌊n/p⌋,
+
+and Phase 2 reduces (pending the θ-law, agent stage V5) to proving this — a
+known-technology statement (Dwork Frobenius structure; Delaygue–Rivoal–Roques;
+Malik–Straub Lucas congruences for Apéry-like sequences). The p^{-5} factor is
+the harmonic-layer depth of the outer digit; the archimedean limit of the same
+ratio is ζ(5) — one ratio, two completions, same digit structure.

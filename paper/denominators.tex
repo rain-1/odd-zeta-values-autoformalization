@@ -21,6 +21,10 @@
 \newcommand{\Q}{\mathbb{Q}}
 \newcommand{\frG}{\mathfrak{G}}
 \newcommand{\cF}{\mathcal{F}}
+\newcommand{\Fbb}{\mathbb{F}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\Res}{\operatorname{Res}}
+\newcommand{\wt}{\widetilde}
 
 \title{Sharp denominator corrections for Brown--Zudilin cellular\\
 linear forms in $\zeta(5)$: measurements, a conjecture,\\ and a lattice
@@ -60,9 +64,18 @@ for $n\le8$) support this. As by-products we determine the
 supremum of the Brown--Zudilin ``worthiness'' exponent over the full
 parameter cone, verify that the leading factor $2$ in a denominator
 conjecture of Krattenthaler--Rivoal is unnecessary for $n\le 5$, and
-document an orbit-coherent boundary-prime anomaly. All measured
-denominator slack is bounded; no measured direction offers exponential
-arithmetic gain.
+document an orbit-coherent boundary-prime anomaly. In the totally
+symmetric case we prove one law unconditionally: reducing to Zudilin's
+2002 sequences, the corrected integrality is equivalent to the
+central-binomial divisibility $\binom{2n}{n}\mid 6A_n$, and we prove it
+for \emph{all} $n$ at every prime $p\in(n,2n]$---the primes invisible
+to every $d_n$-denominator estimate---by a new Frobenius-certificate
+argument: the single polynomial $(k^p-k)^2$ realizes, over
+$\mathbb{F}_p$, the $n+1$ simultaneous local jet conditions that admit
+no low-degree solution over $\Q$, and a residue-sum argument on
+$\mathbb{P}^1$ does the rest. The primes $p\le n$ of that divisibility
+remain open. All measured denominator slack is bounded; no measured
+direction offers exponential arithmetic gain.
 \end{abstract}
 
 \section{Introduction}
@@ -424,11 +437,13 @@ $B_j=(-1)^n\binom{n+a}{a}\binom{n}{a}^2/n!$ and
 $A_j=B_j\,(3H_a-H_{n+a}-2H_{n-a})$ with $a=j-n-1$ (verified exactly for
 $n\le6$). Two consequences, proved in the accompanying notes:
 
-\begin{conjecture}[support; verified $n\le8$]\label{thm:support}
+\begin{conjecture}[support; verified $n\le8$; large-prime half now
+proved in Theorem~\ref{thm:cbcert}]\label{thm:support}
 In the totally symmetric case every prime dividing $\den(P_n)$ is at
 most $2n+1$, and $\ord_p\den(P_n)\le 5\,\ord_p \dn{n}$ for every
 $p\ge5$ (inequality only: the corresponding equality fails at
-$(n,p)=(8,7)$).
+$(n,p)=(8,7)$). \textup{[Added:} for $p\in(n,2n]$ the second bound
+reads $\ord_p\den(P_n)=0$, and this is now a theorem, \S\ref{sec:cbcert}.\textup{]}
 \end{conjecture}
 
 \noindent\emph{Status.} An adversarial audit of our own earlier notes
@@ -465,6 +480,82 @@ matching Theorem~\ref{thm:support} and the data. The remaining gap to a
 full proof of $12\,\dn{n}^5P_n\in\Z$ is a classical-type
 $\dn{n}^5$-collapse bookkeeping for the structured sums above; it is
 verified exactly for $n\le5$.
+
+\subsection{The central-binomial reduction, and a Frobenius certificate:
+the large-prime law is a theorem}\label{sec:cbcert}
+
+The strongest unconditional result of this paper closes the large-prime
+part of the symmetric-case laws. Brown--Zudilin identify the symmetric
+coefficients with Zudilin's 2002 sequences \cite{Zud02}:
+$P_n=(-1)^{n+1}p_n/\binom{2n}{n}$, where $p_n$ satisfies Zudilin's
+denominator theorem $A_n:=2\dn{n}^5 p_n\in\Z$. Hence
+\[
+12\,\dn{n}^5P_n\in\Z
+\quad\Longleftrightarrow\quad
+\binom{2n}{n}\ \Big|\ 6A_n ,
+\tag{CB}
+\]
+an \emph{extra} divisibility on the numerator that no
+$\dn{n}$-denominator estimate can reach at the primes $n<p\le 2n$: these
+divide $\binom{2n}{n}$ but not $\dn{n}$. On that interval (CB) reduces
+(via the $p$-integrality of the partial-fraction and harmonic data, and
+$p_n=\wt w_n v_n-w_n\wt v_n$) to the congruence $(W)$:
+$w_n\equiv\wt w_n\equiv0\pmod p$, where $w_n,\wt w_n$ are the
+$\zeta(3)$-coefficients of Zudilin's two companion forms
+$\sum_k R_n(k)$ and $\sum_k -k(k+n)R_n(k)$, with
+$R_n(k)=(n!)^4(k+\tfrac n2)\prod_1^n(k-j)\prod_1^n(k+n+j)/\prod_0^n(k+j)^6$.
+
+\begin{theorem}[Frobenius certificate; proved in \cite{CBcert}]
+\label{thm:cbcert}
+For every $n\ge1$ and every prime $n<p\le2n$, $p\ge5$:
+$w_n\equiv\wt w_n\equiv0\pmod p$. Consequently \textup{(CB)} holds at
+every prime of $(n,2n]$, and $\den(P_n)$ contains no prime of
+$(n,2n]$---the large-prime half of
+Conjecture~\textup{\ref{thm:support}} is unconditionally true.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Since $p>n$, all partial-fraction coefficients $a_{i,j}$ of $R_n$ are
+$p$-integral and the poles $-0,\dots,-n$ are distinct in $\Fbb_p$;
+$w_n\equiv\sum_j\bar a_{3,j}\pmod p$. The Frobenius identity
+$k^p-k=(k+j)^p-(k+j)$ in $\Fbb_p[k]$ makes the \emph{single} polynomial
+$\varphi=(k^p-k)^2$ satisfy $\varphi\equiv(k+j)^2\pmod{(k+j)^6}$ at
+\emph{every} pole simultaneously (here $p\ge5$), so
+$\Res_{-j}(\varphi\,\overline R_n)=\bar a_{3,j}$ for each $j$. Because
+$\deg\varphi=2p$ and $\ord_\infty\overline R_n\ge4n+5$ (the vanishing
+Laurent coefficients at $\infty$ reduce mod $p$), the bound $p\le 2n$
+gives $\varphi\overline R_n=O(k^{-5})$; the residue-sum theorem on
+$\PP^1$ then forces $\sum_j\bar a_{3,j}=0$. The companion uses
+$\psi=-k(k+n)\varphi$ and $p\le2n$ once more ($O(k^{-3})$). Full details,
+the equivalent explicit three-term certificate
+$c_3=1,\,c_{p+2}=-2,\,c_{2p+1}=1$ on the $\infty$-expansion relations,
+and independent exact verification over $420$ pairs $(n,p)$, $n\le60$,
+are in \cite{CBcert}.
+\end{proof}
+
+The prime window is pinned twice by the proof: $p>n$ for distinct
+nodes and $p$-integrality, $2p+\deg Q\le 4n+3$ for the decay---and
+the certificate provably cannot exist for $p>2n+1$, where $w_n$ is
+generically a unit. The argument uses only the pole orders, the decay,
+and $p$-integrality; it is therefore portable to the higher-weight
+cellular families (poles of order $8$ require merely
+$\varphi\equiv(k+j)^{m}\bmod{(k+j)^8}$ with $p+m\ge 8$).
+
+What remains open for the full law $12\,\dn{n}^5P_n\in\Z$ is
+\emph{Phase 2}: the primes $p\le n$, where $\ord_p\binom{2n}{n}$ is
+governed by Kummer's carry count and interacts with $\dn{n}^5$ and the
+harmonic denominators. Two structural remarks sharpen its frontier.
+First, by Kummer, primes $p\in(\tfrac{2n}3,n]$ contribute no carry
+($n=p+r$ with $2r<p$), so $\ord_p\binom{2n}{n}=0$ and (CB) is
+\emph{vacuous} there: the first genuinely open band is
+$p\le\tfrac{2n}3$, where exactly one extra $p$-adic order beyond
+Zudilin's bound is required ($\ord_p\binom{2n}{n}=1$ on
+$(\tfrac n2,\tfrac{2n}3]$). Second, the exact ledger through $n=60$
+shows $206$ zero-slack cases: the required inequality is frequently
+\emph{tight}, so Phase 2 cannot follow from denominator-size estimates
+and must track the well-poised structure itself. Phase 2 remains open,
+and the full law remains a conjecture; the theorem above removes
+precisely the primes invisible to every classical estimate.
 
 \section{Cross-family controls}\label{sec:crossfamily}
 
@@ -589,6 +680,14 @@ accompanying the formalization.
 \begin{thebibliography}{99}
 \bibitem{BZ} F.~Brown, W.~Zudilin, \emph{On cellular rational
 approximations to $\zeta(5)$}, arXiv:2210.03391.
+\bibitem{Zud02} W.~Zudilin, \emph{A third-order Ap\'ery-like recursion
+for $\zeta(5)$}, Mat.\ Zametki \textbf{72} (2002); arXiv:math/0206178.
+
+\bibitem{CBcert} [companion note], \emph{A Frobenius certificate for
+central-binomial cancellation in Zudilin's symmetric $\zeta(5)$
+construction}, 2026. Repository file \texttt{worthiness/cb\_certificate.tex};
+verification script \texttt{cb\_certificate\_check.py} ($420$ pairs, exact).
+
 \bibitem{Zu18} W.~Zudilin, \emph{One of the odd zeta values from
 $\zeta(5)$ to $\zeta(25)$ is irrational. By elementary means}, SIGMA 14
 (2018), 028; arXiv:1801.09895.

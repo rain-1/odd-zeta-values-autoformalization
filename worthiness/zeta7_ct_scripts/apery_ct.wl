@@ -1,0 +1,28 @@
+lf=OpenWrite["apery_ct.log"]; log[x__]:=(WriteString[lf,x,"\n"];Flush[lf]);
+log["START ",DateString[]];
+Get["/home/ubuntu/riscergosum/RISC/HolonomicFunctions.m"];
+If[Head[Annihilator[nn!,{S[nn]}]]=!=List, log["FATAL load"];Close[lf];Exit[]];
+log["HF ok ",DateString[]];
+W={x1+x2+x3+x4,x3+x4,x2+x3,x1+x2+x3}; xs={x1,x2,x3,x4};
+H=Exp[nn*(Sum[Log[W[[i]]],{i,4}]-Sum[Log[xs[[j]]],{j,4}])]/Product[xs[[j]],{j,4}];
+t0=AbsoluteTime[];
+ann=Annihilator[H,Join[{S[nn]},Der/@xs]];
+log["ann ready ",Length[ann]," ops in ",Round[AbsoluteTime[]-t0],"s"];
+cur=ann; rem=Join[{S[nn]},Der/@xs];
+Do[ dx=Der[xs[[k]]]; t1=AbsoluteTime[];
+    ct=CreativeTelescoping[cur,dx,DeleteCases[rem,dx]];
+    log["  ct head=",ToString[Head[ct]]," len=",ToString[Length[ct]]];
+    cur=ct[[1]]; rem=DeleteCases[rem,dx];
+    log["elim x",k," in ",Round[AbsoluteTime[]-t1],"s; #tele=",ToString[Length[cur]]],
+  {k,Length[xs]}];
+rec=If[Head[cur]===List, cur[[1]], cur];
+log["REC: ",ToString[InputForm[rec]]];
+applied=ApplyOreOperator[rec,q[nn]];
+apery={1,5,73,1445,33001,819005,21460825,584307365,16367912425,468690849005,13657436403073};
+qf[m_]:=apery[[m+1]];
+ordG=Max[Cases[applied,q[nn+a_.]:>a,Infinity]/.{}->{0}];
+log["order=",ToString[ordG]];
+res=Table[{k,Simplify[(applied/.nn->k)/.q[a_]:>qf[a]]},{k,0,10-ordG}];
+log["cert: ",ToString[res]];
+log["ALLZERO ",ToString[AllTrue[res,(#[[2]]===0)&]]];
+log["DONE ",DateString[]]; Close[lf]; Exit[];

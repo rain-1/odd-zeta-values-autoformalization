@@ -193,6 +193,58 @@ exact, verifiable starting point — checked in `lemma_cb_wframe.py` (F3).
 
 ---
 
+## 2.6 Assembly attempt via reflection/pole-sign structure (verified; does not yet close)
+
+Three hand-derived ingredients were tested exactly (`lemma_cb_wproof.py`,
+`lemma_cb_signtab`), `n ≤ 20`–`40`:
+
+**Verified.**
+- **b-parity** `b_r(n−j) = (−1)^r b_r(j)` (`b_1` odd, `b_2` even, `b_3` odd),
+  consistent with `a_{6,j}` odd ⟹ `a_{3,j}` even (0 failures).
+- **Pole-sign structure of the `b_r`** (0 failures), with `p = n+t`,
+  `ε_j := −[j ≥ t] + [j ≤ n−t]`:
+  - `b_1`: `ord = −1` with `1/p`-coefficient `ε_j` (the two boundaries enter
+    with **opposite** signs), so `b_1` is `p`-integral (`ord 0`) on the middle
+    range `t ≤ j ≤ n−t` where `ε_j = 0`.
+  - `b_2`: `ord = −2` **everywhere including the middle** (the two boundaries
+    add with the **same** sign; no cancellation).
+  - `b_3`: `1/p^3`-coefficient `∝ ε_j` (opposite signs) and in fact `b_3` is
+    fully `p`-integral (`ord 0`) on the middle range.
+
+**Two corrections to the proposed assembly.**
+
+1. **Wraparound (R1) is vacuous.** `R_n(k) = 0` for *every* integer
+   `k ∈ {1,…,n}` (the factor `∏_{m=1}^n (k−m)` vanishes). The proposed sum
+   `Σ_{k=1}^{p−1−n} R_n(k)` has upper limit `p−1−n ≤ n−1`, so **all its terms are
+   identically zero** — the congruence holds trivially and carries no `p`-adic
+   information. The nonzero, `p`-adically large evaluations are `R_n(k)` for
+   `k ∈ {n+1,…,p}` (equivalently `R_n(p−j)`, `j < t`, `ord_p = −6 + [j≤n−t]`;
+   `R_n(p−j) = 0` for `j ≥ t`). A Beukers-type extraction of `w_n mod p` from
+   these tail terms remains possible in principle but is not delivered by R1.
+
+2. **The middle range does NOT vanish** — so `(W)` does **not** reduce to the
+   edges. On `t ≤ j ≤ n−t`: `ord(a_{6,j}) = 2`, `ord(b_1)=ord(b_3)=0`,
+   `ord(b_2)=−2`, hence in `a_{3,j} = a_{6,j}(b_3 + b_1 b_2 + b_1^3/6)` the terms
+   `a_{6,j}b_3` and `a_{6,j}b_1^3/6` have `ord ≥ 2` but `a_{6,j}b_1 b_2` has
+   `ord = 2 + 0 + (−2) = 0` — a **unit**. So (a clean by-product, verified
+   mod `p^2`)
+
+       a_{3,j} ≡ a_{6,j} · b_1(j) · b_2(j)   (mod p^2)   for t ≤ j ≤ n−t,
+
+   and the middle partial sum `S_mid = Σ_{mid} a_{3,j}` is a **nonzero unit**
+   mod `p` in 92 of 94 sampled `(n,p)` with nonempty middle (only sporadic
+   `S_mid ≡ 0` at `n=18,p=23` and `n=38,p=43`). Empirically `S_mid` and the edge
+   sum `S_edge` satisfy `S_mid%p + S_edge%p = p` (they cancel *each other*), never
+   `S_mid ≡ 0` alone. So the required cancellation genuinely couples middle and
+   edge; it cannot be localized to the edges.
+
+**Net.** The reflection/pole-sign machinery is correct and gives an explicit
+mod-`p^2` form for the middle summands, but the cancellation in `(W)` remains
+global (middle ↔ edge), reinforcing that a harmonic-denominator-free binomial
+multiple-sum (route B) is the operative next step.
+
+---
+
 ## 3. Phase 2 — primes `p ≤ n`
 
 Here `ord_p binom(2n,n)` can exceed 1 and interacts with `d_n^5` and with the
@@ -265,6 +317,11 @@ literature we checked.
 - `lemma_cb_wframe.py` — integer reframing F1 (`2 d_n^2 w_n, 2 d_n^2 w̃_n ∈ ℤ`),
   F2 (`B_n^{high} | W_n, W̃_n`), F3 (normal form `a_{3,j}=a_{6,j}(b_3+b_1b_2+
   b_1^3/6)`). Run: `python3 lemma_cb_wframe.py 1 30` (all OK).
+- `lemma_cb_wproof.py` — assembly-attempt battery (§2.6): R1 wraparound (verified
+  vacuous), R2 b-parity, R3 pole-sign structure + tail ords, and the middle/edge
+  decomposition showing `S_mid` is a nonzero unit. Run:
+  `python3 lemma_cb_wproof.py 1 20`. Middle mod-`p^2` reduction
+  `a_{3,j} ≡ a_{6,j} b_1 b_2` verified separately (290 checks, 0 mismatches).
 
 (Existing `symmetric_zeta5_divisibility.py` unchanged; it verifies the target
 integrality itself for `n ≤ 12`.)

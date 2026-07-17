@@ -1,3 +1,13 @@
+# Phase-2 band verification V1-V5 -- findings (Fable, 2026-07-18)
+
+> **V5 (2026-07-18, coordinator upgrade) is below §V4** and SUPERSEDES the primary
+> line of attack: the V3 "global rationals" are the **n=1 ladder ratios**, and the
+> whole band phenomenon is a **Dwork descent** that generalises to ALL `p <= n`,
+> reducing Phase 2 entirely to `(FREE) + (DWORK)`. Read §V5 first for the current
+> state; §§V1-V4 remain valid as the band-only (`a=1`) verification.
+
+---
+
 # Phase-2 band verification V1-V4 -- findings (Fable, 2026-07-18)
 
 Execution of `PHASE2_BAND_BLUEPRINT.md` stages V1-V4. Exact `Fraction` arithmetic
@@ -178,3 +188,109 @@ sharp next step.
   Wolstenholme-block (not `E_M`) machinery.
 - Scripts: `lemma_cb_band_v1.py`, `_v2.py`, `_v3.py`, `_v4.py`
   (run `python3 lemma_cb_band_v4.py 11 45 23`).
+
+---
+
+# V5 -- the Dwork ladder congruence and the general-kappa reduction (`lemma_cb_band_v5.py`)
+
+**Coordinator upgrade (2026-07-18).** The V3 constants are exact **ladder ratios**:
+
+    29/28 = p_1/q_1,   101/84 = ptil_1/q_1,   24289/23424 = p_2/q_2,   ...   (verified)
+
+so the band constant for `n = p+r` (digits `(1,r)` base `p`) is the leading-digit
+ratio `p_1/q_1`, and the phenomenon is a **Dwork/Frobenius descent on the ratio**
+`rho_n := p_n/q_n`, not a per-band coincidence. This reorganises ALL of Phase 2
+(every `p <= n`), superseding the Wolstenholme-block hunt as the primary route.
+
+## V5.1 -- the central congruence (Dwork descent; verified)
+
+For `a = floor(n/p)`, `kappa = ord_p binom(2n,n)`:
+
+    (DWORK)   p^5 * (p_n/q_n)    ≡ p_a/q_a       (mod p^{k}),
+              p^3 * (ptil_n/q_n) ≡ ptil_a/q_a    (mod p^{k}),
+              guaranteed floor  k >= 2 - kappa;  typical k = 3 - kappa.
+
+Verified over **272 descents** (`p = 11,13,17,19,23`, `n <= 45`, `a = 1,2,3`),
+non-exceptional primes: floor `k >= 2-kappa` with **0 failures** (min `k+kappa =
+2`); 223 hit the typical `3-kappa`, 46 are **boosted** (`+1/+2`). Boosts sit at
+the reflection centre `r=(p-1)/2` and the endpoints `r=1,p-1` -- the first
+correction digit is **antisymmetric in `r` about the centre** (`~ (2r+1-p)`), the
+signature of a derivative term `p*(d/da)` as in the standard Dwork
+`F(x)/F(x^p)` congruences. The closure needs only `k >= 1`, so `2-kappa` (for
+`kappa <= 1`, the reachable range) is comfortable.
+
+## V5.2 -- iterated descent => the general-kappa target (0 failures)
+
+Iterating `(DWORK)` `L = ord_p(d_n) = floor(log_p n)` times down to the base
+digit `n0 = floor(n/p^L) < p` gives, for non-exceptional `p`,
+
+    ord_p(p_n/q_n) = -5L + ord_p(p_{n0}/q_{n0}) = -5L      (base ratio a p-unit).
+
+Combined with **(FREE)** `ord_p(q_n) >= kappa` (BZ integer sumQ):
+
+    ord_p(p_n) = ord_p(rho_n) + ord_p(q_n)  >=  -5L + kappa  =  kappa - 5L,
+
+which is **exactly the (CB) target** for `p >= 5`: `ord_p(A_n) = 5L + ord_p(p_n)
+>= kappa` with `A_n = 2 d_n^5 p_n`, `ord_p(6) = 0`. The `d_n^5` reserve supplies
+exactly `5` per digit-level, matching the `-5` the Dwork descent costs per level
+(the zeta(5) weight). **`ord_p(p_n) >= kappa - 5L` verified with 0 failures**,
+all `p >= 5`, `n <= 45` (`lemma_cb_band_v5.py` V5.2). *This is the (CB) inequality
+itself -- the earlier band `-4` was the `L=1,kappa=1` special case.*
+
+## V5.3 -- exceptional primes (`p | den` of a ladder ratio)
+
+If `p` divides the denominator of a ladder ratio on the descent path, the base
+ratio is not a `p`-unit and `ord_p(rho_n)` **dips** below `-5L` by the exceptional
+multiplicity `mu`. Two cases seen: `7 | 28 = den(p_1/q_1)` makes **7 exceptional
+for every row** (dip `mu=1`, `ord(rho) = -5L-1`); `11 | den(p_3/q_3)` makes 11
+exceptional at digit `a=3`. In **every** exceptional row, `ord_p(q_n)` rises above
+`kappa` by `nu >= mu`, so
+
+    ord_p(p_n) = ord_p(rho_n) + ord_p(q_n)  >=  (-5L - mu) + (kappa + nu)  >=  kappa - 5L
+
+is **preserved** (25/25 exceptional rows compensated, verified). The clean
+unconditional invariant is thus the **combined** `ord_p(p_n) >= kappa - 5L` (or
+equivalently the integer form `A_n`), which absorbs the denominator of the ladder
+constants -- the corrected statement directive (2) asked for. `p = 2,3` are
+strongly exceptional (they divide `28,84,...`); the ratio `ord(rho)` is wildly
+negative there but `ord(p_n) >= kappa - 5L - ord_p(6)` still holds (they are
+outside the `p>=5` (CB) range anyway).
+
+## V5.4 -- Lucas control (negative) and the operative structure
+
+Plain **Lucas fails**: `q_{ap+b} != q_a q_b` and `Q_{ap+b} != Q_a Q_b (mod p)`
+(`Q_n = q_n/binom`), many failures at every `p` (V5.3 in script). So `q_n` is not
+a Lucas sequence in the naive sense; the correct structure is the **Dwork ratio
+descent** above (ratios of the two fundamental solutions `p_n, q_n`, not products
+of digits). This matches Dwork/Frobenius theory for the ratio of truncated
+solutions, cf. Delaygue-Rivoal-Roques (Dwork congruences for hypergeometric
+sequences) and Straub / Malik-Straub (Lucas congruences for Apery-like numbers).
+
+## V5.5 -- the general-kappa conjecture (Phase 2 reduced)
+
+> **Conjecture (Phase-2 Dwork closure).** For every prime `p` and every `n`, with
+> `a = floor(n/p)`, `kappa = ord_p binom(2n,n)`, `L = ord_p(d_n)`:
+>
+>   (FREE)  `ord_p(q_n) >= kappa`                                       [BZ sumQ -- known]
+>   (DWORK) `p^5 (p_n/q_n) ≡ p_a/q_a (mod p)` and `p^3(ptil_n/q_n) ≡ ptil_a/q_a (mod p)`
+>           (to >= 1 digit; at exceptional `p` the integer-normalised form).
+>
+> Together they give `ord_p(p_n) >= kappa - 5L`, i.e. **(CB) at `p` for all `p >= 5`**.
+
+`(FREE)` is known. `(DWORK)` is a **known-technology** statement: a Dwork-Frobenius
+congruence for the ratio of the two Zudilin solutions. **If `(DWORK)` is proved
+(uniformly, with the exceptional-prime normalisation), Phase 2 is a theorem** --
+no per-`n` certificate, no Wolstenholme-block assembly. This subsumes the §V4
+head-window list (the `a=1` slice of `(DWORK)`): the constants there are now
+explained as `p_1/q_1`, `ptil_1/q_1`, and the required depth `theta` is the
+`a=1,kappa=1` case `k >= 1` of the descent-depth law.
+
+## V5 status
+
+- Ladder-ratio identification: **exact** (V5.0).
+- `(DWORK)` descent + depth law `k >= 2-kappa`: **verified**, 272 descents, 0 floor failures.
+- `(CB)` target `ord_p(p_n) >= kappa - 5L`: **verified 0 failures**, all `p>=5`, `n<=45`.
+- Exceptional-prime compensation: **verified**, 25/25 rows.
+- Lucas: **negative** (Dwork ratio is the correct structure).
+- Remaining: prove `(DWORK)` uniformly (Dwork-Frobenius technology) -- the single
+  clean gate for ALL of Phase 2. Run: `python3 lemma_cb_band_v5.py 45`.

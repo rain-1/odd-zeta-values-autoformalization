@@ -320,6 +320,51 @@ tightness say a proof must track the interaction of `ord_p(p_n)` with both
 with route (B) of the note (a well-poised multiple-sum representation exposing
 `binom(2n,n)` termwise). This is left open.
 
+### 3.1 Phase-2 structure discovered (reconnaissance, 2026-07-17 late)
+
+Scripts: `lemma_cb_phase2_recon.py`, `lemma_cb_phase2_univ.py`. Three verified
+facts reorganize Phase 2 (all exact arithmetic; DATA, not yet theorems, except
+(a) which is trivial and (b) which is free):
+
+**(a) Kummer band law (proved, trivial).** For `n/2 < p ≤ n`: `κ :=
+ord_p binom(2n,n) = [p ≤ 2n/3]` (write `n = p+r`; the single possible carry is
+`2r ≥ p`). So Phase 2 is VACUOUS on `(2n/3, n]`; the first open band is
+`(n/2, 2n/3]`, where exactly `+1` p-adic order beyond Zudilin's bound is needed.
+Verified n < 200.
+
+**(b) `binom(2n,n) | q_n` is FREE (all p ≥ 5).** `Q_n = ±q_n/binom(2n,n)` is
+BZ's cellular coefficient with the manifestly-integer double binomial sum
+(sumQ), so `ord_p q_n ≥ κ` costs nothing. Verified 80 cases `n ≤ 24`.
+
+**(c) p-adic proximity (the discovery — DATA).** In the band, naive products
+give `ord_p ≈ −7` but `ord_p(p_n) = −4` with slack 0 everywhere: the vectors
+`(w,w̃)` and `(v,ṽ)` are p-adically near-proportional (route (A) confirmed).
+Stronger: `ρ_n := p_n/q_n` (ord `−5`) is a UNIVERSAL p-adic constant across `n`
+sharing a band prime — pairwise differences `ρ_n − ρ_m` gain 1–4 digits over
+the size of the terms (p=5: −3 vs −5; p=7: −5 vs −6; p=11: −2 vs −5; p=13
+similar). So `p_n ≈ ρ_p·q_n` p-adically with `ρ_p` an n-independent constant —
+a p-adic ζ(5) avatar (Calegari-type: rational approximations converging
+p-adically to p-adic L-values).
+
+**Consequent reframing of Phase 2.** Given (b), the target
+`ord_p(p_n) ≥ κ − 5` follows from ONE statement:
+
+>  (PROX)  `ord_p(p_n − ρ_p q_n) ≥ κ(n,p) − 5`  for some n-independent
+>  `ρ_p ∈ ℚ_p` with `ord_p ρ_p ≥ −5`,
+
+since then `ord_p p_n ≥ min(ord ρ_p + κ, κ−5) = κ−5`. I.e. **the p-adic error
+of the approximation p_n/q_n → ρ_p must be at least as central-binomially
+divisible as q_n itself** — the exact p-adic mirror of the archimedean
+smallness of `r_n = q_nζ(5) − p_n`. Two-species theme, now on the p-adic side.
+Band case needs just ONE digit of proximity (κ=1); data shows 1–4 digits.
+
+**Attack tools for the band:** the exact ℤ-lift of the Frobenius certificate
+`k^p − k = (k+j)^p − (k+j) + p·G_j(k+j)`, `G_j ∈ ℤ[u]` (verified) — jets
+correct mod p ⟹ main-term-plus-p×(crude-bound) structure, the right shape for
+a +1 gain; plus Wolstenholme-type block congruences for the harmonic layer
+(`H^{(i)}` over full residue blocks). Status: reconnaissance only; (PROX) is
+the open statement.
+
 ---
 
 ## 4. Obstruction map — what remains and why

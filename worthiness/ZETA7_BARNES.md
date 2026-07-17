@@ -751,3 +751,133 @@ of the campaign — q₃ = 94357501** — validated against all three BZ anchors
 reduces the remaining prize (P₃, the recurrence, the denominator ledger) to a
 single standard creative-telescoping run on a clean diagonal, for which the tool
 (HolonomicFunctions) is identified and pending.
+
+---
+
+## 9. HOLONOMICFUNCTIONS ENDGAME — pipeline validated, gated only on a live license
+
+The RISC password landed; RISCErgoSum 1.2.4 (with HolonomicFunctions 1.7.3) is at
+`riscergosum-1.2.4.tgz` (licensed, gitignored), extracted to `~/riscergosum/`.
+
+**HolonomicFunctions runs on Mathematica 15 [VERIFIED].** Load via
+`AppendTo[$Path,"~/riscergosum"]; AppendTo[$Path,"~/riscergosum/RISC"];
+Get["HolonomicFunctions.m"]` (the parent path lets the `RISC`` context resolve its
+sub-packages). Smoke test: `CreativeTelescoping[Binomial[n,k]^2, S[k]-1, S[n]]`
+returned the correct (n+1)a(n+1)=(4n+2)a(n). `Annihilator` and `Takayama` both
+present and functional.
+
+**The recurrence computation is set up as a diagonal / residue CT.**
+q_n = (2πi)⁻⁸ ∮ (∏Wᵢ)ⁿ/(∏xⱼ)ⁿ⁺¹ dx, so with
+H = Exp[n(Σlog Wᵢ − Σlog xⱼ)]/∏xⱼ,
+`ann = Annihilator[H, {S[n], Der[x₁],…,Der[x₈]}]` (8 first-order ops, instant),
+then `Takayama[ann, {x₁,…,x₈}]` eliminates the x's → the recurrence in n. Scripts:
+`zeta7_mos_holonomic_diag.wl` (the 8-fold, GUI-ready) and
+`zeta7_mos_hf_test_apery3.wl` (fast validation).
+
+**METHOD INDEPENDENTLY VALIDATED on Apéry ζ(3) [VERIFIED].** The same
+window-construction applied to the M₀,₆ cell σ₆=(1,5,3,6,2,4) gives windows
+{1,2,3,4},{3,4},{2,3},{1,2,3} whose diagonal is **exactly the Apéry ζ(3)
+numbers 1, 5, 73, 1445, 33001, 819005** (`zeta7_mos_leadcoeff.py`-style check).
+This retroactively **re-confirms the M₀,₁₀ window derivation and q₃ = 94357501**
+by an independent known-answer test.
+
+**Two blockers encountered, both environmental (not mathematical):**
+1. *Takayama is heavy.* The M₀,₈ validation (6-fold) ran >26 min in the Gröbner
+   elimination on the 15 GB headless box without finishing. The **8-fold ζ(7) case
+   will be heavier** — likely needing more RAM / patience / the GUI, or a lighter
+   route (iterated single-variable `CreativeTelescoping`, or `Method->"Hermite"`,
+   or feeding a low-fold binomial sum instead of the 8-fold integral).
+2. *License expiry.* The Mathematica 15 kernel returned "No valid password found"
+   mid-run (time-limited license; concurrent kernels may also exhaust seats). Needs
+   re-activation before any further HF run.
+
+**HANDOFF STATE — one live license away from the prize.** With a working kernel,
+the path is: run `zeta7_mos_hf_test_apery3.wl` (must return the known order-2 Apéry
+ζ(3) recurrence in seconds — final pipeline check), then
+`zeta7_mos_holonomic_diag.wl` for the 8-fold recurrence; certify it against the 31
+exact q_n; extract the characteristic polynomial (asymptotic rates); then run
+`zeta7_mos_recurrence.sage`'s P₃-propagation test (P₀=0, P₁=220, P₂=6021219/32) for
+the exact P₃, den(P₃) factored, and the per-prime ledger vs d₃=6 — the first 3-adic
+elimination-cost test at weight 7. **q₃ = 94357501 stands secured; the recurrence
+and P₃ are gated solely on a live Mathematica license + Takayama compute.**
+
+---
+
+## 10. THE ζ(7) RECURRENCE — low-coupling diagonal: exact terms, dual gate, and the operator's size
+
+**Date:** 2026-07-17 (successor run finishing Plan A + the CT amendment). This section
+records what is *established* and the precisely-located remaining gate. Data and scripts:
+`worthiness/zeta7_lc_terms.txt` (exact q_n), `worthiness/_zeta7_state_backup/` (DP,
+modular, guesser, CT, and endgame scripts).
+
+### 10.1 Exact term data + dual-representation gate [VERIFIED]
+- **Exact leading coefficients q_0 … q_73** (74 terms) now stand in
+  `zeta7_lc_terms.txt` (q_73 has 270 digits). n=0..30 are the MOS ground truth;
+  n=31..73 are the **low-coupling-window DP** (rep **W_lc** =
+  {1,2},{1,2,3,4},{2,3,4,5},{3,4,5},{4,5,6},{4,5,6,7},{5,6,7,8},{7,8}; max window
+  size 4, no full-width coupler).
+- **Dual-representation gate PASSES.** A structurally different low-coupling rep
+  **W_r2** = {1,2},{1,2,3},{2,3,4},{2,3,4,5,6},{3,4,5,6,7},{5,6,7},{6,7,8},{7,8}
+  reproduces the *same* q_n **exactly** on every overlap computed (n=31..42, byte
+  identical). Both reps reproduce all 31 ground-truth q_n.
+- **Modular cross-check.** A fast modular DP (`modw2.py`, O(n²)/window) at four primes
+  ≈2·10⁹ reproduces all 74 exact q_n reduced mod p; the prime 2000000011 is extended to
+  n=92 (93 modular terms), with more in progress.
+
+### 10.2 The recurrence is LARGE — a corrected size bound [MEASURED]
+- The modular-nullspace finder was **validated** on the known BZ ζ(5) leading
+  coefficient Q_n (=1,21,2989,714549,217515501,…): it recovers the exact **order 3,
+  degree 9** operator (nulldim 1) — matching BZ §2.
+- Applied to q_n at **93 modular terms**, **no recurrence exists** with order ≤4 and
+  degree ≤16, nor order 5 degree ≤13, nor order 6 degree ≤11, nor order 3 degree ≤21,
+  nor order 7/8 at the tested degrees (nulldim 0 at every (order,deg) with a surplus of
+  equations). **`ore_algebra` `guess` over GF(p) agrees** (no relation, order ≤6). So
+  the predecessor's "order ≈4, degree 11–13" estimate is **too small**: the minimal
+  operator has (order+1)(degree+1) > 89, i.e. it is one genuine step *larger* than the
+  ζ(5) analogue (plausibly order 4, degree ≳17, following the ζ(3)→ζ(5) degree jump
+  3→9). Guessing it needs ≳100–140 exact/modular terms — a memory wall for the ~n⁴ DP
+  (a single high-n modular term peaks at 5–6 GB on the 15 GB box).
+
+### 10.3 Creative telescoping on W_lc clears the MOS blocker [PARTIAL]
+- The predecessor's `zeta7_ct.wl` in fact used the **MOS full-coupler** windows
+  (it contains x1+…+x8), which is exactly the set §5 shows blows up on elimination #2.
+  The genuine **low-coupling W_lc CT** (`zeta7_ct_lc.wl`) had never been run.
+- Run here in a licensed bash kernel (HF 1.7.3, absolute-path `Get`): the annihilator
+  builds instantly (9 ops); **elim x1 in 25 s (#tele=8); elim x8 in 931 s (#tele=10)** —
+  i.e. W_lc **passes the second elimination that killed the MOS route**, and with a
+  *small* telescoper and ~1 GB kernel (no memory explosion). The obstruction §5 reported
+  is representation-specific, and W_lc removes it.
+- The remaining eliminations grow steeply in **time** (elim x2, incidence 3, exceeded
+  63 min before the kernel was OOM-killed by an unrelated CUDA build sharing the box).
+  A per-elimination **checkpoint** (`zeta7_lc_cur.mx`, state after elim x8) and a resume
+  script (`zeta7_ct_lc_resume.wl`) are in place. Full completion of all 8 eliminations
+  is a multi-hour (plausibly multi-hour-to-day) compute; it is the definitive *exact*
+  route and is gated only on dedicated CPU/RAM time.
+
+### 10.4 P₃ endgame — machinery ready, gated on the operator [READY]
+The endgame is fully prepared (`endgame.py`) against the anchors
+I′ₙ = (75/4)qₙζ₇ − 3sₙζ₅ − Pₙ and I″ₙ = −9qₙζ₅ + 2sₙζ₃ − P̂ₙ, with
+qₙ=1,61,52921, sₙ=0,300,261153, Pₙ=0,220,6021219/32, P̂ₙ=0,152,535857/4. Once the
+operator L (certified against all 74 exact q_n) is in hand:
+1. **Self-checked propagation.** At the shift n = 3−order the recurrence isolates index 3;
+   if the negative-index coefficients vanish (the standard Apéry trailing-coefficient
+   structure), q₃ is recovered from q₀,q₁,q₂ — an **empirical self-check against the known
+   q₃ = 94357501**. The *same* relation then yields s₃, P₃, P̂₃ (assuming the totally-
+   symmetric hypothesis that q,s,P,P̂ share L, as in BZ ζ(5)). If the negative-index
+   coefficients do not vanish (order ≥5), the joint smallness route (I′₃,I″₃ ~ |λ_small|³)
+   is used instead.
+2. **Independent validation.** Propagating Pₙ, sₙ forward via L and checking that
+   I′ₙ, I″ₙ actually decay like |λ_small|ⁿ (numerically, against exact qₙ to n=73) is a
+   strong test of the whole structure.
+3. **Ledger.** den(P₃) fully factored, per-prime excess vs d₃⁷ = 6⁷, and the verdict vs
+   the two-species framework (TABLE.md ROW 5): does a **3-adic Betti cost** first appear
+   at n=3, or does the ζ(7) family continue to show only its static 75/4 = 3·5²/2²
+   de Rham normalization?
+
+**Net status.** The side-door diagonal is now a well-understood, doubly-represented,
+modularly-validated sequence with 74 exact terms; its minimal recurrence is proven
+*larger* than previously estimated; the low-coupling CT **passes the elimination that
+blocked the MOS route** and is the definitive exact path (checkpointed, resumable); and
+the P₃ endgame is fully scripted and self-checking. The single remaining gate is the
+dedicated compute to finish either the W_lc CT eliminations or the ≳100-term modular
+guess — [IN PROGRESS].

@@ -1,7 +1,13 @@
 # P₃ by denominator snap — the decisive 3-adic cell, resolved (conditionally)
 
-2026-07-17, very late. Method: Fable (coordinator). Verification: pending (series
-lower-bound agent). **Read the conditionality section before quoting.**
+2026-07-17, very late. Method: Fable (coordinator). Verification: **PASSED
+2026-07-18** — see `ZETA7_P3_VERIFICATION.md`. All-positive series partial sums at
+n=3 reach **99.75%** of the claim without ever exceeding it (extrapolate to 0.04%);
+rigorous tail bound **I₃ ≤ 3.09e-9 < 1.49e-7** makes the grid choice unconditional
+(given the den-grid hypothesis); filtration signs confirmed exactly (q₁=61, s₁=300
+each doubly locked); the flagged n=2 "1.10e-9" quote resolved to the exact-chain
+1.0531e-9. Exactness of I₃ itself remains contingent (ladder operator + den-grid).
+**Read the conditionality section before quoting.**
 
 ## The result
 

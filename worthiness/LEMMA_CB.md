@@ -65,9 +65,21 @@ the `v`-vector, it **vanishes outright** mod `p`. `v_n, ṽ_n` are generic units
 zero failures (`lemma_cb_wcong.py`). Valuation distribution:
 `ord_p(w_n) ∈ {1,2}` (16 twos), `ord_p(w̃_n) ∈ {1,2}` (7 twos); the excess
 `ord = 2` cases are sporadic apart from the systematic `t = p−n = 1` column.
-Corroboration at integer level: `2 d_n^3 w_n ∈ ℤ` (Zudilin-type weight-3
-denominator bound, verified `n ≤ 15`), and every prime `p ∈ (n,2n]`, `p ≥ 5`
-divides the integer `2 d_n^3 w_n` (`lemma_cb_wcong.py`, factor check).
+
+**Integer reframing (matches Zudilin's own denominator bound).** Zudilin
+(math/0206178) states for the linear form `r_n = u_n ζ(5) + w_n ζ(3) − v_n`:
+`2u_n ∈ ℤ`, `2 D_n^2 w_n ∈ ℤ`, `2 D_n^5 v_n ∈ ℤ` (`D_n = d_n = lcm(1..n)`).
+Verified exactly here that `2 d_n^2 w_n ∈ ℤ` and `2 d_n^2 w̃_n ∈ ℤ` (both, `n<40`;
+this is the *tight* power — `2 d_n^1 w_n` already fails at `n=4`). Writing the
+integers `W_n := 2 d_n^2 w_n`, `W̃_n := 2 d_n^2 w̃_n` and the "large-prime part"
+`B_n^{high} := ∏_{p ∈ (n,2n], p ≥ 5} p`, congruence `(W)` is exactly the integer
+divisibility
+
+    B_n^{high} | W_n   and   B_n^{high} | W̃_n,
+
+verified for all `n < 40` (`lemma_cb_wframe`). Note this is **strictly weaker
+than `binom(2n,n) | W_n`**, which is *false* (holds only sporadically:
+`n = 1,4,16,…`). Only the window primes, each to order 1, divide `W_n`.
 
 ---
 
@@ -136,6 +148,48 @@ well-poised symmetry `Q(−n−k) = Q(k)`. So `(W)` is one instance of:
 > **Conjecture (W′).** For every polynomial `Q` with `Q(−n−k) = Q(k)`, the ζ(3)
 > coefficient of `Σ_{k≥1} Q(k) R_n(k)` is `≡ 0 (mod p)` for all primes
 > `n < p ≤ 2n`, `p ≥ 5`.
+
+---
+
+## 2.5 Does Zudilin's published arithmetic already prove (W)?
+
+Checked against Zudilin math/0206178 (our exact `q,p,p̃` sequences) and the
+general machinery of math/0206176 §§8–9. **Verdict: no — (W) is not a corollary.**
+
+- The published coefficient bounds are **lcm/denominator** statements:
+  `2 D_n^2 w_n ∈ ℤ` (and the Lemma-4-type inclusions of 0206176 use powers of
+  `D_n = lcm(1..n)`). Such a bound says the *denominator* of `w_n` divides
+  `2 D_n^2`, whose prime factors are all `≤ n`. Equivalently it gives
+  `w_n` is `p`-integral for every `p > n` — but it asserts **nothing** about the
+  *numerator* `W_n` being divisible by primes `p ∈ (n,2n]`. Those primes do not
+  appear in `D_n` at all, so no power of `D_n` can detect them.
+- The `Φ_n` prime-savings construction of 0206176 reduces the **leading**
+  coefficient's denominator (for the ζ-irrationality estimate) by removing
+  primes `p` with `{n/p}` in a savings window. That is a denominator *reduction*
+  on the top-weight slot, not a numerator *divisibility* on the ζ(3) slot. It
+  does not yield `p | W_n`.
+- Direct disproof that a stronger published-style statement holds:
+  `binom(2n,n) ∤ W_n` in general (§1). So (W) cannot be packaged as "the central
+  binomial divides the ζ(3) coefficient"; it is precisely the window-restricted
+  divisibility `B_n^{high} | W_n`, which is new.
+
+**Why the termwise floor-count (route 2) does not close it directly.** The
+normal form of the coefficient is
+`w_n = Σ_{j=0}^n a_{3,j} = Σ_{j=0}^n (1/6) G_j'''(−j)`, with
+`G_j(k) = (n!)^4 (k+n/2) ∏_{m=1}^n (k−m)(k+n+m) / ∏_{m≠j}(k+m)^6`.
+Expanding the third derivative by the log-derivative of `G_j` gives
+`a_{3,j} = a_{6,j} · (b_3 + b_1 b_2 + b_1^3/6)`, a **binomial product `a_{6,j}`
+times a weight-≤3 harmonic polynomial** in the `b_r = ψ_r(−j)/r!`. The harmonic
+factors carry `1/p` poles at the window boundary, so the individual integers-
+scaled terms `2 d_n^2 a_{3,j}` are **not** integers (note §8) — floor-counting
+`ord_p ≥ 1` termwise is therefore impossible; the `p`-divisibility is a global
+sum cancellation. Closing (W) by floor-counting requires first re-expressing
+`W_n` as a genuine integer combination of binomial products **without harmonic
+denominators** — the Krattenthaler–Rivoal multiple-sum normal form (route B).
+That re-expression is the concrete open sub-task; the derivation above
+(`a_{3,j} = a_{6,j}·(b_3+b_1b_2+b_1^3/6)`, valid for `j ≠ n/2`; the middle pole
+`j = n/2` at even `n` has `a_{6,j}=0` and needs a separate limiting form) is its
+exact, verifiable starting point — checked in `lemma_cb_wframe.py` (F3).
 
 ---
 
@@ -208,6 +262,9 @@ literature we checked.
 - `lemma_cb_verify.py` — battery V1 (pole order), V2 (reflection), V3 (even
   vanishing), V4 (mod `p^2` refinement), V5 (Phase-2 ledger + tight cases). Run:
   `python3 lemma_cb_verify.py 1 40`.
+- `lemma_cb_wframe.py` — integer reframing F1 (`2 d_n^2 w_n, 2 d_n^2 w̃_n ∈ ℤ`),
+  F2 (`B_n^{high} | W_n, W̃_n`), F3 (normal form `a_{3,j}=a_{6,j}(b_3+b_1b_2+
+  b_1^3/6)`). Run: `python3 lemma_cb_wframe.py 1 30` (all OK).
 
 (Existing `symmetric_zeta5_divisibility.py` unchanged; it verifies the target
 integrality itself for `n ≤ 12`.)

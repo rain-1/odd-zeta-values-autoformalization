@@ -518,11 +518,29 @@ lies outside the single-sum very-well-poised class (a sign dichotomy:
 projections carry opposite-sign adjacent zeta coefficients;
 simultaneous approximations cannot); the cell is dihedrally rigid
 (trivial stabilizer); and, via the leading-coefficient diagonal
-construction of McCarthy--Osburn--Straub \cite{MOS}, the first new
-exact value $q_3 = 94357501$ (gate-verified against the printed
-$1, 61, 52921$; thirty-one terms computed). The family's $3$-adic
-elimination-cost test awaits the recurrence, reduced to one standard
-creative-telescoping computation on the diagonal.
+construction of McCarthy--Osburn--Straub \cite{MOS} --- the leading
+coefficient is the diagonal coefficient
+$q_n=[(x_1\cdots x_8)^n]\prod_i W_i^n$ for explicit window polynomials
+$W_i$ attached to the cell --- the first new exact values. The
+construction is validated twice over: it reproduces the printed
+$q_0,q_1,q_2 = 1, 61, 52921$, and, applied unchanged to the
+$\overline{\mathcal M}_{0,6}$ test cell, reproduces the classical
+Ap\'ery $\zeta(3)$ numbers $1,5,73,1445,33001,819005$. The new terms
+begin
+\[
+q_3 = 94357501,\quad q_4 = 235634763001,\quad q_5 = 715362962769061,
+\]
+with $q_0,\dots,q_{30}$ (the last a $108$-digit integer) computed
+exactly and archived with the code; the growth ratio approaches
+$\lambda_{\max}\approx5.8\times10^{3}$, the family's leading
+asymptotic rate. The recurrence itself --- hence the characteristic
+polynomial, the propagation test for the constant-term ladder
+$P_0=0$, $P_1=220$, $P_2=6021219/32$, and the family's $3$-adic
+elimination-cost test --- is reduced to one standard
+creative-telescoping computation on the diagonal (in progress at the
+time of writing; thirty-one terms exclude operators of order
+$\le8$ at moderate degree, consistent with a high-degree
+order-$4$ operator as in the weight-$5$ family).
 
 \section{The worthiness supremum, and what the arithmetic cannot do}
 \label{sec:gamma}

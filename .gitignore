@@ -9,3 +9,9 @@ paper/*.blg
 compute.txt
 sshkeypair.pem
 riscergosum-*.tgz
+*.aux
+*.out
+*.fls
+*.fdb_latexmk
+worthiness/*.log
+worthiness/ct_run/*.mx

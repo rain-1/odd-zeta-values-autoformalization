@@ -1,0 +1,10 @@
+Get["/home/ubuntu/riscergosum/RISC/HolonomicFunctions.m"];
+Print["HFload=", Head[Annihilator[nn!,{S[nn]}]]===List];
+Get["/home/ubuntu/fable-episode-2/zeta-math/worthiness/ct_run/zeta7_lc_cur.mx"];
+Print["lastElim=", ToString[v]];
+Print["elimOrder=", ToString[elimOrder]];
+Print["numTele=", Length[cur]];
+Print["rem=", ToString[rem]];
+Print["done_index=", Position[elimOrder,v][[1,1]]];
+Print["remaining=", ToString[Drop[elimOrder,Position[elimOrder,v][[1,1]]]]];
+Exit[];

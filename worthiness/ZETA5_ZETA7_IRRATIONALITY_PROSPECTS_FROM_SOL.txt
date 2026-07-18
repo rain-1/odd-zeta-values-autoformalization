@@ -1,0 +1,289 @@
+PROSPECTS FOR PROVING THAT ZETA(5) OR ZETA(7) IS IRRATIONAL
+================================================================
+
+Notes from Sol for Fable
+17 July 2026
+
+
+1. THE PAIRWISE TARGET IS MUCH MORE ATTAINABLE THAN ZETA(7) ALONE
+-----------------------------------------------------------------
+
+The primitive weight-seven form is
+
+    I'_n = (75/4) q_n zeta(7) - 3 s_n zeta(5) - P_n.
+
+This is already the right object for proving
+
+    at least one of zeta(5), zeta(7) is irrational.
+
+There is no need to eliminate zeta(5), and no need first to construct pure
+rational approximations to zeta(7).
+
+Suppose that one proves the following two statements.
+
+(A) Denominator clearing:
+
+    D_n I'_n belongs to
+       Z zeta(7) + Z zeta(5) + Z,
+
+with
+
+    D_n^(1/n) -> exp(7)
+
+up to fixed or subexponential factors.  A typical expected form would be
+
+    C d_n^7 I'_n belongs to
+       Z zeta(7) + Z zeta(5) + Z,
+
+where C is independent of n.
+
+(B) Nonvanishing and sufficient decay:
+
+    0 < |I'_n|
+
+for infinitely many n, and
+
+    limsup |I'_n|^(1/n) = rho
+
+with
+
+    exp(7) rho < 1.
+
+If both zeta(5) and zeta(7) were rational, multiplication by their fixed common
+denominator would turn D_n I'_n into a nonzero integer tending to zero.  This
+is impossible.  Therefore (A) and (B) imply
+
+    at least one of zeta(5), zeta(7) is irrational.
+
+This is a simpler target than an irrationality measure for zeta(7), because
+the mixed zeta(5) term is useful rather than parasitic.
+
+
+2. THE DECISIVE NUMERICAL THRESHOLD
+-----------------------------------
+
+Under a d_n^7 denominator bound, the critical decay threshold is
+
+    rho < exp(-7) = 0.0009118819655...
+
+If the primitive form I'_n has the smallest reciprocal rate suggested by the
+new characteristic polynomial,
+
+    rho = 1/lambda_max
+        = 1/6329.260515...
+        = 0.00015799634...,
+
+then
+
+    exp(7) rho = exp(7)/6329.260515... = 0.1733... < 1.
+
+Equivalently,
+
+    log(lambda_max) = 8.752938686... > 7,
+
+leaving the positive exponential margin
+
+    8.752938686... - 7 = 1.752938686....
+
+In that scenario the pairwise irrationality theorem follows immediately once
+the denominator and nonvanishing statements are proved.
+
+On the other hand, if the primitive decay rate is the intermediate root
+
+    rho = 0.093937379...,
+
+then
+
+    exp(7) rho >> 1,
+
+and the symmetric family cannot prove the pairwise theorem under a d_n^7
+denominator cost.
+
+Thus the primitive recurrence, or even reliable exact values of I'_3 and I'_4,
+is a high-value go/no-go experiment.
+
+
+3. WHAT THE NEW RECURRENCE DOES AND DOES NOT GIVE
+------------------------------------------------
+
+The newly reconstructed order-4, degree-19 operator governs the leading
+coefficient q_n and appears to govern the descended ladder
+
+    q_n, s_n, Phat_n, I''_n.
+
+It does not appear to govern the primitive coefficient P_n or the primitive
+form I'_n.  Consequently, one cannot currently assign the smallest root
+
+    0.000157996...
+
+to I'_n merely because it occurs in the characteristic polynomial of the
+descended recurrence.
+
+This is the central issue.  The full weight-seven primitive ladder needs its
+own operator or a direct saddle-point analysis.
+
+The positive full cellular integral I_n decays extremely rapidly, but it is not
+a substitute for I'_n in the pairwise argument: it also contains the descended
+zeta(2)-multiple and therefore additional periods involving zeta(3).
+
+
+4. THE TWO DECISIVE MISSING THEOREMS
+------------------------------------
+
+The pairwise irrationality result is reduced to two principal tasks.
+
+First, prove a weight-seven denominator theorem of the form
+
+    C d_n^7 I'_n belongs to
+       Z zeta(7) + Z zeta(5) + Z,
+
+or a sharper variant with a smaller exponential denominator cost.
+
+Second, determine the primitive asymptotic rate and prove
+
+    limsup |I'_n|^(1/n) < exp(-7).
+
+Nonvanishing is also required.  It may follow from an integral representation,
+a sign theorem, or a recurrence/asymptotic argument once the primitive operator
+is known.
+
+
+5. HONEST PROBABILITY ASSESSMENT
+--------------------------------
+
+My present estimate is:
+
+    roughly a 10--20 percent chance that this exact totally symmetric family
+    proves that zeta(5) or zeta(7) is irrational.
+
+The chance of extracting major new mathematics from the campaign is much
+higher, perhaps 60--75 percent.  In particular, the primitive recurrence,
+P_3, and the first serious weight-seven denominator data all look realistically
+attainable even if the eventual irrationality threshold is missed.
+
+A more detailed breakdown is:
+
+  * completing an all-n certificate for the discovered q_n recurrence:
+      approximately 85--95 percent;
+
+  * obtaining the true P_3 and additional primitive data:
+      approximately 60--75 percent;
+
+  * finding the primitive recurrence for P_n and I'_n:
+      approximately 40--60 percent;
+
+  * proving a sharp d_n^7-type denominator theorem:
+      approximately 30--50 percent;
+
+  * discovering that the primitive decay is strong enough to beat exp(-7):
+      approximately 10--25 percent on present evidence.
+
+These figures are judgment calls, not statistical probabilities.  They are
+intended to identify where the real risk lies.
+
+
+6. WHY THE ODDS ARE NOT YET HIGHER
+----------------------------------
+
+The available primitive values behave approximately as
+
+    I'_0 = 18.91...,
+    I'_1 = 0.0645...,
+    I'_2 = 0.00116...,
+
+so the first ratios are about
+
+    I'_1/I'_0 = 0.0034...,
+    I'_2/I'_1 = 0.018....
+
+These ratios are increasing.  With only two transitions they prove nothing,
+but they look more naturally compatible with convergence toward an
+intermediate scale such as 0.0939 than with convergence toward 0.000158.
+
+Furthermore, the recurrence containing the tiny root does not annihilate the
+known primitive form.  The optimistic assignment of the tiny root to I'_n is
+therefore currently a hope, not evidence supplied by the recurrence.
+
+
+7. WHAT WOULD CHANGE THE ODDS
+-----------------------------
+
+The single most informative next datum is exact I'_3, followed if possible by
+I'_4.  Better still is the primitive recurrence.
+
+If the resulting primitive root satisfies
+
+    rho < exp(-7),
+
+I would raise the probability of completing the pairwise irrationality proof
+substantially, potentially above 50 percent, because the remaining challenge
+would be primarily arithmetic denominator control.
+
+If instead the primitive root is near 0.0939, the totally symmetric family is
+arithmetically too weak under a d_n^7 cost.  Attention should then move to
+asymmetric parameters and Rhin--Viola group gains.
+
+In general, if
+
+    D_n^(1/n) -> exp(kappa),
+
+the true condition is
+
+    kappa < -log(rho).
+
+For rho = 0.093937..., this requires
+
+    kappa < 2.365...,
+
+which would be an enormous improvement over the crude symmetric value
+kappa=7 and therefore seems unlikely for the same symmetric family.  A more
+favourable primitive root or a different parameter orbit could change the
+balance.
+
+
+8. RECOMMENDED NEXT STEPS
+-------------------------
+
+1. Finish the creative-telescoping certificate for the discovered q_n
+   recurrence.  This secures the descended rank-four structure as a theorem.
+
+2. Compute exact I'_3 by the primal integral, residue decomposition, or the
+   primitive holonomic route.  This is the immediate threshold diagnostic.
+
+3. Search directly for the primitive operator annihilating P_n and I'_n rather
+   than assuming that the descended operator transfers.
+
+4. Prove or sharply formulate the d_n^7 denominator theorem for the primitive
+   form.
+
+5. If the symmetric primitive rate misses exp(-7), optimize asymmetric
+   parameter orbits using the full transformation group and compare the
+   denominator exponent kappa with the primitive decay exponent.
+
+
+9. BOTTOM LINE
+--------------
+
+The pairwise theorem
+
+    zeta(5) is irrational or zeta(7) is irrational
+
+is exactly the right ambitious target for the mixed form I'_n.  It does not
+require eliminating zeta(5), and the numerical gap
+
+    log(lambda_max) - 7 = 1.75294...
+
+shows that the dream asymptotic scenario would cross the threshold cleanly.
+
+However, the newly discovered recurrence belongs to the descended ladder, not
+yet to I'_n.  The project is therefore one primitive recurrence -- or a few
+exact primitive values -- away from knowing whether this route is genuinely
+Diophantine or only structurally beautiful.
+
+I would not yet bet on the irrationality theorem, but I would strongly pursue
+the next gate.  It has unusually high information value and should give a
+fairly decisive answer about the power of the symmetric zeta(7) family.
+
+
+-- Sol
+

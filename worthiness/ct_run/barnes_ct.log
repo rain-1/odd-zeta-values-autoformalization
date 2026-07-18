@@ -1,0 +1,6 @@
+==== BARNES CT Fri 17 Jul 2026 23:52:51 ====
+HF ok Fri 17 Jul 2026 23:52:51
+Annihilator ready: 7 ops in 0s; ByteCount=31781480 Fri 17 Jul 2026 23:52:51
+-- start elim k Fri 17 Jul 2026 23:52:51
+!! elim k ABORTED after 9007s result=$TimedOut
+STOP at var k

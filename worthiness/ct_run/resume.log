@@ -1,0 +1,8 @@
+==== RESUME Fri 17 Jul 2026 23:44:07 ====
+HF ok Fri 17 Jul 2026 23:44:07
+loaded; last elim=x8; #tele=10; ByteCount=13714408; remaining={x2, x6, x3, x7, x4, x5}
+-- start elim x2 Fri 17 Jul 2026 23:44:07
+** elim x2 DONE in 10390s; #tele=9; ByteCount=20183440 Sat 18 Jul 2026 02:37:17
+-- start elim x6 Sat 18 Jul 2026 02:37:17
+!! elim x6 ABORTED after 10801s result=$TimedOut
+STOP at step 4 (var x6)

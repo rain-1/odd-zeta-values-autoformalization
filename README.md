@@ -22,6 +22,9 @@ scratch — current Mathlib has no PNT; s=33 is the paper's own stated
 fallback). `#print axioms zeta_odd_irrational` →
 `[propext, Classical.choice, Quot.sound]`; zero sorries.
 → `zeta5odd/` (companion paper: `zeta5odd/paper.pdf`).
+**Browse the proof interactively:** [dependency-graph blueprint](https://rain-1.github.io/odd-zeta-blueprint/)
+— every definition, lemma and theorem is a node (all green = formalized),
+linked to its Lean declaration. Source in `zeta5odd/blueprint/`.
 To our knowledge the first machine-verified irrationality of this kind beyond ζ(3).
 
 **2. [COMP] sup γ = 0.86597135… for the Brown–Zudilin ζ(5) family** —
@@ -109,7 +112,7 @@ integral OS-bicomplex differential at two strata (H2's last step); the
 
 | Path | Contents |
 |---|---|
-| `zeta5odd/` | The Lean 4 formalization (Mathlib; `lake build`; root theorem in `Zeta5Odd/Main.lean`) + companion paper |
+| `zeta5odd/` | The Lean 4 formalization (Mathlib; `lake build`; root theorem in `Zeta5Odd/Main.lean`) + companion paper + [interactive blueprint](https://rain-1.github.io/odd-zeta-blueprint/) (source in `zeta5odd/blueprint/`) |
 | `worthiness/` | All experimental mathematics: γ search, audit pipeline (`audit.py`, `fast_eval.py`), 200+ certified cells (JSONL), conjecture/mechanism/table documents, ζ(7) campaign |
 | `paper/` | The measurements paper (LaTeX + PDF) |
 | `SURVEY.md` | The original research-directions survey that started this (historical) |

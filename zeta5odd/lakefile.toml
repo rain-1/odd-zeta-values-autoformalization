@@ -8,3 +8,12 @@ scope = "leanprover-community"
 
 [[lean_lib]]
 name = "Zeta5Odd"
+
+# --- leanprover/comparator harness (community verification) ---
+# `Challenge` states the theorem in Mathlib-only vocabulary with `sorry`;
+# `Solution` discharges the identical statement from `Zeta5Odd`.
+[[lean_lib]]
+name = "Solution"
+
+[[lean_lib]]
+name = "Challenge"

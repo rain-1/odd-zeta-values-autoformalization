@@ -1,0 +1,114 @@
+# formalization.yaml (v0.3): repo-root metadata for formalization projects.
+# Schema: https://github.com/mathlib-initiative/formalization.yaml
+version: "v0.3"
+
+project:
+  name: "zeta5odd — one of ζ(5),…,ζ(33) is irrational, in Lean 4"
+  authors: ["River"]
+  license: "Apache-2.0"
+
+sources:
+  - title: "One of the odd zeta values from ζ(5) to ζ(25) is irrational. By elementary means"
+    authors: ["Wadim Zudilin"]
+    id: "arXiv:1801.09895v2"
+    type: "preprint"
+    license: ""
+    author_contacted: "no"
+    prior_work: ""
+
+status:
+  scope: >
+    Full end-to-end formalization of Zudilin's elementary theorem (the s = 33
+    variant, see fidelity below): at least one of ζ(5), ζ(7), …, ζ(33) is
+    irrational, where ζ(j) is the real Dirichlet series ∑_{n≥1} 1/nʲ. Includes
+    the paper's Lemma 4 asymptotics (the de Bruijn-type localization), Lemmas
+    1–3 (partial-fraction integrality and the two series representations), and
+    Hanson's elementary bound d_n ≤ 3ⁿ proved from scratch (Mathlib has no PNT).
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: ["propext", "Classical.choice", "Quot.sound"]
+  main_results:
+  - declaration: "Zeta5Odd.zeta_odd_irrational"
+    file: "Zeta5Odd/Main.lean"
+    sorry_count: 0
+    axioms: ["propext", "Classical.choice", "Quot.sound"]
+    comparator_config: "config.json"
+    literature_dependencies: []
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["claude-opus-4-8"]
+      framework: "Claude Code"
+      tool_setup: >
+        Multi-agent orchestration: a coordinating agent dispatched worker agents,
+        each owning a single module in its own git worktree (worktree-per-worker,
+        one owner file each) to avoid write conflicts, merging back on completion.
+        Lean/Mathlib driven through Lake with the olean cache. No external Lean
+        dependency beyond Mathlib.
+      cost:
+        wall_time: "~1 day (initial Lemma 4), ~1 further day to the full theorem"
+        spend_usd: ""
+        hardware: "API-only"
+      prompting_notes: >
+        Each worker received a self-contained statement to prove (independent
+        modules, x₀ passed as a hypothesis) plus the paper section it formalized.
+  spend_usd: ""
+  notes: >
+    Proof strategy notes are in PROGRESS.md and the accompanying paper.tex/paper.pdf.
+
+fidelity:
+  divergences: >
+    Zudilin's headline result is for s = 25, whose proof needs the prime number
+    theorem (d_n^{1/n} → e) — absent from this Mathlib, and pulling in the
+    external PrimeNumberTheoremAnd would re-pin the Mathlib revision. We instead
+    formalize the s = 33 variant that Zudilin himself records as the elementary
+    fallback (§4), using Hanson's d_n ≤ 3ⁿ. The margin is verified and tight:
+    3^33 · g(x₀) = e^{-0.129} < 1. Consequently the conclusion is about
+    ζ(5),…,ζ(33) rather than ζ(5),…,ζ(25). ζ(j) is formalized as the explicit
+    real series ∑' n, 1/(n+1)ʲ rather than via Mathlib's `riemannZeta`.
+
+review:
+  status: "self-assessed"
+  reviewers: []
+  notes: >
+    Machine-verified: `lake build` is green and
+    `#print axioms Zeta5Odd.zeta_odd_irrational` reports exactly
+    [propext, Classical.choice, Quot.sound] — no `sorryAx`, no
+    `native_decide`/`ofReduceBool`. A `leanprover/comparator` harness
+    (Challenge.lean / Solution.lean / config.json) is provided so third parties
+    can independently confirm that the Mathlib-only statement is proved with no
+    unauthorized axioms and accepted by the kernel. Not yet peer-reviewed.
+
+alignment:
+  namespace: "Zeta5Odd"
+  statements:
+    - source: "Main theorem (§4): one of ζ(5),…,ζ(s) is irrational"
+      lean: "zeta_odd_irrational"
+      module: "Zeta5Odd/Main.lean"
+      status: "proved"
+      note: "s = 33 variant; Mathlib-only restatement in Challenge.lean / Solution.lean"
+    - source: "Lemma 4 (asymptotics of r_n, r̂_n; the localization step)"
+      lean: "tendsto_ratio, tendsto_root_r, tendsto_root_rhat, seven_r_sub_rhat_pos_eventually"
+      module: "Zeta5Odd/Ratio.lean, Zeta5Odd/Roots.lean, Zeta5Odd/Window.lean, Zeta5Odd/Localize.lean"
+      status: "proved"
+      note: ""
+    - source: "Lemmas 1–3 (partial-fraction integrality; series representations e07/e08; ζ(3)-elimination)"
+      lean: "elim_integer"
+      module: "Zeta5Odd/Forms.lean"
+      status: "proved"
+      note: "d_n^33·(7 r_n − r̂_n) = Σ_{j∈oddIdx} A_j ζ(j) + A_0 with integer coefficients"
+    - source: "Hanson's bound d_n ≤ 3ⁿ ([Ha72], invoked in §4)"
+      lean: "lcmUpto_le_three_pow"
+      module: "Zeta5Odd/DnBound.lean"
+      status: "proved"
+      note: "elementary; Sylvester/Legendre divisibility + finite `decide` regime + large-n Stirling"
+    - source: "Numeric margin 3^33·g(x₀) < 1 (§4)"
+      lean: "g_small"
+      module: "Zeta5Odd/Numeric.lean"
+      status: "proved"
+      note: ""
+
+acknowledgements: >
+  Built on Lean 4 and Mathlib (leanprover-community). Formalization carried out
+  with Claude Code (Anthropic).

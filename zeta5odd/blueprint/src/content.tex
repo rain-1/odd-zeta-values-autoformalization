@@ -1,0 +1,255 @@
+% Blueprint content for the formalization of Zudilin's theorem
+% (arXiv:1801.09895, s = 33 variant).
+% Every node below is fully formalized (\leanok); the graph shows the logical
+% architecture of the proof and links each node to its Lean declaration.
+
+\chapter{Overview}
+
+This blueprint charts the Lean~4 / Mathlib formalization of W.~Zudilin's
+elementary theorem (arXiv:1801.09895), in the $s=33$ variant:
+\emph{at least one of $\zeta(5),\zeta(7),\dots,\zeta(33)$ is irrational}.
+The whole development is \textbf{sorry-free} and uses only the standard axioms
+\code{propext}, \code{Classical.choice}, \code{Quot.sound}; every box in the
+dependency graph is green.
+
+The proof has three arithmetic--analytic strands that meet in the final
+contradiction:
+\begin{itemize}
+  \item an \emph{asymptotic} strand (Zudilin's Lemma~4): the well-poised sums
+    $r_n,\hat r_n$ have a controlled exponential decay rate $g(x_0)$;
+  \item an \emph{integrality} strand (Zudilin's Lemmas~1--3): a $\Z$-linear
+    combination $d_n^{33}(7r_n-\hat r_n)=\sum_j A_j\zeta(j)+A_0$;
+  \item Hanson's elementary bound $d_n\le 3^n$ on $d_n=\operatorname{lcm}(1,\dots,n)$.
+\end{itemize}
+A root test then forces a nonzero integer into $(0,1)$.
+
+\chapter{Zeta values and the target statement}
+
+\begin{definition}[Zeta value]
+  \label{def:zetaVal}
+  \lean{Zeta5Odd.zetaVal}
+  \leanok
+  For $j\in\N$, $\zeta(j)=\code{zetaVal}\,j:=\sum_{n=0}^{\infty}\dfrac{1}{(n+1)^{j}}
+  =\sum_{m\ge1}m^{-j}\in\R$.
+\end{definition}
+
+\begin{definition}[Target index set]
+  \label{def:oddIdx}
+  \lean{Zeta5Odd.oddIdx}
+  \leanok
+  $\code{oddIdx}:=\{\,j\in\N: 5\le j\le 33,\ j\ \text{odd}\,\}=\{5,7,9,\dots,33\}$.
+\end{definition}
+
+\begin{theorem}[Main theorem]
+  \label{thm:main}
+  \lean{Zeta5Odd.zeta_odd_irrational}
+  \leanok
+  \uses{def:zetaVal, def:oddIdx}
+  There exists $j\in\code{oddIdx}$ with $\zeta(j)$ irrational; that is, at least
+  one of $\zeta(5),\zeta(7),\dots,\zeta(33)$ is irrational.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:elim, thm:hanson, lem:gsmall, lem:common_denom, lem:pos,
+        lem:seven_root, lem:existsUnique_x0}
+  Assume every $\zeta(j)$, $j\in\code{oddIdx}$, is rational and let $a>0$ be a
+  common denominator (Lemma~\ref{lem:common_denom}). Put
+  $b_n:=d_n^{33}(7r_n-\hat r_n)$. By Theorem~\ref{thm:elim} and
+  Lemma~\ref{lem:pos}, $a\,b_n$ is a \emph{positive} integer, so $a\,b_n\ge1$.
+  On the other hand the root test — Lemma~\ref{lem:seven_root} for the decay
+  rate $g(x_0)$, Hanson's bound $d_n\le3^n$ (Theorem~\ref{thm:hanson}) and the
+  numeric margin $3^{33}g(x_0)<1$ (Lemma~\ref{lem:gsmall}) — gives $b_n\to0$,
+  hence $a\,b_n<1$ eventually. Contradiction.
+\end{proof}
+
+\chapter{The well-poised sums and Lemma 4 (asymptotics)}
+
+\begin{definition}[Well-poised summands and their sums]
+  \label{def:cr}
+  \lean{Zeta5Odd.c, Zeta5Odd.chat, Zeta5Odd.r, Zeta5Odd.rhat}
+  \leanok
+  With $s=2q-1$, Zudilin's rational function $R_n$ gives the summands
+  $c_{n,k}=R_n(n+1+k)$ and $\hat c_{n,k}=R_n(n+\tfrac12+k)$, and the sums
+  $r_n=\sum_{k}c_{n,k}$, $\hat r_n=\sum_{k}\hat c_{n,k}$.
+\end{definition}
+
+\begin{definition}[Rate functions $f$, $g$]
+  \label{def:fg}
+  \lean{Zeta5Odd.f, Zeta5Odd.g}
+  \leanok
+  The functions $f_q,g_q$ controlling the exponential rate: $g_q(x_0)$ is the
+  per-step decay of $r_n$ at the critical point $x_0$ where $f_q(x_0)=1$.
+\end{definition}
+
+\begin{lemma}[Critical point]
+  \label{lem:existsUnique_x0}
+  \lean{Zeta5Odd.existsUnique_x0}
+  \leanok
+  \uses{def:fg}
+  For $q\ge4$ there is a unique $x_0>0$ with $f_q(x_0)=1$.
+\end{lemma}
+\begin{proof}\leanok\uses{def:fg}
+  $f_q$ decreases from $+\infty$, dips below $1$, then increases to $1^-$;
+  a single crossing.
+\end{proof}
+
+\begin{lemma}[Localization; Lemma 4 window]
+  \label{lem:localize}
+  \lean{Zeta5Odd.sum_localizes, Zeta5Odd.sum_localizes_chat}
+  \leanok
+  \uses{def:cr}
+  All but an exponentially small mass of $r_n$ (resp.\ $\hat r_n$) concentrates
+  on an $\varepsilon n$-window around the critical index, so $n$-th roots see
+  only that window.
+\end{lemma}
+\begin{proof}\leanok\uses{def:cr, lem:existsUnique_x0}
+  The $\varepsilon n$-window replaces de Bruijn's $\gamma\sqrt n$: $n$-th roots
+  absorb the subexponential factors and the ratio limit only needs
+  $f(k/n)\in[1-\delta,1+\delta]$ on a window carrying all but exponentially
+  small mass.
+\end{proof}
+
+\begin{lemma}[Term ratio on the window]
+  \label{lem:window}
+  \lean{Zeta5Odd.term_ratio_on_window}
+  \leanok
+  \uses{def:cr}
+  On the window the exact rational term ratio of $c_{n,k}$ is pinched by
+  two-sided Wallis/Stirling bounds for the central-binomial form.
+\end{lemma}
+\begin{proof}\leanok\uses{def:cr}
+  Derived from Mathlib's \code{Stirling} with quantitative rate $1/(12m)$.
+\end{proof}
+
+\begin{lemma}[Root limits]
+  \label{lem:root_r}
+  \lean{Zeta5Odd.tendsto_root_r, Zeta5Odd.tendsto_root_rhat}
+  \leanok
+  \uses{def:cr, def:fg}
+  $r_n^{1/n}\to g_q(x_0)$ and $\hat r_n^{1/n}\to g_q(x_0)$.
+\end{lemma}
+\begin{proof}\leanok\uses{lem:localize, lem:window, lem:existsUnique_x0}
+  Assemble the localized window with the pinched term ratio; the $\hat r$
+  limit is inherited from $r$ through the ratio theorem.
+\end{proof}
+
+\begin{lemma}[Ratio $\to 1$]
+  \label{lem:ratio}
+  \lean{Zeta5Odd.tendsto_ratio}
+  \leanok
+  \uses{def:cr}
+  $r_n/\hat r_n\to1$.
+\end{lemma}
+\begin{proof}\leanok\uses{lem:root_r, lem:localize}\end{proof}
+
+\begin{lemma}[Positivity of $7r-\hat r$]
+  \label{lem:pos}
+  \lean{Zeta5Odd.seven_r_sub_rhat_pos_eventually}
+  \leanok
+  \uses{def:cr}
+  Eventually $7r_n-\hat r_n>0$.
+\end{lemma}
+\begin{proof}\leanok\uses{lem:ratio, lem:localize}\end{proof}
+
+\begin{lemma}[Root of $7r-\hat r$]
+  \label{lem:seven_root}
+  \lean{Zeta5Odd.tendsto_seven_root}
+  \leanok
+  \uses{def:cr, def:fg}
+  $(7r_n-\hat r_n)^{1/n}\to g_q(x_0)$.
+\end{lemma}
+\begin{proof}\leanok\uses{lem:ratio, lem:root_r}
+  Write $7r-\hat r=r\,(7-\hat r/r)$ with $\hat r/r\to1$ and $h^{1/n}\to1$ for
+  $h\to6>0$.
+\end{proof}
+
+\chapter{Lemmas 1--3 (integrality) and the integer linear form}
+
+\begin{lemma}[Integrality; Lemma 1]
+  \label{lem:lemma1}
+  \lean{Zeta5Odd.partialFraction_exists}
+  \leanok
+  \uses{def:cr}
+  The partial-fraction coefficients $a_{i,k}$ of $R_n$ satisfy
+  $d_n^{\,33-i}\,a_{i,k}\in\Z$.
+\end{lemma}
+\begin{proof}\leanok
+  Expansion into six explicit integer-coefficient simple functions, a two-pole
+  product induction and polynomial-interpolation identities.
+\end{proof}
+
+\begin{lemma}[Harmonic integrality]
+  \label{lem:harmonic}
+  \lean{Zeta5Odd.harmonic_integrality}
+  \leanok
+  The relevant harmonic-type sums clear their denominators against $d_n$.
+\end{lemma}
+\begin{proof}\leanok\end{proof}
+
+\begin{lemma}[Series representation; Lemma 3]
+  \label{lem:lemma3}
+  \lean{Zeta5Odd.repr_combined}
+  \leanok
+  \uses{def:cr, def:zetaVal}
+  $r_n$ and $\hat r_n$ expand as $\Z$-linear (with $d_n$-power denominators)
+  combinations of $1$ and the $\zeta(j)$, via the half-integer summation shift
+  for $\hat r_n$.
+\end{lemma}
+\begin{proof}\leanok\uses{lem:lemma1, lem:harmonic}\end{proof}
+
+\begin{theorem}[Integer linear form]
+  \label{thm:elim}
+  \lean{Zeta5Odd.elim_integer}
+  \leanok
+  \uses{def:zetaVal, def:oddIdx, def:cr}
+  There are integers $A_j$ ($j\in\code{oddIdx}$) and $A_0$ with
+  \[
+    d_n^{33}\,(7r_n-\hat r_n)=\sum_{j\in\code{oddIdx}}A_j\,\zeta(j)+A_0 .
+  \]
+  In particular the $\zeta(3)$-coefficient $a_3(8-2^3)$ vanishes: $\zeta(3)$ is
+  eliminated by the ``$7=2^3-1$'' choice.
+\end{theorem}
+\begin{proof}\leanok\uses{lem:lemma3, lem:lemma1, lem:harmonic}\end{proof}
+
+\chapter{Hanson's bound and the numeric margin}
+
+\begin{theorem}[Hanson's bound]
+  \label{thm:hanson}
+  \lean{Zeta5Odd.lcmUpto_le_three_pow}
+  \leanok
+  $d_n=\operatorname{lcm}(1,\dots,n)\le 3^n$ for all $n$.
+\end{theorem}
+\begin{proof}\leanok
+  Sylvester-sequence construction, Legendre divisibility, a finite
+  \code{decide} regime ($n<1600$), and a large-$n$ Stirling certificate
+  $\sum(\log a_i)/a_i<\log 3$.
+\end{proof}
+
+\begin{lemma}[Numeric margin]
+  \label{lem:gsmall}
+  \lean{Zeta5Odd.g_small}
+  \leanok
+  \uses{def:fg}
+  At the critical point of $q=17$ ($s=33$): $3^{33}\,g_{17}(x_0)<1$
+  (numerically $e^{-0.129}$).
+\end{lemma}
+\begin{proof}\leanok\uses{lem:existsUnique_x0}
+  Quadratic Bernoulli bounds plus an exact rational inequality
+  $64\cdot121^{6}\cdot41^{34}\cdot40^{28}<3^{239}$.
+\end{proof}
+
+\chapter{The endgame}
+
+\begin{lemma}[Common denominator]
+  \label{lem:common_denom}
+  \lean{Zeta5Odd.exists_common_denom}
+  \leanok
+  \uses{def:zetaVal, def:oddIdx}
+  If every $\zeta(j)$, $j\in\code{oddIdx}$, is rational, there is a positive
+  integer $a$ with $a\,\zeta(j)\in\Z$ for all such $j$.
+\end{lemma}
+\begin{proof}\leanok\end{proof}
+
+The main theorem (Theorem~\ref{thm:main}) combines the endgame lemma above with
+the integer linear form, Hanson's bound, and the numeric margin, as described in
+Chapter~1.

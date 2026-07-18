@@ -1,0 +1,358 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,enumitem,booktabs}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\newtheorem{theorem}{Theorem}\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}\newtheorem{remark}[theorem]{Remark}
+\newtheorem{finding}[theorem]{Finding}
+
+\DeclareMathOperator{\ord}{ord}\DeclareMathOperator{\den}{den}\DeclareMathOperator{\lcm}{lcm}
+\newcommand{\Z}{\mathbb{Z}}\newcommand{\Q}{\mathbb{Q}}\newcommand{\Fp}{\mathbb{F}_p}
+\newcommand{\wt}{\widetilde}\newcommand{\dn}{d_n}
+\newcommand{\zt}[1]{\zeta(#1)}
+
+\title{The totally symmetric $\zeta(7)$ cellular family:\\
+exact recurrence, two period ladders, the value of $P_3$,\\
+and a Dwork-congruence reduction of the central-binomial law}
+\author{}
+\date{18 July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We report the results of an intensive computational--theoretical campaign on
+Brown--Zudilin cellular integrals at weights five and seven. For the totally
+symmetric $\zeta(7)$ family on $\overline{\mathcal M}_{0,10}$ we determine the
+exact minimal recurrence of the leading coefficients $q_n$ (order $4$, degree
+$19$, from $105$ computed terms; certified against all $74$ exact values), whose
+palindromic characteristic polynomial
+$\lambda^4-6340\lambda^3+67974\lambda^2-6340\lambda+1$ factors over
+$\Q(\sqrt3)$ into two reciprocal quadratic sectors. The family splits into two
+period ladders: the weight-5 descent $(q_n,s_n,\hat P_n)$ rides the recurrence,
+the primitive $(P_n,I'_n)$ does not. Using the filtration identity
+$I_n=I'_n+\zt2\,I''_n$ and the new exact $s_3,\hat P_3$, we determine
+$P_3=23478462179525/(2^5 3^7)$ by a denominator-snap argument that requires
+\emph{no} integral evaluation, verified independently ($99.75\%$ series
+climb; rigorous tail bound). Consequently $\den(P_3)\mid d_3^7$: the decisive
+$3$-adic cell shows no denominator anomaly. Measuring decay rates against the
+irrationality threshold $e^{-7}$ shows both projections ride the sector-B rate
+$0.0939$: the symmetric family cannot prove ``one of $\zt5,\zt7$ is
+irrational''; the $\zt2$-elimination costs a factor $\approx594$ in decay, the
+archimedean mirror of the Betti lattice cost. On the weight-5 arithmetic side,
+the primes $p\le n$ of the central-binomial divisibility
+$\binom{2n}{n}\mid6A_n$ (Phase 2) are reduced to a single new congruence: a
+vector-valued \emph{Dwork descent} $p^5(p_n/q_n)\equiv p_a/q_a \bmod p^{2-\kappa}$,
+$a=\lfloor n/p\rfloor$, whose constants are the $n=1$ ladder ratios
+$29/28=p_1/q_1$, $101/84=\wt p_1/q_1$; the general inequality
+$\ord_p(p_n)\ge\kappa-5L$ is verified with zero failures. Every claim below is
+labeled proven, verified, or conjectural.
+\end{abstract}
+
+\section{Setting and summary of status}
+
+Brown--Zudilin \cite{BZ} construct cellular integrals $I_n$ on
+$\overline{\mathcal M}_{0,N}$; at $N=10$, the totally symmetric convergent cell
+$\sigma=(10,2,4,1,6,3,8,5,9,7)$ yields a rank-4 motive with weight-graded
+pieces $\Q(0),\Q(-2),\Q(-5),\Q(-7)$ and linear forms
+\[
+I'_n=\tfrac{75}{4}q_n\zt7-3s_n\zt5-P_n,\qquad
+I''_n=-9q_n\zt5+2s_n\zt3-\hat P_n,\qquad
+I_n=I'_n+\zt2\,I''_n,
+\]
+with printed anchors $q_n=1,61,52921$; $s_n=0,300,261153$; $P_n=0,220,6021219/32$;
+$\hat P_n=0,152,535857/4$ for $n=0,1,2$ \cite{BZ}. The leading coefficients
+$q_n$ are computable for all $n$ by the McCarthy--Osburn--Straub diagonal
+construction \cite{MOS}, verified against the anchors and extended here to
+$n\le104$.
+
+\smallskip\noindent\textbf{Status ledger.} Throughout, \emph{proven} = complete
+proof; \emph{verified} = exact finite computation, no proof for all $n$;
+\emph{conditional} = exact consequence of named hypotheses.
+
+\begin{center}\small
+\begin{tabular}{lll}
+\toprule
+Result & Status & Where \\
+\midrule
+$(W)$: $w_n\equiv\wt w_n\equiv0\ (p),\ n<p\le2n$ & \textbf{proven} (all $n$) & \cite{CBcert} \\
+Phase 1 of $\binom{2n}{n}\mid6A_n$ & \textbf{proven} (all $n$) & \cite{CBcert} \\
+$q_n$ recurrence (order 4, deg 19) & verified ($74$ terms) & \S\ref{sec:rec} \\
+Descent membership of $s_n,\hat P_n$ & conditional/verified & \S\ref{sec:ladders} \\
+$s_3,\hat P_3$ exact values & conditional on membership & \S\ref{sec:ladders} \\
+$P_3$ exact value & conditional (2 hypotheses) & \S\ref{sec:snap} \\
+Sector measurement (decay rates) & verified/measured & \S\ref{sec:sector} \\
+Phase-2 reduction to (DWORK) & verified ($0$ failures) & \S\ref{sec:dwork} \\
+(DWORK) itself & \textbf{open} (new) & \S\ref{sec:dwork} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{The exact recurrence and its two sectors}\label{sec:rec}
+
+\begin{finding}[verified]\label{find:rec}
+The sequence $q_n$ of the totally symmetric $M_{0,10}$ cell satisfies a linear
+recurrence of order $4$ with polynomial coefficients of degree $19$
+(leading/trailing coefficients palindromic, $7381728\cdot[1,-6340,67974,-6340,1]$),
+reconstructed from $105$ terms by $3$-prime CRT ($\approx2^{125}$) with exact
+rational lifting, and certified to annihilate all $74$ exact values of $q_n$
+(all $70$ testable offsets vanish identically; independently re-verified).
+The characteristic polynomial
+\[
+\chi(\lambda)=\lambda^4-6340\lambda^3+67974\lambda^2-6340\lambda+1
+=\bigl(\lambda^2-a\lambda+1\bigr)\bigl(\lambda^2-b\lambda+1\bigr),
+\qquad a,b=3170\pm1824\sqrt3,
+\]
+factors over $\Q(\sqrt3)$ (check: $a+b=6340$, $2+ab=67974$). The four roots
+form two reciprocal pairs (Poincar\'e-duality pairing):
+\emph{sector A} $\{6329.2605\ldots,\ 1.57996\ldots\times10^{-4}\}$ and
+\emph{sector B} $\{10.6454\ldots,\ 0.0939374\ldots\}$.
+\end{finding}
+
+The order matches the motivic rank ($\zt3$: order 2; $\zt5$: order 3; $\zt7$:
+order 4), while the degree jump ($9\to19$ from weight 5) shows arithmetic
+complexity growing faster than rank. Annihilation of finitely many terms is
+not a proof that the operator governs $q_n$ for all $n$; a creative-telescoping
+certificate was attempted on two representations (an $8$-variable low-coupling
+window model and the $4$-fold hypergeometric-sum form of \S\ref{sec:snap}) and
+in both cases hit the geometric elimination wall (successive eliminations
+$\ge3$h each); checkpoints are preserved. The recurrence's status therefore
+remains \emph{verified}, with overwhelming structural support (motivic order
+match, palindromy, two independent window representations agreeing on all
+computed terms).
+
+\section{Two period ladders}\label{sec:ladders}
+
+\begin{finding}[verified $+$ conditional]\label{find:ladders}
+The weight-5 descent data $(q_n,s_n,\hat P_n)$ --- equivalently the form
+$I''_n$ --- ride the order-4 operator: the three known values of each,
+augmented by the operator's trailing-coefficient degeneracy at the initial
+offset (which also re-derives $q_3=94357501$ from $q_0,q_1,q_2$, an internal
+consistency check), determine
+\[
+s_3=\frac{1396906795}{3},\qquad
+\hat P_3=\frac{232175579999}{972}\quad(972=2^2 3^5).
+\]
+The primitive data $(P_n, I'_n)$ do \emph{not} satisfy the operator:
+propagation is inconsistent (the naive $P_3$ candidate even acquires a
+spurious prime factor $107$). Weight seven thus splits into two holonomic
+species --- the descended and the primitive ladder --- which weight five does
+not separate.
+\end{finding}
+
+The values $s_3,\hat P_3$ are exact \emph{conditional on descent membership}
+(that the actual $s_n,\hat P_n$ satisfy the operator for all $n$); membership
+is verified at all available orders and is implied by the motivic rank
+structure, but a period-level telescoping certificate is the outstanding
+closure (see \S\ref{sec:outlook}).
+
+\section{The value of $P_3$ by denominator snap}\label{sec:snap}
+
+The full cellular integral admits the exact all-positive $4$-fold series
+representation of \cite{BarnesNotes} (verified against the anchors), hence
+$I_n>0$ and $I_{n+1}<I_n$ rigorously. The observed values collapse:
+$I_0=3.5554\ldots$, $I_1=3.2071\ldots\times10^{-5}$,
+$I_2=1.05313\ldots\times10^{-9}$ --- the full form is a near-perfect
+cancellation $I'\approx-\zt2 I''$ (four orders at $n=2$).
+
+\begin{proposition}[snap; conditional on (i)--(ii)]\label{prop:snap}
+Assume \textup{(i)} $\den(P_3)\mid 12\,d_3^7$ and \textup{(ii)} descent
+membership (so $s_3,\hat P_3$ are as above). Then
+\[
+P_3=\frac{23478462179525}{69984},\qquad
+\den(P_3)=69984=2^5\,3^7 .
+\]
+\end{proposition}
+
+\begin{proof}[Proof (no integral evaluated)]
+By the filtration identity, $P_3=\bigl[\tfrac{75}{4}q_3\zt7-3s_3\zt5
++\zt2 I''_3\bigr]-I_3$, where the bracket is computable to arbitrary precision
+from (ii) and $I''_3=-9q_3\zt5+2s_3\zt3-\hat P_3$. The grid $(1/12d_3^7)\Z$ of
+hypothesis (i) has spacing $h=2.977\times10^{-7}$, and rigorously
+$0<I_3<I_2=1.053\times10^{-9}<h/2$; hence $P_3$ is the unique grid point
+within $h/2$ of the bracket, which is the stated rational. No numerical
+precision enters: positivity and monotonicity alone pin the grid point.
+\end{proof}
+
+\noindent\textbf{Independent verification.} The implied value
+$I_3=5.6299224184893\times10^{-14}$ was tested against the all-positive
+series: partial sums (rigorous lower bounds) climb to $99.75\%$ of it without
+ever exceeding it, and power-law extrapolation lands within $0.04\%$; a proved
+separable majorant gives the rigorous bound $I_3\le3.09\times10^{-9}<h/2$,
+making the grid choice unconditional given (i). Consistency locks: the
+residual is positive as required; $I_3/I_2=5.35\times10^{-5}$ continues the
+ratio sequence $9.0\times10^{-6},\,3.28\times10^{-5}$ monotonically toward the
+sector-A root $1.58\times10^{-4}$, as duality predicts for the full form; a
+wrong grid hypothesis would land within $5.6\times10^{-14}$ of a grid point
+with probability $\sim2\times10^{-7}$.
+
+\begin{corollary}[conditional]\label{cor:noanomaly}
+$\den(P_3)=2^53^7$ divides $d_3^7=2^73^7$: the naive inclusion
+$d_3^7P_3\in\Z$ holds at $n=3$, with $\ord_3$ tight and $\ord_2$ slack $2$. At
+its first $3$-adic opportunity the weight-7 primitive ladder shows \emph{no}
+$12$-type correction --- consistent with the $n\le2$ data and with
+$\den(\hat P_3)=2^23^5$ on the descent ladder: the anomalous correction factor
+measured at weight 5 \cite{Denoms} does not recur in this family through $n=3$.
+\end{corollary}
+
+\section{Sector measurement and the Diophantine verdict}\label{sec:sector}
+
+For a weight-7 form with denominator growth $d_n^{7+o(1)}$, irrationality-type
+conclusions require decay below $e^{-7}=9.119\times10^{-4}$. The two sub-unit
+roots straddle this threshold: sector A's $1.58\times10^{-4}$ passes (margin
+$e^{1.753}$), sector B's $0.0939$ fails by two orders.
+
+\begin{finding}[measured]\label{find:sector}
+Propagating $I''_n$ through the exact operator at $300$-digit precision from
+its four exact initial values gives ratios increasing monotonically
+$0.0042,\ 0.0181,\ 0.0306,\ \ldots,\ 0.0833\ (n=29)$ toward $0.0939$: the
+\emph{descended} ladder rides sector B. The filtration then locks the
+primitive projection: since $I_n$ (sector A, ratios
+$9.0\times10^{-6},3.3\times10^{-5},5.4\times10^{-5}\to1.58\times10^{-4}$) is
+negligible against $\zt2 I''_n$, we get $I'_n\approx-\zt2I''_n$, and indeed
+$I'_3/I'_2=0.0306408$ against $I''_3/I''_2=0.0306408$ (difference
+$2.8\times10^{-8}$). \emph{Both projections ride sector B.}
+\end{finding}
+
+\begin{corollary}[conditional on descent membership]
+The totally symmetric $\zt7$ family cannot prove ``at least one of
+$\zt5,\zt7$ is irrational'' under a $d_n^7$-type denominator cost: the
+required decay $e^{-7}$ is missed by the factor $0.0939/e^{-7}\approx103$.
+The $\zt2$-elimination costs a decay factor $0.0939/1.58\times10^{-4}
+\approx594$ --- an archimedean analogue of the Betti elimination cost of
+\cite{Denoms}. The surviving Diophantine route is asymmetric: optimize
+$\mathcal M(a)=-\log\rho_{\mathrm{proj}}(a)-\kappa(a)$ over the parameter
+orbit (decay and denominator cost move together; positive $\mathcal M$ is the
+Diophantine region).
+\end{corollary}
+
+\section{Phase 2 of the central-binomial law: reduction to a Dwork
+congruence}\label{sec:dwork}
+
+We now return to weight 5. With Zudilin's sequences $q_n,p_n,\wt p_n$
+\cite{Zud02} and $A_n=2d_n^5p_n\in\Z$, the corrected symmetric law
+$12d_n^5P_n\in\Z$ is equivalent to $\binom{2n}{n}\mid6A_n$, i.e.
+$\ord_p(p_n)\ge\kappa-5L$ at every prime $p\ge5$, where
+$\kappa=\ord_p\binom{2n}{n}$ (Kummer's carry count) and
+$L=\ord_p d_n=\lfloor\log_p n\rfloor$. Phase 1 ($n<p\le2n$, $L=0$) is proven
+in \cite{CBcert}. For $p\le n$ the following structure was discovered and
+verified in this campaign.
+
+\begin{finding}[verified; $272$ descents, $46$ band pairs, $0$ failures]
+\label{find:dwork}
+Let $a=\lfloor n/p\rfloor$. Then
+\[
+p^{5}\,\frac{p_n}{q_n}\;\equiv\;\frac{p_a}{q_a},
+\qquad
+p^{3}\,\frac{\wt p_n}{q_n}\;\equiv\;\frac{\wt p_a}{q_a}
+\pmod{p^{k}},\qquad k\ge 2-\kappa\ \text{(typical }3-\kappa\text{)},
+\]
+for all tested $(n,p)$, $p\ge5$, $n\le45$. The digit constants are exact
+ladder values --- in particular
+\[
+\frac{p_1}{q_1}=\frac{29}{28},\qquad
+\frac{\wt p_1}{q_1}=\frac{101}{84},\qquad
+\frac{p_2}{q_2}=\frac{24289}{23424},
+\]
+identified first as the unique low-height fit to the measured $p$-adic digits
+and then confirmed exactly. The first correction digit is antisymmetric in
+$r=n-ap$ about $(p-1)/2$ --- the derivative signature of a Dwork
+$F(x)/F(x^p)$ congruence. Plain Lucas congruences
+$q_{ap+b}\equiv q_aq_b\ (p)$ \emph{fail} at every tested prime: the operative
+structure is a Frobenius descent of the ratio of solutions, not a digit
+product. At exceptional primes dividing a digit-constant denominator (e.g.\
+$7\mid28$), the ratio statement degrades but the combined integer invariant
+$\ord_p(p_n)\ge\kappa-5L$ is preserved in every tested case.
+\end{finding}
+
+\begin{proposition}[assembly; proven modulo (DWORK)]\label{prop:assembly}
+Assume, for all $p\ge5$ and $n$,
+\emph{(DWORK)}: the descent congruence of Finding~\textup{\ref{find:dwork}}
+with $k\ge1$ \textup{(}in the denominator-free vector form: cross-multiplied
+by $q_a$, for the pair $(p_n,\wt p_n)$\textup{)}. Then, using
+$\ord_p(q_n)\ge\kappa$ \textup{(}free: $Q_n=\pm q_n/\binom{2n}{n}$ is
+Brown--Zudilin's manifestly integral double sum\textup{)} and iterating the
+descent through the $L$ base-$p$ digit levels \textup{(}each level costing the
+$d_n^5$-reserve exponent $5$\textup{)}, one obtains
+$\ord_p(p_n)\ge\kappa-5L$ for all $p\ge5$: Phase 2 of the central-binomial
+law. Combined with Phase 1 \cite{CBcert} this yields $\binom{2n}{n}\mid6A_n$
+and hence $12\,d_n^5P_n\in\Z$ for all $n$.
+\end{proposition}
+
+The inequality $\ord_p(p_n)\ge\kappa-5L$ itself is verified with zero
+failures for all $p\ge5$, $n\le45$ --- including the $206$ zero-slack tight
+cases of the earlier ledger, which the descent now explains: the $d_n^5$
+reserve pays exactly $5$ orders per digit level, and $\kappa$ carries the
+Kummer carries.
+
+\smallskip\noindent\textbf{Literature status and proof program.} A targeted
+audit (with searches of the primary sources) indicates (DWORK) is \emph{not}
+covered off-the-shelf: Delaygue--Rivoal--Roques \cite{DRR} treat
+hypergeometric coefficient sequences and mirror-map quotients, not
+harmonic-companion ratios; Malik--Straub \cite{MalikStraub} prove scalar
+Lucas-type results and leave stronger Dwork congruences open; Gorodetsky's
+constant-term methods strengthen the scalar toolkit for $q_n$ only. The
+planned proof route: (1) restate (DWORK) denominator-free in the period
+vector $(q_a,p_a,\wt p_a)$, so exceptional primes become lattice bookkeeping;
+(2) prove the $a=1$ band by splitting the very-well-poised summand into
+$p$-blocks and expanding factorial and harmonic blocks through weight 5
+(Wolstenholme-block cancellations); (3) treat $(p_n,\wt p_n)$ simultaneously,
+exposing a triangular Frobenius matrix; (4) generalize in $a$. The $a=0$
+instance of (DWORK) is exactly the proven Phase-1 congruence --- a consistency
+anchor. A period-level telescoping certificate for the weight-7 family
+(\S\ref{sec:rec}) would additionally supply the period-matrix realization
+placing (DWORK) inside matrix Dwork theory.
+
+\section{Outlook}\label{sec:outlook}
+
+Three closures would upgrade the night's conditional results to theorems:
+(1) a creative-telescoping certificate (or alternative proof) that the order-4
+operator governs the weight-7 family at period level --- closing descent
+membership, hence $s_3,\hat P_3$, hence hypothesis (ii) of the snap;
+(2) a proof of the denominator-grid hypothesis (i), e.g.\ by the
+Krattenthaler--Rivoal-type arithmetic for the weight-7 forms;
+(3) a proof of (DWORK), completing the corrected Brown--Zudilin law
+$12d_n^5P_n\in\Z$. Independent of all three, the sharpest new open object is
+the vector-valued Dwork descent itself: one congruence family, verified across
+$272$ instances, whose archimedean limit is the classical convergence
+$p_n/q_n\to\zt5$ and whose $p$-adic content is a self-similarity under
+base-$p$ digit shift. One ratio, all completions, one mechanism.
+
+\subsection*{Provenance}
+Results obtained 17--18 July 2026 in a collaborative session: coordination,
+reductions and proofs as cited; exact computation by fleet agents; independent
+review by a second model (in particular the conditional-rigor form of
+Proposition~\ref{prop:snap} and the literature audit of \S\ref{sec:dwork}).
+Complete scripts and exact data in the repository (\texttt{worthiness/}):
+recurrence and terms (\texttt{zeta7\_q\_recurrence.json},
+\texttt{zeta7\_lc\_terms.txt}), snap and verification
+(\texttt{ZETA7\_P3\_SNAP.md}, \texttt{ZETA7\_P3\_VERIFICATION.md},
+\texttt{zeta7\_p3\_*.py}), sector measurement
+(\texttt{zeta7\_sector\_measurement.py}), Phase-2 program
+(\texttt{PHASE2\_BAND\_BLUEPRINT.md}, \texttt{PHASE2\_BAND\_V.md},
+\texttt{lemma\_cb\_band\_v*.py}).
+
+\begin{thebibliography}{9}
+\bibitem{BZ} F.~Brown, W.~Zudilin, \emph{On cellular rational approximations
+to $\zeta(5)$}, arXiv:2210.03391.
+\bibitem{Zud02} W.~Zudilin, \emph{A third-order Ap\'ery-like recursion for
+$\zeta(5)$}, Mat.\ Zametki \textbf{72} (2002); arXiv:math/0206178.
+\bibitem{MOS} D.~McCarthy, R.~Osburn, A.~Straub, \emph{Sequences, modular
+forms and cellular integrals}, arXiv:1705.05586.
+\bibitem{CBcert} \emph{A Frobenius certificate for central-binomial
+cancellation in Zudilin's symmetric $\zeta(5)$ construction}, companion note,
+2026 (\texttt{worthiness/cb\_certificate.tex}).
+\bibitem{Denoms} \emph{Sharp denominator corrections for Brown--Zudilin
+cellular approximations}, companion paper, 2026
+(\texttt{paper/denominators.tex}).
+\bibitem{BarnesNotes} \emph{$\zeta(7)$ Barnes campaign notes}, 2026
+(\texttt{worthiness/ZETA7\_BARNES.md}).
+\bibitem{DRR} \'E.~Delaygue, T.~Rivoal, J.~Roques, \emph{On Dwork's $p$-adic
+formal congruences theorem and hypergeometric mirror maps}, arXiv:1309.5902.
+\bibitem{MalikStraub} A.~Malik, A.~Straub, \emph{Divisibility properties of
+sporadic Ap\'ery-like numbers}, Res.\ Number Theory (2016).
+\end{thebibliography}
+\end{document}

@@ -14,7 +14,14 @@ sources:
     type: "preprint"
     license: ""
     author_contacted: "no"
-    prior_work: ""
+    prior_work: >
+      Related Lean 4 formalization of a neighbouring result: J. Liu, J. Zhang,
+      L. Zhi, "A formal proof of the irrationality of ζ(3) in Lean 4"
+      (arXiv:2503.07625, 2025), https://github.com/ahhwuhu/zeta_3_irrational —
+      the ζ(3)/Beukers case. Complementary (this project covers odd
+      ζ(5)…ζ(33) via Zudilin's elementary series method); their d_n = lcm(1..n)
+      machinery + PrimeNumberTheoremAnd is the ingredient that would sharpen
+      this result from s=33 to Zudilin's optimal s=25.
 
 status:
   scope: >

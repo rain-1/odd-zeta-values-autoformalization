@@ -61,7 +61,9 @@ engineering of the development.
 \section{Introduction}
 
 The irrationality of $\zeta(s)=\sum_{n\ge1}n^{-s}$ is classical for even $s$
-and, after Ap\'ery, for $s=3$; for odd $s\ge5$ only partial results are known.
+and, after Ap\'ery, for $s=3$ --- the latter recently formalized in Lean~4 by
+Liu, Zhang and Zhi~\cite{LiuZhangZhi2025} via Beukers' integral method; for odd
+$s\ge5$ only partial results are known.
 The prototypical such result --- ``infinitely many odd zeta values are
 irrational,'' and its finite refinements ``at least one of
 $\zeta(5),\dots,\zeta(s)$ is irrational'' --- is due to Ball--Rivoal
@@ -102,9 +104,13 @@ number theorem in the equivalent form $\lim_{n\to\infty}d_n^{1/n}=e$. Mathlib
 \emph{not} contain the prime number theorem; its sharpest built-in bound is the
 Chebyshev estimate $\psi(x)\le x\log 4+o(x)$, giving only
 $\limsup_n d_n^{1/n}\le 4$, which is too weak for \emph{every} $s$. The
-external \emph{PrimeNumberTheoremAnd} project would pin an incompatible Mathlib
-revision and cannot be added without a forbidden dependency update. We
-therefore follow Zudilin's own remark (\cite{Zudilin2018}, \S4): using the
+external \emph{PrimeNumberTheoremAnd} project does supply the required limit
+$d_n^{1/n}\to e$ --- indeed the Lean~4 formalization of $\zeta(3)$ by Liu, Zhang
+and Zhi~\cite{LiuZhangZhi2025} obtains its $d_n$ bound this way, from the
+elementary $d_n\le n^{\pi(n)}$ together with $\pi(n)\log n\sim n$ --- but adding
+it here would pin an incompatible Mathlib revision, a dependency update we chose
+to avoid in order to keep the development self-contained over a single Mathlib.
+We therefore follow Zudilin's own remark (\cite{Zudilin2018}, \S4): using the
 weaker, \emph{elementary} bound $d_n<3^n$ of Hanson \cite{Hanson1972} and the
 choice $s=33$ ``to arrive at the same conclusion.'' Reconstructing Hanson's
 bound in Lean turned out to be one of the substantial pieces of the project
@@ -432,6 +438,11 @@ change to the arithmetic or asymptotic machinery.
   \emph{One of the odd zeta values from $\zeta(5)$ to $\zeta(25)$ is
   irrational. By elementary means},
   SIGMA \textbf{14} (2018), 028, arXiv:1801.09895.
+\bibitem{LiuZhangZhi2025}
+  J.~Liu, J.~Zhang, L.~Zhi,
+  \emph{A formal proof of the irrationality of $\zeta(3)$ in Lean~4},
+  arXiv:2503.07625 (2025);
+  code: \url{https://github.com/ahhwuhu/zeta_3_irrational}.
 \end{thebibliography}
 
 \end{document}

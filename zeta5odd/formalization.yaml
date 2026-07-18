@@ -75,10 +75,14 @@ review:
     Machine-verified: `lake build` is green and
     `#print axioms Zeta5Odd.zeta_odd_irrational` reports exactly
     [propext, Classical.choice, Quot.sound] — no `sorryAx`, no
-    `native_decide`/`ofReduceBool`. A `leanprover/comparator` harness
-    (Challenge.lean / Solution.lean / config.json) is provided so third parties
-    can independently confirm that the Mathlib-only statement is proved with no
-    unauthorized axioms and accepted by the kernel. Not yet peer-reviewed.
+    `native_decide`/`ofReduceBool`. In addition, the bundled
+    `leanprover/comparator` harness (Challenge.lean / Solution.lean /
+    config.json) has been RUN and PASSED ("Lean default kernel accepts the
+    solution / Your solution is okay!"): comparator re-exports the full proof
+    and re-runs the Lean default kernel in isolation, independently confirming
+    that the Mathlib-only Challenge statement is proved using no axioms beyond
+    the three permitted ones and is accepted by the kernel. Not yet
+    peer-reviewed by a human.
 
 alignment:
   namespace: "Zeta5Odd"

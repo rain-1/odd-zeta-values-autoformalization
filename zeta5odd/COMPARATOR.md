@@ -1,5 +1,9 @@
 # Independent verification
 
+> **Status: comparator has been run on this project and it passes** —
+> `Lean default kernel accepts the solution` / `Your solution is okay!`
+> (toolchain `leanprover/lean4:v4.33.0-rc1`). Reproduce it below.
+
 This project ships a [`leanprover/comparator`](https://github.com/leanprover/comparator)
 harness so anyone can confirm, without trusting the internals of the
 formalization, that:

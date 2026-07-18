@@ -1,0 +1,10 @@
+name = "cbcert"
+version = "0.1.0"
+defaultTargets = ["Cbcert"]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+
+[[lean_lib]]
+name = "Cbcert"

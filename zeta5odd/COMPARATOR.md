@@ -18,13 +18,14 @@ formalization, that:
 
 ```lean
 theorem zeta_odd_irrational :
-    ∃ j ∈ (Finset.Icc 5 33).filter (fun j => Odd j),
-      Irrational (∑' n : ℕ, (1 : ℝ) / ((n : ℝ) + 1) ^ j)
+    ∃ j : ℕ, Odd j ∧ 5 ≤ j ∧ j ≤ 33 ∧ Irrational (riemannZeta j).re
 ```
 
-i.e. *at least one of ζ(5), ζ(7), …, ζ(33) is irrational*, where each ζ(j) is the
-explicit real series ∑_{n≥1} 1/nʲ. `Solution.lean` proves the identical
-statement from `Zeta5Odd.zeta_odd_irrational`. See `config.json`.
+i.e. *at least one of ζ(5), ζ(7), …, ζ(33) is irrational*, where ζ is Mathlib's
+`riemannZeta`. Since `riemannZeta j` is complex but takes a real value at an
+integer j > 1, irrationality is stated for `(riemannZeta j).re`. `Solution.lean`
+proves the identical statement from `Zeta5Odd.zeta_odd_irrational` (bridging
+`(riemannZeta j).re = ∑' n, 1/(n+1)ʲ`). See `config.json`.
 
 ## Quick check (no comparator needed)
 

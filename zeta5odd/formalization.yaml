@@ -65,8 +65,10 @@ fidelity:
     formalize the s = 33 variant that Zudilin himself records as the elementary
     fallback (§4), using Hanson's d_n ≤ 3ⁿ. The margin is verified and tight:
     3^33 · g(x₀) = e^{-0.129} < 1. Consequently the conclusion is about
-    ζ(5),…,ζ(33) rather than ζ(5),…,ζ(25). ζ(j) is formalized as the explicit
-    real series ∑' n, 1/(n+1)ʲ rather than via Mathlib's `riemannZeta`.
+    ζ(5),…,ζ(33) rather than ζ(5),…,ζ(25). The comparator Challenge statement is
+    phrased with Mathlib's `riemannZeta` (as `(riemannZeta j).re`, the real value
+    at an integer); internally the project reasons about the equal explicit real
+    series ∑' n, 1/(n+1)ʲ, and `Solution.lean` bridges the two.
 
 review:
   status: "self-assessed"

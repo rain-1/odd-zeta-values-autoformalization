@@ -268,18 +268,110 @@ lemma pn_pInt (n : ℕ) (hp : p.Prime) (h1 : n < p) (hp2 : p ≠ 2) : pInt p (pn
   exact pInt_sub (pInt_mul (wt_pInt n hp h1 hp2) (vv_pInt n hp h1 hp2))
     (pInt_mul (w_pInt n hp h1 hp2) (vt_pInt n hp h1 hp2))
 
-/-! ## The congruences `res p (w n) = 0`, `res p (wt n) = 0` (the heart) -/
+/-! ## The `ZMod p` reordering (the heart) — coefficient-agnostic -/
 
-/-- **(W).** `res p (w_n) = 0`: the `ZMod p` reordering of the certificate against
-the decay relations. -/
+lemma res_natCast [Fact p.Prime] (m : ℕ) : res p ((m : ℚ)) = (m : ZMod p) := by
+  have : ((m : ℚ)) = ((m : ℤ) : ℚ) := by push_cast; ring
+  rw [this, res_intCast]; push_cast; ring
+
+/-- `res` distributes over `E_M`: `res(E_M(b)) = Σ_i (Cneg i (M-i)) Σ_j j^{M-i} res(b_{i,j})`. -/
+lemma res_EM_gen [Fact p.Prime] (n M : ℕ) (b : ℕ → ℕ → ℚ)
+    (hb : ∀ i, ∀ j ∈ Finset.range (n + 1), pInt p (b i j)) :
+    res p (EM n M b) = ∑ i ∈ Finset.Icc 1 (min 6 M),
+      (Cneg i (M - i) : ZMod p) * ∑ j ∈ Finset.range (n + 1),
+        (j : ZMod p) ^ (M - i) * res p (b i j) := by
+  have hcoef : ∀ i ∈ Finset.Icc 1 (min 6 M), ∀ j ∈ Finset.range (n + 1),
+      pInt p ((j : ℚ) ^ (M - i) * b i j) := fun i _ j hj =>
+    pInt_mul (pInt_pow (pInt_natCast _) _) (hb i j hj)
+  rw [EM, res_sum (fun i hi => pInt_mul (pInt_intCast _) (pInt_sum (hcoef i hi)))]
+  apply Finset.sum_congr rfl
+  intro i hi
+  rw [res_mul (pInt_intCast _) (pInt_sum (hcoef i hi)), res_intCast, res_sum (hcoef i hi)]
+  refine congrArg _ (Finset.sum_congr rfl (fun j hj => ?_))
+  rw [res_mul (pInt_pow (pInt_natCast _) _) (hb i j hj), res_pow (pInt_natCast _), res_natCast]
+
+/-- Per-`j` collapse: the three-term certificate sum (over `i`) equals `r 3`. -/
+lemma cert_sum_j [Fact p.Prime] (h5 : 5 ≤ p) (j : ℕ) (r : ℕ → ZMod p) :
+    (∑ i ∈ Finset.Icc 1 3, (Cneg i (3 - i) : ZMod p) * (j : ZMod p) ^ (3 - i) * r i)
+    + (∑ i ∈ Finset.Icc 1 6,
+        (-2 : ZMod p) * (Cneg i (p + 2 - i) : ZMod p) * (j : ZMod p) ^ (p + 2 - i) * r i)
+    + (∑ i ∈ Finset.Icc 1 6,
+        (Cneg i (2 * p + 1 - i) : ZMod p) * (j : ZMod p) ^ (2 * p + 1 - i) * r i)
+    = r 3 := by
+  set x : ZMod p := (j : ZMod p)
+  have hfirst : (∑ i ∈ Finset.Icc 1 3, (Cneg i (3 - i) : ZMod p) * x ^ (3 - i) * r i)
+      = ∑ i ∈ Finset.Icc 1 6,
+          (if i ≤ 3 then (Cneg i (3 - i) : ZMod p) * x ^ (3 - i) else 0) * r i := by
+    rw [← Finset.sum_filter_add_sum_filter_not (Finset.Icc 1 6) (· ≤ 3)]
+    have h2 : ∑ i ∈ (Finset.Icc 1 6).filter (¬ · ≤ 3),
+        (if i ≤ 3 then (Cneg i (3 - i) : ZMod p) * x ^ (3 - i) else 0) * r i = 0 := by
+      apply Finset.sum_eq_zero; intro i hi
+      rw [Finset.mem_filter] at hi; rw [if_neg hi.2]; ring
+    rw [h2, add_zero]
+    apply Finset.sum_congr
+    · ext i; simp only [Finset.mem_filter, Finset.mem_Icc]; omega
+    · intro i hi; rw [Finset.mem_filter] at hi; rw [if_pos hi.2]
+  rw [hfirst, ← Finset.sum_add_distrib, ← Finset.sum_add_distrib]
+  rw [show r 3 = ∑ i ∈ Finset.Icc 1 6, (if i = 3 then (1 : ZMod p) else 0) * r i by
+      rw [Finset.sum_eq_single 3]
+      · rw [if_pos rfl, one_mul]
+      · intro i _ hi; rw [if_neg hi, zero_mul]
+      · intro h; exact absurd (by simp : (3 : ℕ) ∈ Finset.Icc 1 6) h]
+  apply Finset.sum_congr rfl
+  intro i hi
+  rw [Finset.mem_Icc] at hi
+  have := Certificate.certificate h5 hi.1 hi.2 x
+  rw [← this]; ring
+
+/-- **The reordering, coefficient-agnostic.** Given decay `E_M(b)=0` for the three
+certificate indices, `res p (Σ_j b_{3,j}) = 0`. Works for `acoeff` (⇒ `w`) and
+`atcoeff` (⇒ `w̃`) alike — the certificate is the same. -/
+theorem res_congruence_of [Fact p.Prime] (n : ℕ) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p)
+    (b : ℕ → ℕ → ℚ) (hb : ∀ i, ∀ j ∈ Finset.range (n + 1), pInt p (b i j))
+    (hd3 : EM n 3 b = 0) (hd2 : EM n (p + 2) b = 0) (hd1 : EM n (2 * p + 1) b = 0) :
+    res p (∑ j ∈ Finset.range (n + 1), b 3 j) = 0 := by
+  rw [res_sum (fun j hj => hb 3 j hj)]
+  have hT0 : (1 : ZMod p) * res p (EM n 3 b) + (-2) * res p (EM n (p + 2) b)
+      + (1 : ZMod p) * res p (EM n (2 * p + 1) b) = 0 := by
+    rw [hd3, hd2, hd1]; simp [res]
+  rw [← hT0, res_EM_gen n 3 b hb, res_EM_gen n (p + 2) b hb, res_EM_gen n (2 * p + 1) b hb,
+      show min 6 3 = 3 by norm_num, show min 6 (p + 2) = 6 by omega,
+      show min 6 (2 * p + 1) = 6 by omega, one_mul, one_mul]
+  simp only [Finset.mul_sum, ← mul_assoc]
+  rw [Finset.sum_comm (s := Finset.Icc 1 3), Finset.sum_comm (s := Finset.Icc 1 6),
+      Finset.sum_comm (s := Finset.Icc 1 6), ← Finset.sum_add_distrib, ← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro j hj
+  exact (cert_sum_j h5 j (fun i => res p (b i j))).symm
+
+/-- **(W).** `res p (w_n) = 0`. Reordering DONE (via `res_congruence_of`); the three
+`EM n M (acoeff n) = 0` obligations are exactly `Decay.decay_a` (Lemma A, Worker A2,
+in flight) — the ONLY remaining gap here. Ranges `3, p+2, 2p+1 ≤ 4n+4` (as `p ≤ 2n`). -/
 theorem res_congruence_w (n : ℕ) (hp : p.Prime) (h1 : n < p) (h2 : p ≤ 2 * n)
     (h5 : 5 ≤ p) : res p (w n) = 0 := by
-  sorry
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hp2 : p ≠ 2 := by omega
+  rw [w]
+  refine res_congruence_of n h2 h5 (acoeff n)
+    (fun i j hj => acoeff_pInt n i j hp h1 (by have := Finset.mem_range.mp hj; omega) hp2)
+    ?_ ?_ ?_
+  · sorry -- Decay.decay_a n 3 (by omega) (by omega)
+  · sorry -- Decay.decay_a n (p+2) (by omega) (by omega)
+  · sorry -- Decay.decay_a n (2*p+1) (by omega) (by omega)
 
-/-- **(W̃).** `res p (w̃_n) = 0`. -/
+/-- **(W̃).** `res p (w̃_n) = 0`. Same reordering; the three obligations are
+`Decay.decay_at` (range `≤ 4n+2`; `2p+1 ≤ 4n+1 ≤ 4n+2` as `p ≤ 2n`). -/
 theorem res_congruence_wt (n : ℕ) (hp : p.Prime) (h1 : n < p) (h2 : p ≤ 2 * n)
     (h5 : 5 ≤ p) : res p (wt n) = 0 := by
-  sorry
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hp2 : p ≠ 2 := by omega
+  rw [wt]
+  refine res_congruence_of n h2 h5 (atcoeff n)
+    (fun i j hj => atcoeff_pInt n i j hp h1 (by have := Finset.mem_range.mp hj; omega) hp2)
+    ?_ ?_ ?_
+  · sorry -- Decay.decay_at n 3 (by omega) (by omega)
+  · sorry -- Decay.decay_at n (p+2) (by omega) (by omega)
+  · sorry -- Decay.decay_at n (2*p+1) (by omega) (by omega)
 
 /-! ## Nonvanishing (needed only for the `padicValRat`-form statements)
 

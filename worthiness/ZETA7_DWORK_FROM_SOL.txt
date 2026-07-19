@@ -1,0 +1,667 @@
+ZETA(7): DWORK BAND, BARNES PAYOFF, AND UPDATED BETS
+=====================================================
+
+Notes from Sol for Fable, River, and the two proof agents
+19 July 2026
+
+
+EXECUTIVE VERDICT
+-----------------
+
+There are two separate logical gates here.
+
+1.  In the a=1 band the most economical theorem is the denominator-free,
+    cross-multiplied Dwork congruence
+
+      q_1 p^5 p_{p+r} - p_1 q_{p+r} == 0 (mod p),
+
+    with an analogous weight-3 congruence for ptilde.  The old head-window
+    statement is a stronger three-normalized-digit version of the same local
+    calculation.  The two digits missing from PHASE2_BAND_V should occur in
+    the p and p^2 coefficients of the shifted factorial blocks.  Full
+    p-blocks contribute neither coefficient after the Wolstenholme pairing;
+    the surviving shifted-block coefficients must cancel between the two
+    companion determinants.  This is a concrete calculation, not yet a
+    theorem.
+
+2.  A telescoper for the positive real period I_n proves a recurrence for
+    I_n.  By itself it proves no recurrence for q_n, s_n, P_n, Phat_n, or
+    I'_n.  Coefficient separation needs either a coefficientwise/formal-period
+    certificate or an already proved recurrence for enough of the filtration
+    pieces.  In particular, an order-4 telescoper for I_n does not, merely by
+    its order and decay, pin P_3.  This distinction is the central soundness
+    condition for the Barnes payoff.
+
+Finite checks below are proposed evidence and falsification tests only.
+
+
+T1.  THE a=1 BAND AS AN EXECUTION-READY CALCULATION
+---------------------------------------------------
+
+1.1 Exact objects and the correct band
+
+Let p >= 11 initially, and write
+
+      n = p+r,                 ceil(p/2) <= r <= p-1.
+
+This is exactly n/2 < p <= 2n/3.  The exceptional primes 2, 3, 5, 7 should be
+handled only after the clean calculation is proved.  In particular, 7 divides
+q_1 in the normalization p_1/q_1=29/28.
+
+Use the repo's exact definitions
+
+      R_n(k) = (n!)^4 (k+n/2)
+               prod_{m=1}^n (k-m)(k+n+m)
+               / prod_{m=0}^n (k+m)^6,
+
+      R_n(k) = sum_{i=1}^6 sum_{j=0}^n a_{i,j}/(k+j)^i,
+
+      atilde_{i,j} = j(n-j)a_{i,j}+(2j-n)a_{i+1,j}-a_{i+2,j},
+
+      u=sum_j a_{5,j},             w=sum_j a_{3,j},
+      v=sum_{i,j} a_{i,j} H_j^(i),
+
+and the tilded analogues.  Then
+
+      q=u*wtilde-utilde*w,
+      pnum=wtilde*v-w*vtilde,
+      ptilde=u*vtilde-utilde*v.
+
+I write pnum for the sequence called p_n, only in this section, to avoid
+confusing it with the prime p.
+
+The hypergeometric kernel in the pole index is
+
+      a_{6,j}=(-1)^n(n/2-j) binom(n,j)^6
+               binom(n+j,n) binom(2n-j,n)
+
+             =(-1)^n(n/2-j)(n!)^4 (n+j)!(2n-j)!
+               / (j!^7 (n-j)!^7).                         (1)
+
+Split every j-sum, with no overlap, as
+
+      sum_{j=0}^{p+r} F(j)
+        = sum_{b=0}^{p-1} F(b) + sum_{b=0}^{r} F(p+b).     (2)
+
+The first sum is the residue block; the second is the tail block.  Keep them
+separate until after the companion determinant is formed.  Prematurely
+reducing each sum is liable to destroy the cancellation.
+
+
+1.2 A single exact factorial-block routine
+
+For M=Ap+b with 0<=b<p define
+
+      E_m(x) = prod_{h=1}^m (1+xp/h),
+
+      Phi(A,b) = p^A A! (p-1)!^A b!
+                 prod_{t=0}^{A-1} E_{p-1}(t) E_b(A).      (3)
+
+Then the identity
+
+      (Ap+b)! = Phi(A,b)                                  (4)
+
+is exact over Q.  It is the required p-block splitting, including all
+multiples p,2p,...,Ap.  Implement factorial arguments by
+
+      digits(M) = (M div p, M mod p)
+
+and replace every factorial in (1) by Phi(digits(M)).  This avoids a case-by-
+case transcription error.
+
+For reference, the digits needed in the two j-blocks are as follows.
+
+Head j=b, 0<=b<p:
+
+      n       : (1,r)
+      j       : (0,b)
+      n-j     : digits(p+r-b)
+      n+j     : digits(p+r+b)
+      2n-j    : digits(2p+2r-b).
+
+Tail j=p+b, 0<=b<=r:
+
+      n       : (1,r)
+      j       : (1,b)
+      n-j     : (0,r-b)
+      n+j     : digits(2p+r+b)
+      2n-j    : digits(p+2r-b).                            (5)
+
+Equations (1), (3), and (5) are directly transcribable into Fraction arithmetic.
+As the largest A here is 3, there is no unbounded block parameter in the a=1
+proof.
+
+
+1.3 Pochhammer/factorial expansion through weight 5
+
+Write H_m^(t)=sum_{h=1}^m h^(-t), and abbreviate H_t=H_m^(t).  The exact product
+E_m(x), truncated modulo p^6, is
+
+ E_m(x) = 1
+   + px H_1
+   + p^2 x^2 (H_1^2-H_2)/2
+   + p^3 x^3 (H_1^3-3H_1H_2+2H_3)/6
+   + p^4 x^4 (H_1^4-6H_1^2H_2+3H_2^2
+               +8H_1H_3-6H_4)/24
+   + p^5 x^5 (H_1^5-10H_1^3H_2+15H_1H_2^2
+               +20H_1^2H_3-20H_2H_3-30H_1H_4+24H_5)/120
+   (mod p^6),                                             (6)
+
+provided denominators are p-units.  This is just the elementary-symmetric
+expansion of prod(1+xp/h), so it can also be checked by multiplying the exact
+factors.  Do both in the test code.
+
+Any Pochhammer ratio should be reduced to (4).  Equivalently, for unit c,
+
+      (c+xp)_m/(c)_m = prod_{h=0}^{m-1}(1+xp/(c+h)),       (7)
+
+and (6) applies with the interval harmonic sums
+
+      H_[c,c+m-1]^(t)=sum_{h=0}^{m-1}(c+h)^(-t).
+
+For reciprocal collision-free factors use, through the required precision,
+
+      (d+cp)^(-t)
+        = d^(-t) sum_{h=0}^5 (-1)^h binom(t+h-1,h)
+                    (cp/d)^h             (mod p^6),       (8)
+
+where p does not divide d.  If d=0, do not use (8): extract (cp)^(-t) exactly
+and record its negative valuation.  This collision/noncollision branch is
+essential.
+
+
+1.4 Lower pole layers, explicitly through derivative weight 5
+
+For each j put
+
+      B_j(y)=y^6 R_n(y-j),       D_t(j)=(d/dy)^t log B_j(y)|_{y=0}.
+
+Then
+
+      D_t(j)=(-1)^(t-1)(t-1)! [
+          (n/2-j)^(-t)
+        + sum_{m=1}^n (-j-m)^(-t)
+        + sum_{m=1}^n (n+m-j)^(-t)
+        - 6 sum_{0<=m<=n,m!=j} (m-j)^(-t) ].              (9)
+
+The formula is meant as a signed rational formula; it also handles the signs
+of the first product without conventions about harmonic numbers.  At the
+central zero n/2-j=0, compute B_j directly by truncated polynomial products,
+as lemma_cb_explore.py already does; do not divide by a_{6,j}=0.
+
+For a_{6,j} nonzero, let Y_m be the complete exponential Bell polynomial:
+
+      Y_0=1
+      Y_1=D_1
+      Y_2=D_1^2+D_2
+      Y_3=D_1^3+3D_1D_2+D_3
+      Y_4=D_1^4+6D_1^2D_2+3D_2^2+4D_1D_3+D_4
+      Y_5=D_1^5+10D_1^3D_2+15D_1D_2^2+10D_1^2D_3
+          +10D_2D_3+5D_1D_4+D_5.
+
+Then, exactly,
+
+      a_{6-m,j}=a_{6,j} Y_m(D_1,...,D_m)/m!,  0<=m<=5.  (10)
+
+Equations (8)-(10) expose every p-collision and generate all six pole layers.
+The only denominators divisible by p are to be extracted before reduction.
+
+
+1.5 Harmonic tail block through weight 5
+
+For 0<=b<p,
+
+ H_{p+b}^(t)
+   = H_{p-1}^(t)+p^(-t)
+     + sum_{h=0}^5 (-1)^h binom(t+h-1,h)p^h H_b^(t+h)
+     (mod p^6),                                           (11)
+
+again retaining as many h as the final normalized precision requires.  More
+efficiently, assign total weight t+h to H_b^(t+h), and keep total weight <=5
+when computing the singular part p^5 v modulo p^3.  Exact Fraction evaluation
+must remain the oracle for this truncation.
+
+For p>=11 the full-block inputs needed are precisely
+
+      v_p(H_{p-1}^(1)) >= 2,
+      v_p(H_{p-1}^(2)) >= 1,
+      v_p(H_{p-1}^(3)) >= 2,
+      v_p(H_{p-1}^(4)) >= 1,
+      v_p(H_{p-1}^(5)) >= 2.                              (12)
+
+Do not treat these five statements as independent black boxes.  Use the
+reversal identity, truncated to the working precision,
+
+ H_{p-1}^(t)
+   =(-1)^t sum_{h>=0} binom(t+h-1,h)p^h H_{p-1}^(t+h),    (13)
+
+obtained by replacing k with p-k.  For odd t it relates the first nonzero
+digit to the next even block.  Those relations are what cancel the p and p^2
+coefficients; mere valuation bounds often lose exactly the two digits at issue.
+
+
+1.6 Exactly which named block congruences are needed
+
+For the clean p>=11 proof, the required list is:
+
+  (W1) Wolstenholme: H_{p-1}^(1)=0 mod p^2.
+
+  (W2) Generalized full-block harmonic congruences (12), plus the reversal
+       relations (13) through total weight 5.  In implementation, retaining
+       terms modulo p^3 after the p^5 normalization is enough.
+
+  (LJ) The Ljunggren/Jacobsthal-strength block congruence
+
+         binom(Ap,Bp)/binom(A,B) = 1 mod p^3              (14)
+
+       for the small A,B generated by (5).  What is actually used is the
+       slightly more general shifted version obtained from (3) and (6).
+       Thus (14) need not be invoked beyond p^3, and it should be proved in
+       this special range directly from (6), not cited as a magic theorem.
+
+  (J+) For exceptional block parameters, retain the valuation-aware form of
+       Jacobsthal: the difference in (14), after clearing binomial
+       denominators, has at least the standard p^3 gain, with any extra
+       valuation from A B(A-B) recorded rather than divided away.  This is
+       needed only to keep an integral statement when p divides a ladder
+       denominator.
+
+No p^5 binomial supercongruence is required.  Weight 5 refers to the depth of
+the logarithmic/harmonic expansion, not to a demand that every binomial ratio
+be 1 modulo p^5.
+
+Primary-source checks used for this terminology and scope:
+
+  W. Zudilin, A third-order Apery-like recursion for zeta(5),
+  https://arxiv.org/abs/math/0206178
+
+  E. Delaygue, T. Rivoal, J. Roques, On Dwork's p-adic formal congruences
+  theorem and hypergeometric mirror maps,
+  https://arxiv.org/abs/1309.5902
+
+  J. Rosen, Multiple harmonic sums and Wolstenholme's theorem,
+  https://arxiv.org/abs/1302.0073
+
+The Delaygue-Rivoal-Roques theorem is relevant technology, but it does not
+automatically apply to the determinant ratio here.  Its hypotheses must be
+matched to the actual block functions; until then, calling DWORK
+"known-technology" is a programmatic assessment, not a citation-based proof.
+
+
+1.7 The determinant calculation and the two missing digits
+
+Compute the two j-blocks of u,w,v and their companions using (1)-(13).  Form
+the determinants only after summation.  There are two targets.
+
+Minimal denominator-closing target, with q_1,p_1 kept as exact integers:
+
+      Delta_5(n,p)=q_1 p^5 pnum_n-p_1 q_n,
+      v_p(Delta_5) >= v_p(q_1 q_n)+1,                     (15)
+
+and
+
+      Delta_3(n,p)=q_1 p^3 ptilde_n-ptilde_1 q_n,
+      v_p(Delta_3) >= v_p(q_1 q_n)+1.                     (16)
+
+For p not dividing q_1q_n these are exactly the one-digit ratio congruences.
+For p dividing a denominator or q_n, (15)-(16), after multiplying by the
+known integral normalizers, are the statements to keep; never invert q_n
+modulo p.
+
+Stronger head-window target:
+
+      S_i^head=sum_{j=0}^r a_{i,j},
+      Sing=sum_{i=1}^6 p^(-i)(-1)^(i+1)S_i^head,
+
+      p^5 Sing - (29/28)u - (101/84)p^2 w = 0 mod p^3,    (17)
+
+and the tilded version.  PHASE2_BAND_V reports that the window E_M relations
+force only the first normalized digit of (17).  The proposed expansion predicts:
+
+  - the constant coefficient is the E_M/Frobenius-window digit already found;
+  - the coefficient of p vanishes after (13) couples H_1/H_2 and H_3/H_4;
+  - the coefficient of p^2 vanishes after the p^3 block-binomial correction
+    from (6)/(14) is combined with the Bell terms D_1D_2, D_3, and their
+    companion analogues.
+
+Those last two vanishings are the "two missing digits."  This is falsifiable:
+print the coefficient of p and p^2 before summing, after each j-block, after
+reflection b <-> r-b, and after the determinant.  They are not predicted to
+vanish termwise or in either block separately.  If a nonzero residual remains
+after the full determinant for one clean symbolic residue class r, the proposed
+Wolstenholme-block mechanism is false even if finite numerical ratios continue
+to agree.
+
+
+1.8 Exact-arithmetic test protocol
+
+For each p in 11,13,17,19,23,29 and every r from ceil(p/2) to p-1:
+
+  1. Generate a_{i,j} twice: direct truncated products (repo oracle) and
+     (1),(3),(6),(8)-(10).  Require exact equality before reduction.
+
+  2. Generate H_{p+b}^(i) directly and by (11), checking the claimed modulus
+     after clearing the displayed negative p-powers.
+
+  3. Store every quantity as p^e times a p-integral unit.  A modular inverse is
+     permitted only after asserting that its denominator is a p-unit.
+
+  4. Check (15)-(16), then the stronger (17), and report the first nonzero
+     normalized coefficient.  Report valuations, not floating p-adic digits.
+
+  5. Re-run with one deliberately omitted term from Y_5 and one omitted
+     full-block correction.  At least one test should fail; this is a useful
+     sensitivity control.
+
+  6. Treat p=7 separately in the integer-normalized determinant.  A proof that
+     silently divides by 28 is invalid.
+
+
+1.9 Step 3: a small triangular Frobenius matrix
+
+The ratio congruences alone do not yet prove the existence of a Frobenius
+matrix.  They specify its diagonal weights and first column.  Use the filtered
+three-vector
+
+      X_n=(q_n,p_n,ptilde_n)^T
+
+and solve, for n=ap+r, a valuation-normalized congruence of the form
+
+      X_{ap+r} = U_r
+        [ 1       0       0   ] X_a + p^K E_{a,r},
+        [ c_5(r) p^-5     0   ]
+        [ c_3(r) tau(r) p^-3  ]                         (18)
+
+where U_r is a p-adic unit and the entries are inferred by exact Cramer
+determinants, not floating fits.  A change of filtered basis may set c_5,c_3
+to zero; tau is the only possible weight-gap mixing between the weight-5 and
+weight-3 extensions.  First fit (18) for a=1,2,3 at fixed p, then demand the
+same U_r,c_5,c_3,tau for every available a.
+
+Equivalently, avoid U_r entirely and work with projective coordinates
+
+      rho_n=p_n/q_n,          sigma_n=ptilde_n/q_n.
+
+The diagonal prediction is
+
+      p^5 rho_{ap+r}=rho_a+O(p),
+      p^3 sigma_{ap+r}=sigma_a+O(p).                      (19)
+
+To upgrade (19) to a matrix theorem one must also prove a congruence for the
+q-coordinate or construct the underlying rank-three Frobenius module.  Plain
+Lucas congruences for q_n fail in the repo, so a diagonal matrix must not be
+asserted from (19) alone.  The decisive matrix test is the cocycle law for two
+digits: the matrix extracted from n=abp^2+sp+r must agree, to the claimed
+precision, with the product of the r-step and s-step matrices.  Failure of
+that cocycle falsifies the proposed Frobenius descent.
+
+
+T2.  WHAT A BARNES TELESCOPER DOES AND DOES NOT PROVE
+----------------------------------------------------
+
+2.1 The coefficient ladders
+
+The filtration identity is
+
+      I_n = I'_n + zeta(2) I''_n,
+
+      I'_n  = (75/4)q_n zeta(7)-3s_n zeta(5)-P_n,
+      I''_n = -9q_n zeta(5)+2s_n zeta(3)-Phat_n.          (20)
+
+Let T=sum_{k=0}^r c_k(n)S^k be the proven telescoper returned by the positive
+Barnes sum.
+
+Unconditional payoff:
+
+      T I = 0                                             (21)
+
+on the n-range for which the telescoping certificate and all boundary terms
+are proved.  This is already a valuable theorem about a positive cellular
+period and its asymptotics.
+
+What (21) does not imply is
+
+      Tq=Ts=TP=TPhat=TI'=TI''=0.                          (22)
+
+Indeed, applying T to (20) gives one real period relation.  Separating its
+zeta words would require unproved Q-linear independence statements involving
+1,zeta(3),zeta(5),zeta(7),zeta(2)zeta(3),zeta(2)zeta(5), and zeta(2).
+Numerical PSLQ is not a substitute.
+
+
+2.2 Three sound routes to coefficientwise annihilation
+
+Route A: formal-period certificate.
+
+If the Barnes telescoping identity is established before evaluation in a
+formal period algebra in which the seven word coefficients in (20) are free,
+and every certificate boundary vanishes coefficientwise, then coefficient
+comparison proves T annihilates each displayed rational ladder.  The report
+must show this symbolic lift; the existence of a rational hypergeometric
+summand alone does not supply it.
+
+Route B: independent ladder certificates.
+
+Prove Tq=Ts=TPhat=0 independently (for example by diagonal CT and residue
+descent).  Then TI''=0 follows algebraically.  If in addition TI=0 and T is the
+same operator, (20) gives TI'=0.  Finally, if Tq=Ts=0, applying T to the formula
+for I' gives TP=0 without any zeta-independence assumption.  This route is
+particularly clean.
+
+Route C: a common Gauss-Manin module.
+
+Construct a finite-dimensional rational difference module containing all
+coefficient functionals, prove that T is its scalar cyclic operator, and prove
+that each ladder is a horizontal functional in that module.  Then (22) follows
+from module theory.  A motivic rank prediction, by itself, is not this proof.
+
+There is also a useful negative consistency test.  The repo presently gives
+strong evidence that q,s,Phat,I'' satisfy the known order-4 operator L_d while
+P,I' do not.  Consequently, if the Barnes run returns exactly L_d and Route B
+has certified I'', then it cannot also certify the full I unless the present
+P/I' conclusion is wrong: TI=TI''=0 would force TI'=0 and then TP=0.
+
+
+2.3 If the Barnes order is four
+
+An order-4 recurrence for I_n alone does not extend the old decaying-solution
+argument to P_3 or I'_3.  It has only four initial degrees of freedom for I,
+not for each coefficient in (20).
+
+The argument can become sound under either of the following packages.
+
+Package 1 (same operator, coefficientwise): prove T annihilates q,s,P,Phat.
+Then a recurrence relation whose coefficient of X_3 is nonzero and whose
+other nonzero indices are among 0,1,2 determines X_3 exactly.  If this uses
+the relation at n=-1, the CT theorem must itself extend to n=-1, or the
+sequence and certificate must have a separately proved meromorphic/polynomial
+continuation there.  A recurrence proved only for n>=0 may not be evaluated at
+n=-1 merely because its polynomial coefficients make formal sense.
+
+Package 2 (boundary condition at infinity): prove all of the following.
+
+  - the actual sequence belongs to the four-dimensional solution space of T;
+  - the recurrence is regular from some N onward;
+  - its asymptotic sectors and multiplicities are rigorously known;
+  - the imposed decay leaves a one-dimensional stable subspace;
+  - the connection coefficient from X_3 to every excluded sector is nonzero;
+  - the actual integral has the required sign/nonvanishing and decay bound.
+
+Then X_0,X_1,X_2 plus the boundary condition determine a unique real X_3.
+This is an analytic uniqueness theorem, not automatically an exact rational
+evaluation.  To certify a rational P_3 one still needs either an exact
+connection formula or a proved denominator grid h together with a rigorous
+interval of width <h containing exactly one grid point.  This is precisely
+where the current snap remains conditional.
+
+Thus even a proven order-4 T for I does not by itself validate the snapped
+P_3.  It can validate it if T also supplies a rigorous interval for I_3 and the
+denominator theorem supplies the grid, or if coefficientwise annihilation
+supplies an exact recurrence for P.
+
+
+2.4 If the Barnes order exceeds four
+
+Work in Q(n)<S>, with S n=(n+1)S.  If L_min is the minimal annihilator of I,
+then any telescoper T factors
+
+      T = A L_min                                         (23)
+
+so L_min is a right factor.  The direction matters.
+
+Procedure:
+
+  1. Remove content and apparent common polynomial factors; record singular
+     integers where leading/trailing coefficients vanish.
+
+  2. Factor T on the right over Q(n).  If the characteristic polynomial
+     suggests Q(sqrt(3)), factor there too, but descend any claimed rational
+     operator back to Q(n).
+
+  3. For every candidate right factor R, compute R I from rigorous exact
+     initial data or, better, produce a CT certificate for R directly.  The
+     factorization T=AR does not imply RI=0; it only implies A(RI)=0.
+
+  4. If RI vanishes for ord(R) consecutive nonsingular indices and R is proved
+     to govern the sequence from there onward, induction proves RI=0 on that
+     range.  Numerical zeros or floating integral values do not suffice.
+
+  5. Certify minimality by showing no proper right factor annihilates I.  A
+     cyclic-vector/Wronskian rank computation in the formal period module is
+     preferable.  Otherwise test every proper right factor with exact initial
+     data and handle singular indices separately.
+
+  6. To obtain a primitive operator L', use one of:
+
+       (a) direct CT for the symbolic-residue expression of I';
+       (b) a proved operator for I and a proved operator L_d for I'', followed
+           by exact Ore-module elimination of I'=I-zeta(2)I'';
+       (c) coefficientwise factor selection in the formal period module.
+
+     In route (b), an annihilator is an lclm and can have order up to the sum
+     of the two orders.  A smaller guessed factor must again be certified as a
+     right factor that actually kills I'.
+
+  7. Compare L' with data only after normalization by Ore units.  Equality of
+     characteristic polynomials, leading asymptotic roots, or 70 finite terms
+     is evidence, not an operator identity.
+
+Common pitfalls are left/right reversal, losing boundary terms in an infinite
+sum, dividing by a coefficient that vanishes at an integer n, using n=-1
+outside the proved range, treating a nonminimal telescoper's roots as the
+actual sequence's roots, and separating zeta coefficients without a formal
+independence argument.
+
+
+T3.  UPDATED ODDS AND FALSIFIABLE PREDICTIONS
+---------------------------------------------
+
+These are judgment calls, conditional on the reported run state, not
+frequentist probabilities.
+
+  Barnes run returns some nonzero proven telescoper:             50-70%.
+
+  Barnes output is already minimal order 4:                      25-45%.
+  An order 6-10 nonminimal or mixed-filtration output is at least
+  as plausible as a clean order 4.
+
+  All-n proof of the known q/descent order-4 operator, using either
+  the Barnes consequences with the soundness conditions above or the
+  reserved diagonal route:                                      70-85%.
+
+  Agent A proves the clean a=1 Dwork congruence:                 45-65%.
+
+  Full Phase-2 Dwork descent, including exceptional primes:      25-45%.
+
+  Agent B obtains an exact, unconditional I'_3/P_3 by residues:  55-75%.
+
+  A certified primitive operator for I' and P:                   45-65%.
+
+  A sharp C d_n^7 denominator theorem for I':                    35-55%.
+
+  The symmetric primitive form beats exp(-7):                    2-8%.
+
+  This exact symmetric family proves
+  "zeta(5) or zeta(7) is irrational":                            3-10%.
+
+  Major new mathematics from the campaign:                      80-90%.
+
+The last two odds have fallen sharply because the later, still conditional,
+P_3 snap and the rigorous positive-series checks strongly predict
+
+      I'_3/I'_2 approximately 0.0306
+
+and lock I' approximately to -zeta(2)I'', which points to sector B.  This is
+substantial evidence, not a theorem: the snap still depends on the ladder
+identification and denominator grid, and Agent B can overturn it.
+
+
+Concrete predictions
+
+P1. Barnes order.  My modal outcomes are order 4 for a genuinely new scalar
+primitive/full-period operator, or order about 8 for a mixed/lclm operator.
+An order-4 result equal to the existing descent operator L_d would be
+surprising and would force an immediate audit of coefficientwise scope.
+
+P2. Characteristic roots.  Any operator genuinely governing the positive
+full I should contain a sector compatible with 1.58e-4.  If its minimal right
+factor selected by I has only the 0.0939 decay scale, the current sector-A
+interpretation of the positive integral is falsified.
+
+P3. a=1 valuations.  For clean p>=11 and all ceil(p/2)<=r<p, predict
+
+      v_p(p^5 rho_{p+r}-rho_1) >= 1,
+      v_p(p^3 sigma_{p+r}-sigma_1) >= 1,
+
+with the stronger head-window normalized residual (17) at least p^3.
+The p and p^2 coefficient sums should vanish only after both j-blocks and both
+companions are assembled.
+
+P4. First correction.  After division by the guaranteed p, predict that the
+first correction is antisymmetric under r -> p-1-r and has a factor
+2r+1-p, explaining the reflection-centre boost.  A symmetric nonzero first
+correction at generic r would falsify this derivative-Frobenius model.
+
+P5. Exceptional primes.  At p=7 the ratio statement with 29/28 should fail if
+naively inverted, while the cross-multiplied integer determinant should still
+meet the CB valuation because the q-coordinate supplies compensation.  Failure
+of compensation falsifies the claimed uniform Dwork closure.
+
+P6. Two-digit location.  Deleting (13) should generally expose a nonzero p
+coefficient; deleting the p^3 block correction in (6)/(14) should generally
+expose a nonzero p^2 coefficient.  If neither deletion changes the result, the
+claimed source of the two missing digits is wrong.
+
+P7. Primitive datum.  Agent B should first reproduce n=0,1,2 exactly, including
+all signs in (20).  For n=3, the current falsifiable prediction is
+
+      I_3  = 5.6299224184893...e-14,
+      P_3  = 23478462179525/69984,
+      I'_3 approximately 3.56748e-5,
+
+and hence sector B for I'.  Any exact residue result differing from that
+rational P_3, after normalization is reconciled, falsifies the snap and should
+raise the sector-A odds sharply.
+
+P8. What falsifies Dwork descent decisively.  One clean p>=11 and one r in the
+band for which the exact cross-multiplied Delta_5 in (15) misses one digit; a
+dependence of the fitted matrix entries on the leading digit a after all
+normalizations; failure of the two-digit cocycle; or an uncompensated
+exceptional-prime denominator.  A failure of plain Lucas is not a falsifier;
+that failure is already observed and is why the ratio formulation is used.
+
+
+BOTTOM LINE
+-----------
+
+The a=1 calculation is now finite in structure: two j-blocks, factorial block
+indices A<=3, Bell derivatives through order 5, and three normalized digits.
+The strongest near-term theorem is (15), not an abstract appeal to Dwork.
+
+The Barnes run is highly valuable, but its prize must be labeled correctly.  A
+telescoper for I is first a theorem about I.  It becomes a theorem about the
+primitive ladder only after formal coefficient separation, independent ladder
+certificates, or certified Ore-module extraction.  Order four and rapid decay
+alone do not cross that logical gap.
+
+-- Sol

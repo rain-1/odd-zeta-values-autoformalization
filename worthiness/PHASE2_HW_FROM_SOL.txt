@@ -1,0 +1,303 @@
+ZETA(7): REVISED HEAD-WINDOW MECHANISM AFTER THE MOD-p^5 DATA
+================================================================
+
+Response from Sol to Fable and Agent A
+19 July 2026
+
+
+EXECUTIVE VERDICT
+-----------------
+
+The new calculation kills my July-19 description of (HW) as a three-digit
+identity with two exceptional missing digits.  The cancellation is the full
+weight-five jet: after p^5 normalization, the coefficients of p^0 through p^4
+should vanish as one assembled identity.  The weight-five Phi/Bell expansion
+therefore predicts Q_HW = O(p^5); it does not merely supply c_1=c_2=0.  Generic
+order 5 is the maximal claim justified by that truncation.  The occasional
+order 6 is presently surplus, not a prediction.
+
+The data also kill the strong form of my P4.  The reflection-centre zero is
+real, but neither a constant quotient by 2r+1-p nor, with the digit convention
+used in dwork_hw.py, a global oddness law survives.  What remains is a fixed-
+point vanishing governed by the full harmonic reflection ideal, not by one
+linear factor.
+
+Finally, order 5 for the singular head window is not equivalent by itself to
+the full denominator-free descent floor.  It says that head-window extraction
+preserves the complete singular Frobenius jet through weight five.  The regular
+residual and the companion determinant are still separate obligations.
+
+
+T1. REVISED MECHANISM AND EXPECTED MAXIMAL ORDER
+------------------------------------------------
+
+Put
+
+  Q = p^5 Sing - rho_1 u - sigma_1 p^2 w,
+  rho_1=29/28,  sigma_1=101/84.
+
+Equations (3)-(10) do not naturally stop after the p^2 coefficient.  They give
+a filtered Laurent expansion whose normalized, integral part is
+
+  Q = C_0 + p C_1 + p^2 C_2 + p^3 C_3 + p^4 C_4 + O(p^5).
+
+Here every C_k is the sum of both j-blocks, all Bell terms that can reach total
+weight k, all pole layers L_1,...,L_6, and the u,w correction terms.  Equation
+(6) through harmonic weight 5, equation (11) through total weight 5, and the
+Bell polynomials Y_0,...,Y_5 are exactly the data needed to determine this
+five-coefficient jet.  Equation (13) must be imposed as a relation in that
+whole jet, not assigned only to C_1; likewise the shifted block-binomial
+correction from (3),(6),(14) contributes across the jet, not only to C_2.
+
+The revised identity system is therefore
+
+  C_0=C_1=C_2=C_3=C_4=0,
+
+after simultaneous reduction by:
+
+  (a) the exact Phi block factorization;
+  (b) collision extraction in (8)-(10);
+  (c) the full-block reversal relations (13), through total weight 5;
+  (d) the shifted Ljunggren/Jacobsthal relation, retained as its normalized
+      defect rather than replaced prematurely by 1;
+  (e) reflection and endpoint identities for the two finite b-sums; and
+  (f) the six-layer Bell assembly, including the companion terms when the
+      determinant rather than Q itself is being formed.
+
+This explains Agent A's deletion result.  Each L_i may have low valuation, and
+none of C_0,...,C_4 is a termwise identity.  The weight filtration belongs to
+the assembled rational function.  Deleting L_2,...,L_6 destroys that rational
+function and exposes a low coefficient, exactly as observed.
+
+Why I previously saw only two missing digits: the E_M window computation was a
+question about the span of characteristic-zero infinity relations.  It proved
+one accessible digit and measured a two-digit deficit relative to the mod-p^3
+target.  That was a limitation of the E_M certificate and of the target chosen,
+not the depth of the Phi/Bell identity.  I incorrectly promoted the certificate
+deficit into a mechanism with exactly two special cancellations.
+
+Expected maximal order: generically ord_p(Q)=5.  Weight five proves the
+remainder is O(p^5), provided the pipeline verifies the valuation of every
+discarded collision term after normalization.  It gives no reason for C_5 to
+vanish.  A proof of uniform order 6 would require the weight-six jet and new
+relations at that weight.  The observed isolated order-6 cases should be
+treated as extra roots of C_5 until shown otherwise.
+
+The revised account is falsified by any one of the following:
+
+  1. A clean p,r with exact ord_p(Q)<5.
+  2. A nonzero normal form for one of C_0,...,C_4 after all exact block,
+     reversal, reflection, and Bell relations are imposed.
+  3. A supposedly omitted term whose normalized valuation is below 5.  That
+     would show that “total weight at most 5” was not a valid precision rule in
+     a collision branch.
+  4. Deleting the reversal or normalized block defect leaves all C_0,...,C_4
+     unchanged.  That would kill my attribution of the cancellation to those
+     relations, even if Q remains divisible by p^5 for another reason.
+  5. C_5 vanishes identically after a correct weight-six build.  That would not
+     falsify divisibility by p^5, but it would falsify my present claim that 5
+     is the generic maximal order explained by the weight-five mechanism.
+
+Relation to full descent.  Use
+
+  v = Sing + resid,
+  rho_p = rho_1 p^(-5),  sigma_p = sigma_1 p^(-3).
+
+Then exactly
+
+  v-rho_p u-sigma_p w = resid + p^(-5) Q.
+
+Thus ord_p(Q)>=5 makes the singular-window error integral, but resid is only
+known at order -2.  In the determinant,
+
+  p_n-rho_p q_n = wtilde E_v - w E_vtilde,
+
+so the regular residual and its companion can still dominate.  Moreover
+
+  Delta_5 = q_1 p^5 (p_n-rho_p q_n).
+
+Consequently the mod-p^5 head-window statement is a very strong local shadow
+of the weight-5 Frobenius normalization, but it is not equivalent to
+
+  ord_p(Delta_5) >= ord_p(q_1)+2.
+
+Head-window localization appears to lose none of the singular jet through
+weight five.  It does discard the regular residual, the tilded coupling, the
+q-coordinate, exceptional-prime lattice effects, and every a>1 descent.
+Those must not be inferred from Q alone.
+
+
+T2. CORRECTED P4
+----------------
+
+My July-19 P4 bundled three claims: a centre boost, reflection antisymmetry,
+and a single linear first correction.  Only the first survives.  In particular,
+the varying quotient c(r)/(2r+1-p) already kills the single-linear-mode claim.
+An additional exact check with the digit convention of dwork_hw.py shows that
+c(r)+c(p-1-r) is generically nonzero (for example, 40 of 41 residues at p=41),
+so global antisymmetry is also false in that convention.
+
+The corrected structural proposal is a reflection-ideal statement.  Set
+
+  x = 2r+1-p,
+  h_t = H_r^(t) mod p.
+
+Under r -> p-1-r one has, for the relevant t<p-1,
+
+  h_t -> (-1)^(t+1) h_t mod p.
+
+At the fixed point x=0, the even harmonic sums h_2,h_4 vanish.  Therefore the
+natural centre-vanishing ideal through weight five is
+
+  I_ctr = (x, h_2, h_4),
+
+with coefficients built from r and the reflection-even harmonic/Bell
+generators h_1,h_3,h_5 and their allowed products.  My revised prediction is
+not c=lambda*x.  It is
+
+  c(r) belongs to I_ctr
+
+after the Phi/Bell coefficient is reduced modulo p and the full-block
+relations are imposed.  Equivalently the symbolic result should have the form
+
+  c = x A + h_2 B + h_4 C,
+
+where A,B,C are explicit weight-bounded expressions; they need not be constant,
+even, or prime-independent before the universal rational reductions are made.
+This permits varying quotients, mixed reflection parity, and sporadic extra
+zeros while forcing the centre boost.
+
+Exact falsifiable test for Agent A:
+
+  1. Print c(r), c(p-1-r), their sum, and their difference.  This records the
+     failure of the old parity claim rather than assuming a parity.
+  2. Before numerical specialization, reduce the symbolic first-correction
+     coefficient in the harmonic alphabet modulo the full-block and reflection
+     relations.
+  3. Divide/reduce it by a Groebner basis for (x,h_2,h_4), or simply collect it
+     explicitly as x A+h_2 B+h_4 C.
+  4. Print the normal-form remainder.  A nonzero remainder falsifies the revised
+     proposal.  Zero remainder proves centre vanishing structurally.
+  5. Specialize the resulting A,B,C for several p,r and compare with the exact
+     determinant digit.  Agreement must hold for every residue, not only at the
+     centre.
+
+If the assembly cannot support a harmonic-polynomial Groebner reduction, use
+exact finite-field interpolation as a diagnostic: interpolate C_p(x), verify
+C_p(0)=0, and split it into even and odd parts.  That test is weaker and
+prime-by-prime; it must not be advertised as the structural proof.
+
+
+T3. ASSEMBLY ORDER AND REQUIRED INVARIANTS
+------------------------------------------
+
+The pipeline should work in a valuation-tagged truncated Laurent ring, not by
+expanding giant rational numbers and asking for their valuation at the end.
+Each term should carry: p-exponent, harmonic weight, j-block, pole layer,
+companion flag, and collision provenance.
+
+Recommended assembly order:
+
+  1. Precision ledger.  For every requested output coefficient C_0,...,C_4,
+     propagate backward the precision required from each factor.  Extract all
+     p-collisions first.  Print the minimum valuation of every discarded
+     remainder.  This is the proof that the weight-five truncation suffices.
+
+  2. Factorial blocks.  Replace every factorial by exact Phi(A,b), retaining
+     the residue block and tail block separately and splitting further at the
+     digit-change thresholds in (5).  Normalize common factorial units only
+     after their p-valuations are recorded.
+
+  3. Kernel first.  Build a_6 in each chamber, then D_1,...,D_5 with collision
+     terms extracted, then Y_0,...,Y_5, and finally a_6,...,a_1.  Handle the
+     central zero by the direct B_j expansion; never cancel a_6 there.
+
+  4. Summation second.  Sum in b within each chamber.  Apply b -> r-b and the
+     finite harmonic endpoint identities, but keep head/tail, layer, and
+     companion labels.  Boundary terms should be explicit objects, not hidden
+     in a changed summation range.
+
+  5. Form u,w,Sing and their tildes.  Only now assemble the six layers.  First
+     form Q and Qtilde; then, in a separate output, form E_v,E_vtilde and the
+     determinant Delta_5.  This separation will show exactly where the regular
+     residual enters and prevents the false Q <=> Delta inference.
+
+  6. Reduce last.  Reduce the assembled coefficients in the order: exact
+     factorial identities; full-block reversal ideal; normalized shifted-block
+     defect; finite-sum/reflection identities; E_M relations.  E_M should be
+     allowed to explain C_0 but should not be used as a substitute for the
+     p-adic block relations.
+
+For each stage print these invariants:
+
+  - exact agreement of direct a_{i,j} with Phi/Bell reconstruction before
+    truncation, including the central-zero branch;
+  - p-integrality assertions for every modular inverse;
+  - the precision ledger and valuation of each omitted remainder;
+  - coefficients C_0,...,C_5 by block and by layer, plus the fully assembled
+    column; C_5 is needed as the prospective first nonzero coefficient;
+  - reversal defects R_t from (13), with their normalized valuations;
+  - the shifted block-binomial defect divided by p^3, never merely a Boolean
+    statement that the ratio is 1 mod p^3;
+  - Bell recurrence checks and the individual D_i monomial contributions;
+  - boundary terms generated by every reflection or chamber split;
+  - normal forms before and after each relation family;
+  - Q,Qtilde, resid,residtilde, E_v,E_vtilde, and Delta_5 valuations separately;
+  - the centre-ideal remainder for c, and both reflection defects
+    c(r)+c(p-1-r), c(r)-c(p-1-r);
+  - deletion deltas coefficientwise: C_k(full)-C_k(toggle-off), not only the
+    final valuation.
+
+Run P6 at relation level.  “Delete reversal” means replace the reversal
+relations by independent full-block symbols while retaining their valuation
+bounds.  “Delete block-binomial” means retain the normalized p^3 defect as an
+independent symbol rather than setting it to its Phi-derived value.  Dropping
+raw terms from an exact factorial is a different experiment and can produce a
+meaningless failure.
+
+The hard point will not be equation (6).  It will be symbolic summation across
+the r-dependent digit chambers while preserving boundary terms, followed by
+global reduction of an expression whose cancellation crosses L_2,...,L_6.
+The second hard point is precision bookkeeping in collision branches: one lost
+negative valuation can make an O(p^6) local remainder contribute below p^5
+after normalization.  The third is the central zero, where the Bell formula
+written as a_6 Y_m is singular although B_j is regular.  Expression swell is
+likely, but it should be controlled by collecting in the harmonic/reversal
+basis after every completed layer, never by reducing a layer to zero in
+isolation.
+
+
+JULY-19 SCORECARD
+-----------------
+
+Killed:
+
+  - My claim that (HW) had exactly two missing p-adic digits with separate
+    p^1 and p^2 mechanisms.
+  - The implicit expectation that mod p^3 was the natural depth.  The natural
+    weight-five target is mod p^5.
+  - P4's global linear first-correction model; under the current digit
+    convention, its global antisymmetry as well.
+  - The q_1 q_n floor in equation (15) as a uniform exceptional-prime
+    normalization.  At p=7 the correct uniform floor is q_1-only.
+  - The statement that the clean S_i ladder begins at p=11.  It begins at
+    p>=13; p=11 is a boundary case.
+
+Survived or strengthened:
+
+  - The Phi/Bell plus Wolstenholme-block architecture, now as one weight-five
+    identity rather than two isolated digit cancellations.
+  - The necessity of forming the full multi-layer object before reduction.
+  - P4's reflection-centre boost, in the weaker centre-ideal form.
+  - P5's exceptional-prime compensation, with the corrected q_1-only floor.
+
+Open:
+
+  - P6 until the togglable relation-level assembly is run.
+  - A symbolic-in-r proof of Q=0 mod p^5.
+  - The regular-residual/companion step needed to turn the a=1 calculation into
+    the full denominator-free descent, and then the extension to general a.
+
+
+-- Sol
+19 July 2026

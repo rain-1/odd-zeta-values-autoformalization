@@ -1,0 +1,305 @@
+========================================================================
+IRRATIONALITY OF zeta(3)  --  APERY'S THEOREM VIA BEUKERS' INTEGRALS
+A self-contained proof, formatted for an LLM reader.
+========================================================================
+
+NOTE ON NOTATION
+  - All mathematics is written in LaTeX source notation (e.g. \zeta(3),
+    \binom{n}{k}, \frac{a}{b}, \int_0^1, \sum_{k=0}^n). Nothing here is
+    rendered; the LaTeX is the text.
+  - $...$ marks inline math; $$...$$ marks a displayed equation.
+  - Read carefully: the entire proof is three properties of one integral
+    J_n, followed by a one-line arithmetic contradiction. Sections 2 and
+    3 establish the three properties; Section 4 is the kill.
+
+------------------------------------------------------------------------
+THEOREM (Apery, 1978; this proof: Beukers, 1979)
+------------------------------------------------------------------------
+$\zeta(3) = \sum_{m=1}^{\infty} m^{-3}$ is irrational.
+
+------------------------------------------------------------------------
+CONVENTIONS AND PREREQUISITE FACTS
+------------------------------------------------------------------------
+(C1) $d_n := \operatorname{lcm}(1,2,\dots,n)$, the least common multiple.
+     Key fact (equivalent to the Prime Number Theorem):
+        $$\frac{1}{n}\ln d_n \longrightarrow 1 \quad (n\to\infty),
+          \qquad\text{i.e.}\qquad d_n = e^{\,n(1+o(1))}.$$
+     Consequence used repeatedly: if $1 \le m \le n$ then
+     $d_n / m \in \mathbb{Z}$ (and more generally $d_n^k/m^k \in \mathbb{Z}$),
+     and $d_n \sum_{m=1}^{n} 1/m \in \mathbb{Z}$,
+     $d_n^2 \sum_{m=1}^{n} 1/m^2 \in \mathbb{Z}$,
+     $d_n^3 \sum_{m=1}^{n} 1/m^3 \in \mathbb{Z}$.
+
+(C2) Shifted Legendre polynomial, Rodrigues form:
+        $$P_n(x) := \frac{1}{n!}\,\frac{d^n}{dx^n}\big(x^n(1-x)^n\big).$$
+     Expanding $x^n(1-x)^n = \sum_{k=0}^n \binom{n}{k}(-1)^k x^{n+k}$ and
+     applying $\frac{d^n}{dx^n} x^{n+k} = \frac{(n+k)!}{k!}x^k$ gives the
+     explicit coefficients
+        $$P_n(x) = \sum_{k=0}^{n} c_k\, x^k,
+          \qquad c_k = (-1)^k \binom{n}{k}\binom{n+k}{k} \in \mathbb{Z}.$$
+     In particular $P_n \in \mathbb{Z}[x]$, of degree $n$.
+
+(C3) APERY NUMBERS.
+        $$A_n := \sum_{k=0}^{n}\binom{n}{k}^2\binom{n+k}{k}^2.$$
+     Note $A_n = \sum_{k=0}^n c_k^2$, since $c_k^2 = \binom{n}{k}^2\binom{n+k}{k}^2$.
+     Thus $A_n \in \mathbb{Z}$. (First values: $A_0=1, A_1=5, A_2=73, A_3=1445,\dots$)
+
+(C4) THE DIOPHANTINE PRINCIPLE (the "kill", stated abstractly).
+     If $(E_n)_{n\ge1}$ is a sequence with $E_n \in \mathbb{Z}$,
+     $E_n \ne 0$ for all large $n$, and $E_n \to 0$, then no such sequence
+     exists -- contradiction. (A nonzero integer has absolute value >= 1.)
+     Every irrationality proof below manufactures exactly such an $E_n$
+     under the assumption that $\zeta(3)$ is rational.
+
+------------------------------------------------------------------------
+STRATEGY (the whole proof in one paragraph)
+------------------------------------------------------------------------
+Build one real number $J_n$ with three properties:
+   (P1) ARITHMETIC:  $J_n = A_n\,\zeta(3) - B_n$, where $A_n \in \mathbb{Z}$
+        and $B_n \in \mathbb{Q}$ has bounded denominator: $2 d_n^3 B_n \in \mathbb{Z}$.
+   (P2) NONVANISHING: $J_n > 0$ (hence $J_n \ne 0$).
+   (P3) SMALLNESS:  $0 < J_n \le \zeta(3)\,(\sqrt2-1)^{4n}$, decaying
+        geometrically at rate $(\sqrt2-1)^4 = 1/(1+\sqrt2)^4 \approx 0.0294$.
+If $\zeta(3) = p/q$ were rational, then $2 q d_n^3 J_n$ is (by P1) a nonzero
+integer (by P2), yet (by P3, plus $d_n^3 \approx e^{3n}$) tends to 0, because
+$e^3 (\sqrt2-1)^4 \approx 0.591 < 1$. That contradicts (C4). Done.
+
+The only real work is establishing (P1) [Section 2] and (P2)+(P3) [Section 3].
+
+========================================================================
+SECTION 1.  THE AUXILIARY INTEGRAL
+========================================================================
+Define, for $n \ge 0$,
+   $$J_n := \frac{1}{2}\int_0^1\!\!\int_0^1
+            \frac{-\ln(xy)}{1-xy}\,P_n(x)\,P_n(y)\,dx\,dy.$$
+
+Seed case $n=0$ (where $P_0 \equiv 1$): expand $\frac{1}{1-xy}=\sum_{k\ge0}(xy)^k$
+and use $-\ln(xy) = -\ln x - \ln y$, together with
+$\int_0^1 x^k(-\ln x)\,dx = \frac{1}{(k+1)^2}$ and $\int_0^1 x^k\,dx=\frac{1}{k+1}$:
+   $$\int_0^1\!\!\int_0^1 \frac{-\ln(xy)}{1-xy}\,dx\,dy
+     = \sum_{k\ge0}\frac{2}{(k+1)^3} = 2\zeta(3),
+     \qquad\text{so } J_0 = \zeta(3).$$
+So $J_n$ is a deformation of $\zeta(3)$ by the polynomial weights $P_n$.
+
+========================================================================
+SECTION 2.  ARITHMETIC:  $J_n = A_n\,\zeta(3) - B_n$   (proves P1)
+========================================================================
+Everything reduces to one family of monomial integrals. For integers
+$r,s \ge 0$ define
+   $$L(r,s) := \int_0^1\!\!\int_0^1 \frac{-\ln(xy)}{1-xy}\, x^r y^s\,dx\,dy.$$
+
+LEMMA 2.1 (evaluation of $L(r,s)$).
+   (a) Diagonal ($r=s$):
+       $$L(r,r) = 2\zeta(3) - 2\sum_{m=1}^{r}\frac{1}{m^3}.$$
+   (b) Off-diagonal ($r \ne s$):
+       $$L(r,s) = \frac{1}{\,r-s\,}\sum_{m=s+1}^{r}\frac{1}{m^2}
+                 \ \in\ \mathbb{Q}
+                 \qquad (\text{convention: for } s>r \text{ read } L(s,r)).$$
+   In particular the off-diagonal terms carry NO $\zeta$-value at all --
+   all the $\zeta(2)$ pieces cancel, leaving pure rationals.
+
+Proof of Lemma 2.1.
+   Expand $\frac{1}{1-xy}=\sum_{k\ge0}(xy)^k$ and $-\ln(xy)=-\ln x-\ln y$.
+   Integrating term by term,
+     $$L(r,s) = \sum_{k\ge0}
+        \Big[\underbrace{\tfrac{1}{(r+k+1)^2}}_{\int x^{r+k}(-\ln x)}
+             \underbrace{\tfrac{1}{s+k+1}}_{\int y^{s+k}}
+           + \tfrac{1}{r+k+1}\,\tfrac{1}{(s+k+1)^2}\Big].$$
+   Put $u = r+k+1,\ v = s+k+1$, so $u-v = r-s$ is constant in $k$.
+
+   (a) If $r=s$ then $u=v$ and each bracket is $2/u^3$, giving
+       $L(r,r)=\sum_{k\ge0} 2/(r+k+1)^3 = 2\sum_{m\ge r+1} m^{-3}
+              = 2\zeta(3) - 2\sum_{m=1}^{r} m^{-3}$.
+
+   (b) If $r\ne s$, use the partial-fraction identity
+       $\frac{1}{uv}=\frac{1}{u-v}\big(\frac1v-\frac1u\big)$ twice to get
+       $$\frac{1}{u^2 v}+\frac{1}{u v^2}
+         = \frac{1}{u-v}\Big(\frac{1}{v^2}-\frac{1}{u^2}\Big).$$
+       [Direct check: $\frac{1}{u^2v}=\frac{1}{(u-v)^2}(\frac1v-\frac1u)-\frac{1}{(u-v)}\frac{1}{u^2}$
+        and $\frac{1}{uv^2}=\frac{1}{(u-v)}\frac{1}{v^2}-\frac{1}{(u-v)^2}(\frac1v-\frac1u)$;
+        add.]
+       Summing the telescoping tail over $k\ge0$:
+       $$L(r,s)=\frac{1}{r-s}\sum_{k\ge0}\Big(\frac{1}{(s+k+1)^2}-\frac{1}{(r+k+1)^2}\Big)
+               =\frac{1}{r-s}\sum_{m=s+1}^{r}\frac{1}{m^2}.$$
+   QED (Lemma 2.1).
+
+Now assemble. Writing $P_n(x)P_n(y)=\sum_{i,j} c_i c_j\, x^i y^j$ with
+$c_i\in\mathbb{Z}$ (C2),
+   $$J_n = \frac12\sum_{i,j} c_i c_j\, L(i,j)
+         = \frac12\Big[\sum_i c_i^2 L(i,i) + \sum_{i\ne j} c_i c_j L(i,j)\Big].$$
+Insert Lemma 2.1:
+   $$J_n = \underbrace{\Big(\sum_i c_i^2\Big)}_{=\,A_n}\zeta(3)
+          \ -\ \underbrace{\Big[\sum_i c_i^2\sum_{m=1}^i \tfrac{1}{m^3}
+             - \tfrac12\sum_{i\ne j} c_i c_j\,\tfrac{1}{i-j}\sum_{m=j+1}^i \tfrac{1}{m^2}\Big]}_{=\,B_n}.$$
+
+Hence
+   $$\boxed{\,J_n = A_n\,\zeta(3) - B_n,\qquad
+            A_n=\sum_i c_i^2=\sum_{k=0}^n\binom{n}{k}^2\binom{n+k}{k}^2\in\mathbb{Z}.\,}$$
+
+INTEGRALITY OF THE DENOMINATOR:  $2 d_n^3 B_n \in \mathbb{Z}$.
+   - First sum: $2 d_n^3 \sum_i c_i^2 \sum_{m\le i} m^{-3}$. Since $i\le n$,
+     $d_n^3 \sum_{m\le i} m^{-3}\in\mathbb{Z}$ (C1) and $c_i^2\in\mathbb{Z}$;
+     integer times 2 is an integer.
+   - Second sum: $2 d_n^3\cdot\tfrac12\sum_{i\ne j} c_i c_j \tfrac{1}{i-j}\sum_{m=j+1}^i m^{-2}
+       = \sum_{i\ne j} c_i c_j\,\big(\tfrac{d_n}{i-j}\big)\big(d_n^2\sum_m m^{-2}\big)$.
+     Here $\tfrac{d_n}{i-j}\in\mathbb{Z}$ because $|i-j|\le n$ (C1), and
+     $d_n^2\sum_{m} m^{-2}\in\mathbb{Z}$ (C1), and $c_i c_j\in\mathbb{Z}$.
+   Both pieces are integers, so $2 d_n^3 B_n\in\mathbb{Z}$.  (P1) is proved.
+
+========================================================================
+SECTION 3.  ANALYSIS:  positivity and smallness   (proves P2 and P3)
+========================================================================
+
+LEMMA 3.1 (transformation to a manifestly positive integral).
+   $$\int_0^1\!\!\int_0^1 \frac{-\ln(xy)}{1-xy}P_n(x)P_n(y)\,dx\,dy
+     \;=\;
+     \int_0^1\!\!\int_0^1\!\!\int_0^1
+       \frac{\big(x(1-x)\,y(1-y)\,z(1-z)\big)^n}{\big(1-(1-xy)z\big)^{n+1}}
+       \,dx\,dy\,dz.$$
+   Consequently
+     $$J_n=\frac12\int_0^1\!\!\int_0^1\!\!\int_0^1
+        \frac{\big(x(1-x)y(1-y)z(1-z)\big)^n}{\big(1-(1-xy)z\big)^{n+1}}\,dx\,dy\,dz.$$
+
+Proof of Lemma 3.1.  Three moves: rewrite the log as a $z$-integral,
+integrate by parts in $x$, apply an involution in $z$, integrate by parts in $y$.
+
+STEP A (log becomes a z-integral).  For $0<xy\le 1$,
+   $$\int_0^1 \frac{dz}{1-(1-xy)z} = \frac{-\ln(xy)}{1-xy}$$
+   (antiderivative $-\frac{1}{1-xy}\ln(1-(1-xy)z)$ evaluated at $z=1,0$).
+   Therefore the LHS equals
+   $\displaystyle \iiint_{[0,1]^3} \frac{P_n(x)P_n(y)}{1-(1-xy)z}\,dx\,dy\,dz.$
+
+STEP B (integrate by parts n times in x).  With
+$P_n(x)=\frac{1}{n!}\frac{d^n}{dx^n}(x^n(1-x)^n)$, all boundary terms vanish
+because $x^n(1-x)^n$ and its first $n-1$ derivatives are 0 at $x=0$ and $x=1$.
+Using $\frac{\partial^n}{\partial x^n}\frac{1}{1-(1-xy)z}=\frac{n!\,(-yz)^n}{(1-(1-xy)z)^{n+1}}$
+(chain rule, $\partial_x(1-(1-xy)z)=yz$),
+   $$\int_0^1 \frac{P_n(x)}{1-(1-xy)z}\,dx
+     = \frac{(-1)^n}{n!}\int_0^1 x^n(1-x)^n\,\frac{n!(-yz)^n}{(1-(1-xy)z)^{n+1}}\,dx
+     = \int_0^1 \frac{x^n(1-x)^n\,(yz)^n}{(1-(1-xy)z)^{n+1}}\,dx.$$
+   The integral is now
+   $\displaystyle \iiint \frac{P_n(y)\,x^n(1-x)^n\,(yz)^n}{(1-(1-xy)z)^{n+1}}\,dx\,dy\,dz.$
+
+STEP C (involution in z to prepare the y-integration).  For fixed $x,y$
+substitute
+   $$z=\frac{1-w}{1-(1-xy)w}\quad\Longleftrightarrow\quad w=\frac{1-z}{1-(1-xy)z},$$
+   an involution of $[0,1]$ ($z=0\leftrightarrow w=1$, $z=1\leftrightarrow w=0$).
+   Direct computation gives the two identities
+     $$1-(1-xy)z=\frac{xy}{1-(1-xy)w},\qquad
+       dz=\frac{-\,xy}{(1-(1-xy)w)^2}\,dw,$$
+   and $\ yz=\dfrac{y(1-w)}{1-(1-xy)w}$.  Substituting these into the
+   $z$-dependent factor,
+     $$\frac{(yz)^n}{(1-(1-xy)z)^{n+1}}\,dz
+       \;=\; \frac{(1-w)^n}{x^n\,(1-(1-xy)w)}\,dw.$$
+   (All powers of $(1-(1-xy)w)$ collapse to exponent $-1$; the $y^n$ from
+   $(yz)^n$ cancels one $y^n$ from $(xy)^n$, leaving $x^{-n}$.)
+   After the substitution the $x^n(1-x)^n$ factor's $x^n$ cancels the new
+   $x^{-n}$, and the integral becomes
+   $\displaystyle \iiint \frac{P_n(y)\,(1-x)^n(1-w)^n}{1-(1-xy)w}\,dx\,dy\,dw.$
+
+STEP D (integrate by parts n times in y).  Identical to Step B with the
+roles of the variables permuted; using
+$\frac{\partial^n}{\partial y^n}\frac{1}{1-(1-xy)w}=\frac{n!(-xw)^n}{(1-(1-xy)w)^{n+1}}$,
+   $$\int_0^1 \frac{P_n(y)}{1-(1-xy)w}\,dy
+     = \int_0^1 \frac{y^n(1-y)^n(xw)^n}{(1-(1-xy)w)^{n+1}}\,dy.$$
+   Collecting the surviving factors
+   $(1-x)^n\cdot(1-w)^n\cdot y^n(1-y)^n\cdot (xw)^n
+     = \big(x(1-x)\,y(1-y)\,w(1-w)\big)^n$
+   and renaming $w\to z$ yields exactly the claimed triple integral.
+QED (Lemma 3.1).
+
+POSITIVITY (P2).  The integrand
+$\big(x(1-x)y(1-y)z(1-z)\big)^n / \big(1-(1-xy)z\big)^{n+1}$ is strictly
+positive on the open cube $(0,1)^3$ (numerator > 0; and
+$0<1-(1-xy)z<1$ there). Hence $J_n>0$; in particular $J_n\ne 0$.
+
+LEMMA 3.2 (the maximum of the base function).  On $[0,1]^3$,
+   $$g(x,y,z):=\frac{x(1-x)\,y(1-y)\,z(1-z)}{\,1-(1-xy)z\,}
+     \quad\text{satisfies}\quad
+     \max_{[0,1]^3} g = (\sqrt2-1)^4 = 17-12\sqrt2 \approx 0.0294.$$
+   (Proof: $g=0$ on the boundary and $g>0$ inside, so the max is at an
+   interior critical point; solving $\nabla(\log g)=0$ -- an elementary if
+   tedious calculus computation -- gives this value. Note the useful
+   identity $(\sqrt2-1)^4 = 1/(1+\sqrt2)^4$, since $(\sqrt2-1)(\sqrt2+1)=1$.)
+
+SMALLNESS (P3).  Factor the triple integrand as $g(x,y,z)^n\cdot\frac{1}{1-(1-xy)z}$.
+By Lemma 3.2, $g^n \le (\sqrt2-1)^{4n}$ pointwise, so
+   $$J_n=\frac12\iiint g^n\,\frac{dx\,dy\,dz}{1-(1-xy)z}
+        \ \le\ \frac12(\sqrt2-1)^{4n}\iiint\frac{dx\,dy\,dz}{1-(1-xy)z}
+        \ =\ \frac12(\sqrt2-1)^{4n}\cdot 2\zeta(3).$$
+   (The last integral is the seed $2\zeta(3)$ from Section 1.) Hence
+   $$\boxed{\,0 < J_n \le \zeta(3)\,(\sqrt2-1)^{4n}.\,}$$
+
+========================================================================
+SECTION 4.  THE KILL (Diophantine contradiction)
+========================================================================
+Assume, for contradiction, that $\zeta(3)=p/q$ with $p,q\in\mathbb{Z}$, $q\ge1$.
+Consider
+   $$E_n := 2\,q\,d_n^3\,J_n.$$
+
+(i) $E_n\in\mathbb{Z}$.  By (P1), $J_n=A_n\zeta(3)-B_n=A_n\frac{p}{q}-B_n$, so
+   $$E_n = 2 q d_n^3\Big(A_n\tfrac{p}{q}-B_n\Big)
+         = 2 d_n^3 A_n\,p \;-\; q\,\big(2 d_n^3 B_n\big).$$
+   The first term is an integer ($A_n,d_n^3,p\in\mathbb{Z}$); the second is
+   an integer because $2 d_n^3 B_n\in\mathbb{Z}$ (Section 2) and $q\in\mathbb{Z}$.
+   So $E_n\in\mathbb{Z}$.
+
+(ii) $E_n>0$ for every $n$.  Because $J_n>0$ (P2) and $q,d_n^3>0$.
+
+(iii) $E_n\to 0$.  By (P3) and (C1), with $d_n=e^{\,n(1+o(1))}$,
+   $$0<E_n \le 2 q\, d_n^3\,\zeta(3)\,(\sqrt2-1)^{4n}
+     = 2q\zeta(3)\,\big(d_n^3(\sqrt2-1)^{4n}\big)
+     = 2q\zeta(3)\,\Big(e^{3(1+o(1))}(\sqrt2-1)^4\Big)^{n}.$$
+   The base tends to $e^3(\sqrt2-1)^4 = \dfrac{e^3}{(1+\sqrt2)^4}
+     = \dfrac{20.0855\ldots}{33.9705\ldots} = 0.5913\ldots < 1$,
+   so $E_n\to 0$.
+
+By (i)-(iii), $(E_n)$ is a sequence of positive integers converging to 0.
+For all large $n$ this forces $0<E_n<1$, which is impossible for an integer
+(C4). The assumption $\zeta(3)\in\mathbb{Q}$ is therefore false.
+
+   Q.E.D.  $\zeta(3)$ is irrational.
+
+========================================================================
+REMARKS
+========================================================================
+R1 (the reusable skeleton).  The proof is exactly: build $J_n$ that is
+   (P1) an integer combination after clearing $d_n^k$, (P2) nonzero, and
+   (P3) exponentially small, then run (C4). The tension is the single
+   inequality  $d_n^k \cdot (\text{smallness}) \to 0$, i.e.
+   $e^{k}\cdot(\text{decay rate}) < 1$. For $\zeta(3)$: $k=3$, decay
+   $(\sqrt2-1)^4$, and $e^3(\sqrt2-1)^4 \approx 0.591 < 1$ wins.
+
+R2 (where the constant $(\sqrt2-1)^4$ comes from, independently).  Both
+   $A_n$ and the sequence $B_n' := d_n^3 B_n$ satisfy the Apery recurrence
+     $$n^3 u_n = (34 n^3 - 51 n^2 + 27 n - 5)\,u_{n-1} - (n-1)^3\,u_{n-2}.$$
+   Dividing by $n^3$ and letting $n\to\infty$ gives the characteristic
+   equation $x^2 - 34 x + 1 = 0$, with roots $17 \pm 12\sqrt2 = (1\pm\sqrt2)^4$.
+   By Poincare--Perron the dominant solution grows like
+   $\alpha^n$ with $\alpha=(1+\sqrt2)^4\approx 33.97$, while $J_n$ is the
+   recessive solution and decays like $\alpha^{-n}=(\sqrt2-1)^{4n}$ --
+   matching the integral bound of Section 3.
+
+R3 (irrationality measure).  Quantifying (iii) yields an explicit
+   irrationality measure; Apery's data give $\mu(\zeta(3))\le 13.42$, later
+   sharpened (Hata; Rhin--Viola) to $\mu(\zeta(3))\le 5.5139\ldots$ via a
+   symmetry-group refinement (the "group method") of the same integral.
+
+R4 (the zeta(2) analogue).  Identical architecture in TWO variables:
+     $I_n=\int_0^1\!\int_0^1 \frac{P_n(x)P_n(y)}{1-xy}\,dx\,dy = a_n\zeta(2)-b_n$,
+   with $a_n\in\mathbb{Z}$, $d_n^2 b_n\in\mathbb{Z}$, positive form
+   $I_n=\iint \frac{(x(1-x)y(1-y))^n}{(1-xy)^{n+1}}\ge0$, decay rate
+   $\varphi^{-5}=((\sqrt5-1)/2)^5$, and the winning inequality
+   $e^2\varphi^{-5}\approx 0.666<1$ with denominator $d_n^2$.
+
+R5 (the step to a "one of ..." theorem).  One does NOT use a single small
+   number but a FAMILY of $\mathbb{Z}$-linear forms
+     $c_{0,n} + c_{5,n}\zeta(5) + c_{7,n}\zeta(7) + \dots$
+   with the SAME architecture (small, nonzero, integer after clearing
+   denominators). The abstract principle (C4) generalizes: if a fixed
+   finite set of reals admits nonzero integer combinations tending to 0,
+   at least one of the reals is irrational -- but the argument is blind to
+   WHICH one. That blindness is exactly why "one of zeta(5), zeta(7),
+   zeta(9), zeta(11) is irrational" (Zudilin 2001) does not isolate any
+   single value.
+========================================================================

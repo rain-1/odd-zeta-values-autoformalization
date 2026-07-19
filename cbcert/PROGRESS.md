@@ -36,6 +36,19 @@ Whole project builds green (sorries tracked below; build must stay green).
   a clean final: (a) prove nonvanishing, (b) restate main thms as
   `x=0 ∨ 1≤padicValRat`, or (c) keep the residue-congruence form as canonical.
 
+## Round-2 FINAL state (assembly reordering DONE)
+- **The entire `ZMod p` reordering is PROVEN sorry-free in `Main`**: `res_natCast`,
+  `res_EM_gen`, `cert_sum_j`, `res_congruence_of` (coefficient-agnostic). `res_congruence_w`
+  and `res_congruence_wt` are proven via it; their ONLY remaining sorries are the 6 decay
+  facts `EM n M (acoeff/atcoeff n) = 0` = `Decay.decay_a`/`decay_at` (Lemma A).
+- **To finish the (W) congruences (once A2's `Decay` + A1's `PartialFraction` land):**
+  in `Main`, add `import Cbcert.Decay`, and replace the 6 `sorry`s in `res_congruence_w/wt`
+  with the commented `Decay.decay_a n M (by omega) (by omega)` / `Decay.decay_at …` calls
+  (already written as comments next to each sorry). That closes (W)/(W̃) and hence
+  `pn_valuation'` modulo ONLY nonvanishing.
+- Remaining after that: `w/wt/pn_ne_zero` (nonvanishing — separate obligation, see SOUNDNESS
+  NOTE) and Lemma A itself (`Decay`, `PartialFraction`).
+
 ## Round-2 integration update
 - **Worker C (Lemma C) DONE.** FINDING: `integrality_a`/`integrality_at` are FALSE as
   originally stated — need `j ≤ n` (else a pole diff `m−j` can be `≡0 mod p`) and `p ≠ 2`

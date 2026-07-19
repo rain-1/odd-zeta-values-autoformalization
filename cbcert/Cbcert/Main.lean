@@ -65,6 +65,13 @@ lemma pInt_sub [Fact p.Prime] {x y : ℚ} (hx : pInt p x) (hy : pInt p y) :
     pInt p (x - y) := by
   rw [sub_eq_add_neg]; exact pInt_add hx (pInt_neg hy)
 
+lemma pInt_one : pInt p 1 := by simp [pInt]
+
+lemma pInt_pow [Fact p.Prime] {x : ℚ} (hx : pInt p x) (k : ℕ) : pInt p (x ^ k) := by
+  induction k with
+  | zero => simpa using (pInt_one : pInt p 1)
+  | succ k ih => rw [pow_succ]; exact pInt_mul ih hx
+
 /-! ## The residue map -/
 
 /-- Residue of a rational modulo `p` (well-defined on `p`-integers). -/
@@ -196,6 +203,22 @@ lemma res_sum [Fact p.Prime] {ι : Type*} {s : Finset ι} {f : ι → ℚ}
         res_add (h a (Finset.mem_insert_self _ _))
           (pInt_sum (fun i hi => h i (Finset.mem_insert_of_mem hi))),
         ih (fun i hi => h i (Finset.mem_insert_of_mem hi))]
+
+lemma res_one : res p 1 = 1 := by simp [res]
+
+lemma res_intCast [Fact p.Prime] (m : ℤ) : res p ((m : ℚ)) = (m : ZMod p) := by
+  have hp1 : ¬ (p : ℤ) ∣ 1 := by
+    intro h
+    have h2 : (p : ℤ) ≤ 1 := Int.le_of_dvd one_pos h
+    have hp2 : p ≤ 1 := by exact_mod_cast h2
+    have := (Fact.out : p.Prime).one_lt; omega
+  rw [Rat.intCast_eq_divInt, res_divInt m 1 one_ne_zero hp1]; simp
+
+lemma res_pow [Fact p.Prime] {x : ℚ} (hx : pInt p x) (k : ℕ) :
+    res p (x ^ k) = (res p x) ^ k := by
+  induction k with
+  | zero => simpa using res_one
+  | succ k ih => rw [pow_succ, pow_succ, res_mul (pInt_pow hx k) hx, ih]
 
 /-! ## `p`-integrality of the functionals (from Lemma C) -/
 

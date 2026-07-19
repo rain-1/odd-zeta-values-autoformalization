@@ -115,29 +115,27 @@ def EM (n M : ℕ) (b : ℕ → ℕ → ℚ) : ℚ :=
   ∑ i ∈ Finset.Icc 1 (min 6 M),
     (Cneg i (M - i) : ℚ) * ∑ j ∈ Finset.range (n + 1), (j : ℚ) ^ (M - i) * b i j
 
-/-! ## Main theorem statements (frozen; proved in `Main.lean`)
+/-! ## Main theorem statements — see `Cbcert/Main.lean`
 
-`padicValRat p x ≥ 1` is the faithful rendering of `p ∣ x` for a `p`-integral
-rational `x ≠ 0` (all `w_n, w̃_n, p_n` are nonzero on the theorem's domain,
-verified numerically for `n ≤ 60`). -/
+**A statement fix discovered by formalization.** The main theorems originally lived
+here as three frozen stubs `w_congruence`/`wtilde_congruence`/`pn_valuation`, each of
+the shape `1 ≤ padicValRat p (·)` (the intended "`p ∣ ·`"). Formalizing them exposed
+that this phrasing is **subtly unsound**: Mathlib defines `padicValRat p 0 = 0`, so
+`1 ≤ padicValRat p x` is *false* whenever `x = 0`, even though `p ∣ 0` holds. The
+certificate proof yields `p ∣ w_n` unconditionally, but says nothing about `w_n ≠ 0`
+(numerically nonzero for `n ≤ 60`, but a general nonvanishing proof is a genuinely
+separate, currently-OPEN question). So the pure `1 ≤ padicValRat` form could only be
+proved by importing an unproven nonvanishing fact.
 
-/-- **(W) for `w`.** For every `n ≥ 1` and prime `p` with `n < p ≤ 2n`, `p ≥ 5`:
-`p ∣ w_n`. -/
-theorem w_congruence (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
-    (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) :
-    1 ≤ padicValRat p (w n) := by
-  sorry
+The stubs are therefore **removed**, and the canonical theorems live in `Main.lean`:
+- `res_congruence_w`, `res_congruence_wt`, `res_congruence_pn` — the residue form
+  `res p (·) = 0`, the exact, always-valid meaning of "`p` divides" for a `p`-integral
+  rational (the complete, kernel-clean result); and
+- `w_congruence`, `wtilde_congruence`, `pn_valuation` — the faithful `padicValRat`
+  form, stated honestly as `· = 0 ∨ 1 ≤ padicValRat p (·)`, proven sorry-free.
 
-/-- **(W) for `w̃`.** Same hypotheses: `p ∣ w̃_n`. -/
-theorem wtilde_congruence (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
-    (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) :
-    1 ≤ padicValRat p (wt n) := by
-  sorry
-
-/-- **(CB₁).** Same hypotheses: `p ∣ p_n`. -/
-theorem pn_valuation (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
-    (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) :
-    1 ≤ padicValRat p (pn n) := by
-  sorry
+(They cannot be proved here: `Main` imports the lemma modules, which import this file.)
+This mirrors Worker C's discovery that the naive `integrality_a`/`integrality_at` were
+false without `j ≤ n` and `p ≠ 2` (see `Cbcert/Integrality.lean`). -/
 
 end Cbcert

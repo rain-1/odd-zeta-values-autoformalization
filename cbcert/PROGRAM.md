@@ -23,23 +23,27 @@ functionals w_n, w̃_n ≡ 0 (mod p), whence the band theorem (CB₁): p | p_n.
 ## The ladder
 
 ```
-L0  Definitions                                             [cbcert — in flight]
+L0  Definitions                                             [cbcert — DONE]
     R_n, partial fractions a_{i,j}, ã_{i,j}, harmonic sums H_j^{(i)},
     functionals u,w,v (+tilded), ladders q_n, p_n, p̃_n, d_n = lcm(1..n).
-    All finite ℚ-objects. Source of truth: cbcert/SPEC.md.
+    All finite ℚ-objects. Cbcert/Defs.lean (+ Numeric.lean gate). Source: SPEC.md.
 
-L1  Decay relations                                         [cbcert Lemma A]
+L1  Decay relations                                         [cbcert Lemma A — DONE]
     E_M(a) = 0 for 1 ≤ M ≤ 4n+4 (resp. 4n+2 tilded): the Laurent expansion of
-    R_n at ∞. Route: RatFunc ℚ → LaurentSeries. Moderate difficulty.
+    R_n at ∞. Cbcert/{PartialFraction,Decay}.lean — proved via the cleared PF
+    identity + an elementary power-series (ℚ⟦X⟧) route, E_M(a)=[X^M]R_n(1/X)=0.
 
-L2  Certificate identity                                    [cbcert Lemma B]
+L2  Certificate identity                                    [cbcert Lemma B — DONE]
     Three-term certificate (c₃, c_{p+2}, c_{2p+1}) = (1, −2, 1) in ZMod p:
     pure binomial arithmetic (x^p = x, p | C(p,m), C(−i,r) signs).
-    The mathematically new part and the EASIEST to formalize.
+    Cbcert/Certificate.lean. The mathematically new part.
 
-L3  Assembly                                                [cbcert main]
-    p-integrality (Lemma C) + L1 + L2 ⇒ (W): p | w_n, w̃_n for n < p ≤ 2n
-    ⇒ (CB₁): p | p_n (Prop 1: determinant step).
+L3  Assembly                                                [cbcert main — DONE]
+    p-integrality (Lemma C, Cbcert/Integrality.lean) + L1 + L2 ⇒ (W): p | w_n, w̃_n
+    for n < p ≤ 2n ⇒ (CB₁): p | p_n. Cbcert/Main.lean (residue map + ZMod-p
+    reordering). Canonical theorems res_congruence_{w,wt,pn}, kernel-clean.
+    SCOPE NOTE: general nonvanishing w_n,w̃_n,p_n ≠ 0 is explicitly OPEN (not needed
+    for the residue-form theorems; only sharpens the padicValRat disjunct).
 
 L4  Error exhibit                                           [in flight, 2026-07-19]
     Construction-derived P₂ = 1190161/384; ¬(d₂⁵·P₂ ∈ ℤ);

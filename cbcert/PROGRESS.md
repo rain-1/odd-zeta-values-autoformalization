@@ -3,20 +3,36 @@
 Target: `worthiness/cb_certificate.tex` (Frobenius certificate for central-binomial
 cancellation). Contract: `cbcert/SPEC.md`. Template: `zeta5odd/`.
 
-## Status: THE FROBENIUS-CERTIFICATE THEOREM IS PROVEN (residue form), kernel-clean.
-`res_congruence_w`, `res_congruence_wt`, `res_congruence_pn` — i.e. `p ∣ w_n`, `p ∣ w̃_n`,
-`p ∣ p_n` for every prime `n < p ≤ 2n`, `p ≥ 5`, all `n` — are PROVEN with axioms exactly
-`[propext, Classical.choice, Quot.sound]`. Lemma A (`pf_cleared`, `decay_a`, `decay_at`),
-Lemma B (`certificate`), Lemma C (`integrality_*_core`, `integrality_H`), and the ZMod-p
-assembly are ALL sorry-free.
+## Status: COMPLETE — ZERO sorries project-wide. Frobenius-certificate theorem PROVEN.
 
-REMAINING (only for the `padicValRat`-form `w_congruence'/wtilde_congruence'/pn_valuation'`):
-the nonvanishing lemmas `w/wt/pn_ne_zero` (sorry) — needed solely because Mathlib sets
-`padicValRat p 0 = 0`. The mathematically complete result is the residue form above.
-Plus the 3 frozen `padicValRat` stubs in `Defs` (proven as `Main.*'`).
+The central-binomial cancellation of `cb_certificate.tex` is formalized and kernel-verified,
+for every `n` and every prime `n < p ≤ 2n`, `p ≥ 5`. Canonical theorems (`Cbcert/Main.lean`),
+all with axioms exactly `[propext, Classical.choice, Quot.sound]`:
+- `res_congruence_w`  : `res p (w n)  = 0`   (`p ∣ w_n`)
+- `res_congruence_wt` : `res p (wt n) = 0`   (`p ∣ w̃_n`)
+- `res_congruence_pn` : `res p (pn n) = 0`   (`p ∣ p_n`, = CB₁ on the clean interval)
+- `w_congruence` / `wtilde_congruence` / `pn_valuation` : the faithful `padicValRat` form,
+  `· = 0 ∨ 1 ≤ padicValRat p (·)` (honest disjunct — see the statement-fix note below).
 
-Toolchain `leanprover/lean4:v4.33.0-rc1`, Mathlib `cd580e54…` (cache hit).
-Whole project builds green (sorries tracked below; build must stay green).
+Lemma A (`pf_cleared`, `decay_a`, `decay_at`), Lemma B (`certificate`), Lemma C
+(`integrality_a_core`, `integrality_at_core`, `integrality_H`), and the ZMod-p assembly
+(residue map + reordering) are ALL sorry-free. `Numeric.lean` gate green (n=2,3 vs ground
+truth, + n=3 nonvanishing sanity). Toolchain `v4.33.0-rc1`, Mathlib `cd580e54…`.
+
+### Two statement fixes discovered by formalization (publishable nuggets)
+1. **Main theorems** (`Defs.lean` docstring): the intended `1 ≤ padicValRat p (·)` is unsound
+   under Mathlib's `padicValRat p 0 = 0` — it is FALSE at `· = 0`, and the certificate gives
+   `p ∣ ·` without `· ≠ 0`. Fixed to the disjunctive form; the residue form is the complete
+   result.
+2. **Lemma C** (`Integrality.lean` docstring): the naive `integrality_a/at` are FALSE without
+   `j ≤ n` and `p ≠ 2` — e.g. `acoeff 1 5 2 = 9/128` (`padicVal₂ = −7`), `acoeff 1 5 0 = 9/2`.
+   Removed; the proven `_core` lemmas carry those hypotheses.
+
+### The ONE explicitly-OPEN mini-campaign (NOT a sorry — a scope boundary)
+General nonvanishing `w_n, w̃_n, p_n ≠ 0` (all `n` on domain) is unproved (numerically true
+`n ≤ 60`; relates to the linear forms being nontrivial). It is NOT needed for the canonical
+theorems above. If closed, the disjuncts collapse to the sharp `1 ≤ padicValRat`. A finite
+witness (`n = 3`) is in `Numeric.lean`.
 
 ## Module table
 

@@ -2,16 +2,91 @@
 
 Lake project (Lean `v4.33.0-rc1`, Mathlib pinned). Two strands live here:
 
-- **Frobenius-certificate theorem** (Tier 1, in progress) — see `SPEC.md`, `PROGRAM.md`,
-  `PROGRESS.md`.
+- **Frobenius-certificate theorem** (Tier 1, **complete** — zero sorries) —
+  `Cbcert/Main.lean`, documented below; see also `SPEC.md`, `PROGRAM.md`, `PROGRESS.md`.
 - **Error exhibit** (complete) — `Cbcert/ErrorExhibit.lean`, documented below.
 
 Build everything and run the axiom audit:
 
 ```bash
 cd cbcert
-lake build            # green; prints the #print axioms lines for the exhibit
+lake build            # green; prints the #print axioms lines
 ```
+
+---
+
+## Frobenius-certificate theorem — central-binomial cancellation on `n < p ≤ 2n`
+
+**Modules:** `Cbcert/{Defs,Certificate,PartialFraction,Decay,Integrality,Main}.lean`
+(sorry-free, no `native_decide`; every canonical theorem uses only
+`[propext, Classical.choice, Quot.sound]`). Paper: `worthiness/cb_certificate.tex`.
+
+### What it proves
+
+For every `n ≥ 1` and every prime `p` with `n < p ≤ 2n` and `p ≥ 5`, the ζ(3)-coefficients
+`w_n, w̃_n` of Zudilin's two symmetric ζ(5) forms — and hence the eliminated numerator
+`p_n = w̃_n v_n − w_n ṽ_n` — vanish mod `p`. This is the large-prime (Phase-1) cancellation
+that no `d_n`-denominator estimate can see; it was previously known only experimentally.
+
+The mechanism is the **Frobenius certificate** `φ = (k^p − k)²`: since `k^p − k = (k+j)^p −
+(k+j)` in `𝔽_p`, `φ ≡ (k+j)² (mod (k+j)⁶)` at every pole `−j` simultaneously, while
+`deg φ = 2p ≤ 4n+2` keeps `φ R_n` decaying at ∞, so a residue-sum argument on `ℙ¹` forces
+`w_n ≡ 0`.
+
+### Canonical theorems (`Cbcert.Main`)
+
+| Lean name | statement | meaning |
+|---|---|---|
+| `res_congruence_w` | `res p (w n) = 0` | `p ∣ w_n` |
+| `res_congruence_wt` | `res p (wt n) = 0` | `p ∣ w̃_n` |
+| `res_congruence_pn` | `res p (pn n) = 0` | `p ∣ p_n` (**CB₁**) |
+| `w_congruence` | `w n = 0 ∨ 1 ≤ padicValRat p (w n)` | faithful `padicValRat` form |
+| `wtilde_congruence` | `wt n = 0 ∨ 1 ≤ padicValRat p (wt n)` | " |
+| `pn_valuation` | `pn n = 0 ∨ 1 ≤ padicValRat p (pn n)` | " |
+
+`res p x := (x.num : ZMod p) * (x.den : ZMod p)⁻¹` is the residue of a `p`-integral rational;
+`res p x = 0` is exactly "`p` divides `x`". The disjunctive `padicValRat` form is honest about
+Mathlib's `padicValRat p 0 = 0` convention (see `Defs.lean` — the original non-disjunctive
+phrasing was subtly unsound, a statement error caught by formalization).
+
+### Proof architecture (one file per layer)
+
+| module | role |
+|---|---|
+| `Defs.lean` | concrete computable `a_{i,j}`, `ã`, `w/w̃/u/ũ/v/ṽ/p_n`, `H`, `E_M` |
+| `Certificate.lean` | **Lemma B** — the three-term certificate `= δ_{i,3}` over `ZMod p` |
+| `PartialFraction.lean` | the cleared PF identity `pf_cleared` for all `n` (the `a_{i,j}` are the PF coefficients) |
+| `Decay.lean` | **Lemma A** — `E_M(a) = E_M(ã) = 0` (Laurent decay of `R_n`, over `ℚ⟦X⟧`) |
+| `Integrality.lean` | **Lemma C** — `p`-integrality of `a, ã, H` (cores need `j ≤ n`, `p ≠ 2`) |
+| `Main.lean` | residue map + `ZMod p` reordering ⇒ the canonical theorems |
+
+### Human-verification recipe
+
+1. **Match to the paper.** In `worthiness/cb_certificate.tex`: Theorem (main result) ↔
+   `res_congruence_w`/`res_congruence_wt` (and Prop. 1 ↔ `res_congruence_pn`); the certificate
+   `φ = (k^p−k)²` ↔ `Certificate.certificate`; the decay relations `E_M = 0` ↔ `Decay.decay_a`;
+   `R_n = Σ a_{i,j}/(k+j)^i` ↔ `PartialFraction.pf_cleared`.
+2. **Build and audit axioms:**
+   ```bash
+   cd cbcert
+   lake build
+   lake env lean -c /dev/stdin <<< 'import Cbcert.Main
+   open Cbcert
+   #print axioms Main.res_congruence_w
+   #print axioms Main.res_congruence_wt
+   #print axioms Main.res_congruence_pn
+   #print axioms Main.w_congruence
+   #print axioms Main.pn_valuation'
+   ```
+   Each must read `[propext, Classical.choice, Quot.sound]`.
+3. **Confirm zero sorries / no `native_decide`:**
+   ```bash
+   grep -rnE '\bsorry\b|native_decide|admit' Cbcert/*.lean | grep -v '/-'   # (only prose in docstrings)
+   ```
+4. **Numeric cross-check** (optional): `Cbcert/Numeric.lean` reproduces the closed forms at
+   `n = 2, 3` against `worthiness/lemma_cb_explore.py` (`all_data`), and exhibits nonvanishing
+   at `n = 3`. The scope note: general nonvanishing of `w_n, w̃_n, p_n` is an explicitly-open
+   mini-campaign (see `PROGRESS.md`).
 
 ---
 

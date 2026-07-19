@@ -7,17 +7,17 @@ For a prime `p > n`, every `a_{i,j}`, `ã_{i,j}` (`j ≤ n`) and `H_j^{(i)}` (`j
 is `p`-integral: `padicValRat p (·) ≥ 0` (`cb_certificate.tex`, §1 and the proof of
 Prop. 1). This legitimises reduction mod `p` in the assembly.
 
-## Status of the three theorems
+## Status of the theorems (a statement fix discovered by formalization)
 
 * `integrality_H` — **fully proven, sorry-free** (true exactly as stated).
-* `integrality_a`, `integrality_at` — the *literal universal statements are FALSE*;
-  see the counterexample note on `integrality_a` below. They are proven **fully and
-  sorry-free** on the region that actually occurs downstream, namely `j ≤ n ∧ p ≠ 2`
-  (reusable cores `integrality_a_core` / `integrality_at_core`), and a single `sorry`
-  remains for the genuinely-false complementary region, with the exact counterexample
-  recorded. The manager should tighten the two signatures with hypotheses `j ≤ n` and
-  `p ≠ 2` (equivalently `2 < p`; note the real domain has `p ≥ 5`), after which the
-  cores discharge them with no `sorry`.
+* `integrality_a_core`, `integrality_at_core` — **fully proven, sorry-free**, the
+  CANONICAL results, carrying the hypotheses `j ≤ n` and `p ≠ 2` that the assembly
+  supplies (`j ∈ range (n+1) ⇒ j ≤ n`; `p ≥ 5 ⇒ p ≠ 2`).
+* The naive universal wrappers `integrality_a`/`integrality_at` (`0 ≤ padicValRat p
+  (acoeff n i j)` for ALL `i,j`) were **removed**: they are literally FALSE — they
+  need `j ≤ n` (else a pole difference `m − j ≡ 0 mod p`) and `p ≠ 2` (else the
+  `n/2 − j` factor gives a `1/2`). Exact counterexamples in "Why the literal
+  statements are false" below.
 
 ## The p-integrality mechanism (why the core is true)
 `acoeff n i j = [t^{6-i}] B_j`, a product/sum (`Bseries`, a `List.foldl` of `tsMul`)

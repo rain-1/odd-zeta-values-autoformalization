@@ -48,4 +48,15 @@ example : wt 3  = 346485        := by eval_cb
 example : u 3   = 38601         := by eval_cb
 example : ut 3  = 105156        := by eval_cb
 
+/-! ### Nonvanishing sanity exhibit (the explicitly-OPEN general obligation)
+
+The `padicValRat`-form main theorems (`Main.w_congruence` etc.) carry a `· = 0`
+disjunct precisely because a general proof of `w_n, w̃_n, p_n ≠ 0` is open. Here is a
+finite decidable witness that the disjunct is not vacuous at the smallest domain
+point (`n = 3`, prime `p = 5`): the quantities are genuinely nonzero, so there the
+theorems deliver the sharp `1 ≤ padicValRat`. NOT a general proof. -/
+
+example : w 3  ≠ 0 := by eval_cb
+example : wt 3 ≠ 0 := by eval_cb
+
 end Cbcert.Numeric

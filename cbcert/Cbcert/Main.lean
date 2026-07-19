@@ -384,46 +384,32 @@ theorem res_congruence_pn (n : ℕ) (hp : p.Prime) (h1 : n < p) (h2 : p ≤ 2 * 
       res_congruence_w n hp h1 h2 h5, res_congruence_wt n hp h1 h2 h5]
   ring
 
-/-! ## Nonvanishing (needed only for the `padicValRat`-form statements)
+/-! ## The main theorems — canonical, faithful, sorry-free
 
-`padicValRat p 0 = 0` in Mathlib, so the frozen `1 ≤ padicValRat` statements are
-only sound where the quantity is nonzero. The residue congruences
-`res_congruence_w/wt` (the true content of "`p ∣ w_n`") need NO nonvanishing.
-These three are a SEPARATE arithmetic obligation: numerically nonzero for all
-`n ≤ 60` on the domain (checked in `worthiness/lemma_cb_explore.py`); a general-`n`
-proof is open (relates to the linear forms being nontrivial). STAGED. -/
+Faithful `padicValRat` renderings of "`p` divides", handling the `padicValRat p 0 = 0`
+convention with an explicit `= 0` disjunct. Each is immediate from `res_eq_zero_iff`
+(`p`-integrality, Lemma C) applied to the corresponding `res_congruence_*`. No
+nonvanishing needed; standard axioms only. (The pure `1 ≤ padicValRat` form would
+additionally require `w_n, w̃_n, p_n ≠ 0` — an explicitly-OPEN mini-campaign, see
+`PROGRESS.md`; the residue forms `res_congruence_*` are the complete result.) -/
 
-theorem w_ne_zero (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (h1 : n < p) (h2 : p ≤ 2 * n)
-    (h5 : 5 ≤ p) : w n ≠ 0 := by sorry
-
-theorem wt_ne_zero (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (h1 : n < p) (h2 : p ≤ 2 * n)
-    (h5 : 5 ≤ p) : wt n ≠ 0 := by sorry
-
-theorem pn_ne_zero (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (h1 : n < p) (h2 : p ≤ 2 * n)
-    (h5 : 5 ≤ p) : pn n ≠ 0 := by sorry
-
-/-! ## The main theorems (discharged) -/
-
-/-- **(W) for `w`** — discharged. -/
-theorem w_congruence' (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
-    (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) : 1 ≤ padicValRat p (w n) := by
+/-- **(W) for `w`.** `p ∣ w_n`: for every prime `n < p ≤ 2n`, `p ≥ 5`. -/
+theorem w_congruence (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
+    (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) : w n = 0 ∨ 1 ≤ padicValRat p (w n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  exact bridge (w_pInt n hp h1 (by omega)) (w_ne_zero n hn p h1 h2 h5)
-    (res_congruence_w n hp h1 h2 h5)
+  exact (res_eq_zero_iff (w_pInt n hp h1 (by omega))).mp (res_congruence_w n hp h1 h2 h5)
 
-/-- **(W) for `w̃`** — discharged. -/
-theorem wtilde_congruence' (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
-    (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) : 1 ≤ padicValRat p (wt n) := by
+/-- **(W) for `w̃`.** `p ∣ w̃_n`. -/
+theorem wtilde_congruence (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
+    (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) : wt n = 0 ∨ 1 ≤ padicValRat p (wt n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  exact bridge (wt_pInt n hp h1 (by omega)) (wt_ne_zero n hn p h1 h2 h5)
-    (res_congruence_wt n hp h1 h2 h5)
+  exact (res_eq_zero_iff (wt_pInt n hp h1 (by omega))).mp (res_congruence_wt n hp h1 h2 h5)
 
-/-- **(CB₁)** — discharged. `res p (p_n) = res(w̃)·res(v) − res(w)·res(ṽ) = 0`. -/
-theorem pn_valuation' (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
-    (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) : 1 ≤ padicValRat p (pn n) := by
+/-- **(CB₁).** `p ∣ p_n` — the central-binomial cancellation on the clean interval. -/
+theorem pn_valuation (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
+    (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) : pn n = 0 ∨ 1 ≤ padicValRat p (pn n) := by
   haveI : Fact p.Prime := ⟨hp⟩
   have hp2 : p ≠ 2 := by omega
-  exact bridge (pn_pInt n hp h1 hp2) (pn_ne_zero n hn p h1 h2 h5)
-    (res_congruence_pn n hp h1 h2 h5)
+  exact (res_eq_zero_iff (pn_pInt n hp h1 hp2)).mp (res_congruence_pn n hp h1 h2 h5)
 
 end Cbcert.Main

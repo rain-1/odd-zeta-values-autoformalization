@@ -1,7 +1,6 @@
 import Cbcert.Certificate
 import Cbcert.Integrality
--- (`res_congruence_*` will additionally use `Cbcert.Decay` / `Cbcert.PartialFraction`
---  once the reordering is filled in; not needed while those are `sorry`.)
+import Cbcert.Decay
 
 /-!
 # Assembly (Layer L3)
@@ -354,10 +353,9 @@ theorem res_congruence_w (n : ℕ) (hp : p.Prime) (h1 : n < p) (h2 : p ≤ 2 * n
   rw [w]
   refine res_congruence_of n h2 h5 (acoeff n)
     (fun i j hj => acoeff_pInt n i j hp h1 (by have := Finset.mem_range.mp hj; omega) hp2)
-    ?_ ?_ ?_
-  · sorry -- Decay.decay_a n 3 (by omega) (by omega)
-  · sorry -- Decay.decay_a n (p+2) (by omega) (by omega)
-  · sorry -- Decay.decay_a n (2*p+1) (by omega) (by omega)
+    (Decay.decay_a n 3 (by omega) (by omega))
+    (Decay.decay_a n (p + 2) (by omega) (by omega))
+    (Decay.decay_a n (2 * p + 1) (by omega) (by omega))
 
 /-- **(W̃).** `res p (w̃_n) = 0`. Same reordering; the three obligations are
 `Decay.decay_at` (range `≤ 4n+2`; `2p+1 ≤ 4n+1 ≤ 4n+2` as `p ≤ 2n`). -/
@@ -368,10 +366,23 @@ theorem res_congruence_wt (n : ℕ) (hp : p.Prime) (h1 : n < p) (h2 : p ≤ 2 * 
   rw [wt]
   refine res_congruence_of n h2 h5 (atcoeff n)
     (fun i j hj => atcoeff_pInt n i j hp h1 (by have := Finset.mem_range.mp hj; omega) hp2)
-    ?_ ?_ ?_
-  · sorry -- Decay.decay_at n 3 (by omega) (by omega)
-  · sorry -- Decay.decay_at n (p+2) (by omega) (by omega)
-  · sorry -- Decay.decay_at n (2*p+1) (by omega) (by omega)
+    (Decay.decay_at n 3 (by omega) (by omega))
+    (Decay.decay_at n (p + 2) (by omega) (by omega))
+    (Decay.decay_at n (2 * p + 1) (by omega) (by omega))
+
+/-- **(CB₁), residue form — fully proven.** `res p (p_n) = 0`, i.e. `p ∣ p_n`.
+`p_n = w̃_n v_n − w_n ṽ_n`, `v_n, ṽ_n` are `p`-integral (Lemma C) and `res(w_n)=res(w̃_n)=0`
+(the (W) congruences). Needs NO nonvanishing. Standard axioms only. -/
+theorem res_congruence_pn (n : ℕ) (hp : p.Prime) (h1 : n < p) (h2 : p ≤ 2 * n)
+    (h5 : 5 ≤ p) : res p (pn n) = 0 := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hp2 : p ≠ 2 := by omega
+  rw [pn, res_sub (pInt_mul (wt_pInt n hp h1 hp2) (vv_pInt n hp h1 hp2))
+        (pInt_mul (w_pInt n hp h1 hp2) (vt_pInt n hp h1 hp2)),
+      res_mul (wt_pInt n hp h1 hp2) (vv_pInt n hp h1 hp2),
+      res_mul (w_pInt n hp h1 hp2) (vt_pInt n hp h1 hp2),
+      res_congruence_w n hp h1 h2 h5, res_congruence_wt n hp h1 h2 h5]
+  ring
 
 /-! ## Nonvanishing (needed only for the `padicValRat`-form statements)
 
@@ -412,14 +423,7 @@ theorem pn_valuation' (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
     (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) : 1 ≤ padicValRat p (pn n) := by
   haveI : Fact p.Prime := ⟨hp⟩
   have hp2 : p ≠ 2 := by omega
-  refine bridge (pn_pInt n hp h1 hp2) (pn_ne_zero n hn p h1 h2 h5) ?_
-  have hz : res p (pn n)
-      = res p (wt n) * res p (vv n) - res p (w n) * res p (vt n) := by
-    rw [pn, res_sub (pInt_mul (wt_pInt n hp h1 hp2) (vv_pInt n hp h1 hp2))
-        (pInt_mul (w_pInt n hp h1 hp2) (vt_pInt n hp h1 hp2)),
-      res_mul (wt_pInt n hp h1 hp2) (vv_pInt n hp h1 hp2),
-      res_mul (w_pInt n hp h1 hp2) (vt_pInt n hp h1 hp2)]
-  rw [hz, res_congruence_w n hp h1 h2 h5, res_congruence_wt n hp h1 h2 h5]
-  ring
+  exact bridge (pn_pInt n hp h1 hp2) (pn_ne_zero n hn p h1 h2 h5)
+    (res_congruence_pn n hp h1 h2 h5)
 
 end Cbcert.Main

@@ -270,33 +270,10 @@ theorem integrality_at_core (n i j : ℕ) (p : ℕ) (hp : p.Prime) (hpn : n < p)
               padicNorm.nonarchimedean
           _ ≤ 1 := max_le t1 t2
 
-/-- **Lemma C (base coefficients).**
-
-WARNING — the literal universal statement is FALSE. Counterexamples:
-`acoeff 1 5 2 = 9/128` (`j > n`, `padicValRat 2 = -7`) and `acoeff 1 5 0 = 9/2`
-(`p = 2`, `n` odd, `padicValRat 2 = -1`). It holds on `j ≤ n ∧ p ≠ 2`, discharged by
-`integrality_a_core`. The remaining `sorry` covers exactly the false region
-`¬(j ≤ n ∧ p ≠ 2)` (obligation: unprovable — signature needs `hjn : j ≤ n` and
-`hp2 : p ≠ 2`, then `exact integrality_a_core n i j p hp hpn hjn hp2`). -/
-theorem integrality_a (n i j : ℕ) (p : ℕ) (hp : p.Prime) (hpn : n < p) :
-    0 ≤ padicValRat p (acoeff n i j) := by
-  by_cases h : j ≤ n ∧ p ≠ 2
-  · exact integrality_a_core n i j p hp hpn h.1 h.2
-  · -- FALSE region: e.g. n=1,i=5,j=0,p=2 gives 9/2; n=1,i=5,j=2,p=2 gives 9/128.
-    sorry
-
-/-- **Lemma C (companion coefficients).**
-
-WARNING — false as literally stated for the same reason as `integrality_a`
-(`atcoeff` is built from `acoeff`). Holds on `j ≤ n ∧ p ≠ 2` via
-`integrality_at_core`; the `sorry` covers the genuinely-false region
-`¬(j ≤ n ∧ p ≠ 2)` (fix: add `hjn : j ≤ n`, `hp2 : p ≠ 2` and use the core). -/
-theorem integrality_at (n i j : ℕ) (p : ℕ) (hp : p.Prime) (hpn : n < p) :
-    0 ≤ padicValRat p (atcoeff n i j) := by
-  by_cases h : j ≤ n ∧ p ≠ 2
-  · exact integrality_at_core n i j p hp hpn h.1 h.2
-  · -- FALSE region (same counterexamples propagate through `atcoeff`).
-    sorry
+/-! The public `integrality_a`/`integrality_at` were REMOVED: the literal universal
+statements are FALSE (fail for `j > n` and for `p = 2`; e.g. `acoeff 1 5 2 = 9/128`).
+The correct, proven results are `integrality_a_core`/`integrality_at_core` above
+(hypotheses `j ≤ n`, `p ≠ 2`), which is what the assembly (`Main`) uses. -/
 
 /-- **Lemma C (harmonic sums).** `H_j^{(i)}` is `p`-integral for `j < p`. This one is
 TRUE exactly as stated and is proven sorry-free: the denominators are `m^i` with

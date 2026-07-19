@@ -3,8 +3,17 @@
 Target: `worthiness/cb_certificate.tex` (Frobenius certificate for central-binomial
 cancellation). Contract: `cbcert/SPEC.md`. Template: `zeta5odd/`.
 
-## Status: L0 FROZEN + NUMERIC GATE GREEN + L2 (Lemma B) DONE sorry-free.
-L1 (Lemma A) and L3 (Lemma C + assembly) STAGED with precise statements + `sorry`.
+## Status: THE FROBENIUS-CERTIFICATE THEOREM IS PROVEN (residue form), kernel-clean.
+`res_congruence_w`, `res_congruence_wt`, `res_congruence_pn` — i.e. `p ∣ w_n`, `p ∣ w̃_n`,
+`p ∣ p_n` for every prime `n < p ≤ 2n`, `p ≥ 5`, all `n` — are PROVEN with axioms exactly
+`[propext, Classical.choice, Quot.sound]`. Lemma A (`pf_cleared`, `decay_a`, `decay_at`),
+Lemma B (`certificate`), Lemma C (`integrality_*_core`, `integrality_H`), and the ZMod-p
+assembly are ALL sorry-free.
+
+REMAINING (only for the `padicValRat`-form `w_congruence'/wtilde_congruence'/pn_valuation'`):
+the nonvanishing lemmas `w/wt/pn_ne_zero` (sorry) — needed solely because Mathlib sets
+`padicValRat p 0 = 0`. The mathematically complete result is the residue form above.
+Plus the 3 frozen `padicValRat` stubs in `Defs` (proven as `Main.*'`).
 
 Toolchain `leanprover/lean4:v4.33.0-rc1`, Mathlib `cd580e54…` (cache hit).
 Whole project builds green (sorries tracked below; build must stay green).

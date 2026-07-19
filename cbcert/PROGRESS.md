@@ -18,14 +18,35 @@ Whole project builds green (sorries tracked below; build must stay green).
 | `Cbcert/Certificate.lean` | **Lemma B** (Frobenius certificate, mod p) | **DONE, no sorry**, axioms std |
 | `Cbcert/Decay.lean` | Lemma A: `decay_a` (M≤4n+4), `decay_at` (M≤4n+2) | STATED; 2 sorry (risk concentrate) |
 | `Cbcert/Integrality.lean` | Lemma C: `integrality_a/at/H` (p-integral, p>n) | STATED; 3 sorry |
-| `Cbcert/Main.lean` | assembly plan (full docstring); no code yet | scaffold, no sorry (docstring only) |
+| `Cbcert/Main.lean` | assembly BUILT: 3 main thms proven modulo named lemmas | 3 main thms proven; 8 staged sorry |
+| `Cbcert/PartialFraction.lean` | pf_cleared (load-bearing PF identity) | STATED; 1 sorry [Worker A1] |
 
-## Sorry inventory (8 total; ZERO required at completion)
-- `Defs.lean`: `w_congruence`, `wtilde_congruence`, `pn_valuation` (frozen statement
-  stubs; the proven versions land in `Main.lean`, then these stubs are removed — they
-  cannot be proved in Defs due to the import cycle with the lemma modules).
-- `Decay.lean`: `decay_a`, `decay_at` (Lemma A).
-- `Integrality.lean`: `integrality_a`, `integrality_at`, `integrality_H` (Lemma C).
+## Round-2 state
+- Workers spawned (Opus): A1=`PartialFraction.pf_cleared`, C=`Integrality.*`, A2=`Decay.*`.
+- **Assembly BUILT** in `Main.lean`: `w_congruence'`, `wtilde_congruence'`, `pn_valuation'`
+  are PROVEN modulo: `res_eq_zero_iff`, `res_add`, `res_mul` (residue-hom infra),
+  `res_congruence_w/wt` (the ZMod-p reordering, uses `certificate`+`decay_*`), and
+  `w/wt/pn_ne_zero` (nonvanishing). `pInt` closure + `res_sum`/`res_sub`/`res_neg` +
+  all `pInt` facts of w/wt/vv/vt/pn are PROVEN (from `Integrality.*`).
+- **SOUNDNESS NOTE (flag for coordinator):** `padicValRat p 0 = 0` in Mathlib, so the
+  frozen `1 ≤ padicValRat` statements are FALSE where the quantity is 0. The true,
+  always-valid content is `res_congruence_w/wt : res p (w n) = 0` (no nonvanishing
+  needed). The `padicValRat` form additionally needs `w_n,w̃_n,p_n ≠ 0` — numerically
+  true for n≤60, general proof OPEN. Handled via `w/wt/pn_ne_zero` (sorry). Options for
+  a clean final: (a) prove nonvanishing, (b) restate main thms as
+  `x=0 ∨ 1≤padicValRat`, or (c) keep the residue-congruence form as canonical.
+
+## Sorry inventory (14 total; ZERO required at completion)
+- `Defs.lean` (3): `w_congruence`, `wtilde_congruence`, `pn_valuation` (frozen stubs;
+  proven as `Main.*'`; remove once Main is fully closed — import cycle prevents proving
+  in Defs).
+- `PartialFraction.lean` (1): `pf_cleared` [Worker A1].
+- `Decay.lean` (2): `decay_a`, `decay_at` [Worker A2].
+- `Integrality.lean` (3): `integrality_a/at/H` [Worker C].
+- `Main.lean` (5): `res_eq_zero_iff`, `res_add`, `res_mul` (residue-hom infra, self-
+  contained — no worker dep), `res_congruence_w`, `res_congruence_wt` (the reordering).
+- `Main.lean` nonvanishing (3): `w_ne_zero`, `wt_ne_zero`, `pn_ne_zero` (separate
+  obligation; see SOUNDNESS NOTE).
 
 ## What is DONE and verified
 - **L0**: concrete/computable definitions; `a_{i,j} = [t^{6-i}]B_j` via truncated local

@@ -10,8 +10,9 @@ following the reference implementation `worthiness/lemma_cb_explore.py`
 All objects live over `ℚ` and are *computable* so that the finite numeric sanity
 checks (`Cbcert/Numeric.lean`) can reduce them for small `n`.
 
-The three main theorems (`w_congruence`, `wtilde_congruence`, `pn_valuation`) are
-stated here with `sorry` bodies; they are discharged in `Cbcert/Main.lean`.
+The three main theorems (`w_congruence`, `wtilde_congruence`, `pn_valuation`)
+live in `Cbcert/Main.lean`, proven sorry-free in their canonical forms (residue
+form + honest disjunct); this module holds only the definitions.
 
 Design decision (orchestrator): the partial-fraction coefficients `a_{i,j}` are
 defined *concretely* as the truncated local Taylor coefficients of

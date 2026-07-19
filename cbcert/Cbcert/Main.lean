@@ -1,7 +1,7 @@
 import Cbcert.Certificate
-import Cbcert.PartialFraction
-import Cbcert.Decay
 import Cbcert.Integrality
+-- (`res_congruence_*` will additionally use `Cbcert.Decay` / `Cbcert.PartialFraction`
+--  once the reordering is filled in; not needed while those are `sorry`.)
 
 /-!
 # Assembly (Layer L3)
@@ -70,13 +70,68 @@ lemma pInt_sub [Fact p.Prime] {x y : ℚ} (hx : pInt p x) (hy : pInt p y) :
 /-- Residue of a rational modulo `p` (well-defined on `p`-integers). -/
 def res (p : ℕ) (x : ℚ) : ZMod p := (x.num : ZMod p) * ((x.den : ZMod p))⁻¹
 
+/-- A `p`-integral rational has denominator coprime to `p`. -/
+lemma pInt_den [Fact p.Prime] {x : ℚ} (hx : pInt p x) : ¬ (p : ℤ) ∣ (x.den : ℤ) := by
+  intro hdvd
+  have hpp : p.Prime := Fact.out
+  have hp_int : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp hpp
+  have hnum : ¬ (p : ℤ) ∣ x.num := fun hn =>
+    hp_int.not_unit ((Rat.isCoprime_num_den x).isUnit_of_dvd' hn hdvd)
+  have hden0 : x.den ≠ 0 := x.den_nz
+  have h1 : 1 ≤ padicValNat p x.den :=
+    one_le_padicValNat_of_dvd hden0 (by exact_mod_cast hdvd)
+  have h2 : padicValInt p x.num = 0 := padicValInt.eq_zero_of_not_dvd hnum
+  have : padicValRat p x < 0 := by rw [padicValRat_def]; omega
+  exact absurd hx (by rw [pInt]; omega)
+
+/-- Representation independence: `res p (a /. b) = ā · b̄⁻¹` for any `p`-coprime `b`. -/
+lemma res_divInt [Fact p.Prime] (a b : ℤ) (hb0 : b ≠ 0) (hbp : ¬ (p : ℤ) ∣ b) :
+    res p (Rat.divInt a b) = (a : ZMod p) * (b : ZMod p)⁻¹ := by
+  set x : ℚ := Rat.divInt a b with hx
+  have hden0 : (x.den : ℤ) ≠ 0 := by exact_mod_cast x.den_nz
+  have hcross : x.num * b = a * (x.den : ℤ) :=
+    (Rat.divInt_eq_divInt_iff hden0 hb0).1 (by rw [Rat.num_divInt_den])
+  have hxdp : ¬ (p : ℤ) ∣ (x.den : ℤ) := fun h => hbp (dvd_trans h (Rat.den_dvd a b))
+  have hbz : (b : ZMod p) ≠ 0 := by rw [Ne, ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hbp
+  have hdz : (x.den : ZMod p) ≠ 0 := by
+    rw [Ne, ← Int.cast_natCast, ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hxdp
+  have hcz : (x.num : ZMod p) * (b : ZMod p) = (a : ZMod p) * (x.den : ZMod p) := by
+    have := congrArg (fun z : ℤ => (z : ZMod p)) hcross; push_cast at this ⊢; exact this
+  rw [res]; field_simp; linear_combination hcz
+
 /-- **Bridge.** For `p`-integral `x`, `res p x = 0 ↔ (x = 0 ∨ 1 ≤ padicValRat p x)`.
 The `x = 0` branch is essential: Mathlib sets `padicValRat p 0 = 0`, so the bare
 `1 ≤ padicValRat` form fails at `0`. (This is why the frozen `padicValRat`-form main
 theorems require nonvanishing — see `w_ne_zero` etc.) -/
 lemma res_eq_zero_iff [Fact p.Prime] {x : ℚ} (hx : pInt p x) :
     res p x = 0 ↔ x = 0 ∨ 1 ≤ padicValRat p x := by
-  sorry
+  have hxd := pInt_den hx
+  have hdz : (x.den : ZMod p) ≠ 0 := by
+    rw [Ne, ← Int.cast_natCast, ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hxd
+  have hden0 : ¬ p ∣ x.den := by exact_mod_cast hxd
+  have hnum0den : padicValNat p x.den = 0 := padicValNat.eq_zero_of_not_dvd hden0
+  have hres : res p x = 0 ↔ (p : ℤ) ∣ x.num := by
+    rw [res, mul_eq_zero, inv_eq_zero]
+    constructor
+    · rintro (h | h)
+      · exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h
+      · exact absurd h hdz
+    · intro h; exact Or.inl ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr h)
+  rw [hres]
+  rcases eq_or_ne x 0 with hx0 | hx0
+  · subst hx0; simp
+  · have hv : (1 ≤ padicValRat p x) ↔ (p : ℤ) ∣ x.num := by
+      rw [padicValRat_def, hnum0den, Nat.cast_zero, sub_zero]
+      constructor
+      · intro h
+        by_contra hc
+        rw [padicValInt.eq_zero_of_not_dvd hc] at h; omega
+      · intro h
+        have hna : x.num.natAbs ≠ 0 := Int.natAbs_ne_zero.mpr (Rat.num_ne_zero.mpr hx0)
+        have hd : p ∣ x.num.natAbs := by simpa using Int.natAbs_dvd_natAbs.mpr h
+        rw [padicValInt]
+        exact_mod_cast one_le_padicValNat_of_dvd hna hd
+    rw [hv]; exact ⟨fun h => Or.inr h, fun h => h.resolve_left hx0⟩
 
 /-- For nonzero `p`-integral `x`, `res p x = 0 → 1 ≤ padicValRat p x`. -/
 lemma bridge [Fact p.Prime] {x : ℚ} (hx : pInt p x) (hne : x ≠ 0) (h0 : res p x = 0) :
@@ -85,12 +140,44 @@ lemma bridge [Fact p.Prime] {x : ℚ} (hx : pInt p x) (hne : x ≠ 0) (h0 : res 
 /-- `res` is additive on `p`-integers. -/
 lemma res_add [Fact p.Prime] {x y : ℚ} (hx : pInt p x) (hy : pInt p y) :
     res p (x + y) = res p x + res p y := by
-  sorry
+  have hxd := pInt_den hx; have hyd := pInt_den hy
+  have hxd0 : (x.den : ℤ) ≠ 0 := by exact_mod_cast x.den_nz
+  have hyd0 : (y.den : ℤ) ≠ 0 := by exact_mod_cast y.den_nz
+  have hp_int : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp Fact.out
+  have hbp : ¬ (p : ℤ) ∣ ((x.den : ℤ) * (y.den : ℤ)) := by
+    intro h; rcases hp_int.dvd_or_dvd h with h | h; exact hxd h; exact hyd h
+  have hsum : x + y = Rat.divInt (x.num * y.den + y.num * x.den) ((x.den : ℤ) * (y.den : ℤ)) := by
+    conv_lhs => rw [← Rat.num_divInt_den x, ← Rat.num_divInt_den y]
+    rw [Rat.divInt_add_divInt _ _ hxd0 hyd0]
+  have hdxz : (x.den : ZMod p) ≠ 0 := by
+    rw [Ne, ← Int.cast_natCast, ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hxd
+  have hdyz : (y.den : ZMod p) ≠ 0 := by
+    rw [Ne, ← Int.cast_natCast, ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hyd
+  rw [hsum, res_divInt _ _ (mul_ne_zero hxd0 hyd0) hbp,
+      show res p x = (x.num : ZMod p) * (x.den : ZMod p)⁻¹ from rfl,
+      show res p y = (y.num : ZMod p) * (y.den : ZMod p)⁻¹ from rfl]
+  push_cast; field_simp
 
 /-- `res` is multiplicative on `p`-integers. -/
 lemma res_mul [Fact p.Prime] {x y : ℚ} (hx : pInt p x) (hy : pInt p y) :
     res p (x * y) = res p x * res p y := by
-  sorry
+  have hxd := pInt_den hx; have hyd := pInt_den hy
+  have hxd0 : (x.den : ℤ) ≠ 0 := by exact_mod_cast x.den_nz
+  have hyd0 : (y.den : ℤ) ≠ 0 := by exact_mod_cast y.den_nz
+  have hp_int : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp Fact.out
+  have hbp : ¬ (p : ℤ) ∣ ((x.den : ℤ) * (y.den : ℤ)) := by
+    intro h; rcases hp_int.dvd_or_dvd h with h | h; exact hxd h; exact hyd h
+  have hprod : x * y = Rat.divInt (x.num * y.num) ((x.den : ℤ) * (y.den : ℤ)) := by
+    conv_lhs => rw [← Rat.num_divInt_den x, ← Rat.num_divInt_den y]
+    rw [Rat.divInt_mul_divInt]
+  have hdxz : (x.den : ZMod p) ≠ 0 := by
+    rw [Ne, ← Int.cast_natCast, ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hxd
+  have hdyz : (y.den : ZMod p) ≠ 0 := by
+    rw [Ne, ← Int.cast_natCast, ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hyd
+  rw [hprod, res_divInt _ _ (mul_ne_zero hxd0 hyd0) hbp,
+      show res p x = (x.num : ZMod p) * (x.den : ZMod p)⁻¹ from rfl,
+      show res p y = (y.num : ZMod p) * (y.den : ZMod p)⁻¹ from rfl]
+  push_cast; field_simp
 
 lemma res_neg {x : ℚ} : res p (-x) = - res p x := by
   simp [res, Rat.neg_num, Rat.neg_den]
@@ -112,37 +199,46 @@ lemma res_sum [Fact p.Prime] {ι : Type*} {s : Finset ι} {f : ι → ℚ}
 
 /-! ## `p`-integrality of the functionals (from Lemma C) -/
 
-lemma acoeff_pInt (n i j : ℕ) (hp : p.Prime) (h1 : n < p) : pInt p (acoeff n i j) :=
-  Integrality.integrality_a n i j p hp h1
+-- Lemma C is TRUE only on the core region `j ≤ n`, `p ≠ 2` (Worker C: the public
+-- `integrality_a/at` are false as stated; the `_core` versions are proven). Both
+-- hold in our use: `j ∈ range (n+1) ⇒ j ≤ n`, and `5 ≤ p ⇒ p ≠ 2`.
+lemma acoeff_pInt (n i j : ℕ) (hp : p.Prime) (h1 : n < p) (hjn : j ≤ n) (hp2 : p ≠ 2) :
+    pInt p (acoeff n i j) :=
+  Integrality.integrality_a_core n i j p hp h1 hjn hp2
 
-lemma atcoeff_pInt (n i j : ℕ) (hp : p.Prime) (h1 : n < p) : pInt p (atcoeff n i j) :=
-  Integrality.integrality_at n i j p hp h1
+lemma atcoeff_pInt (n i j : ℕ) (hp : p.Prime) (h1 : n < p) (hjn : j ≤ n) (hp2 : p ≠ 2) :
+    pInt p (atcoeff n i j) :=
+  Integrality.integrality_at_core n i j p hp h1 hjn hp2
 
 lemma Hh_pInt (i j : ℕ) (hp : p.Prime) (hj : j < p) : pInt p (Hh i j) :=
   Integrality.integrality_H i j p hp hj
 
-lemma w_pInt (n : ℕ) (hp : p.Prime) (h1 : n < p) : pInt p (w n) := by
+lemma w_pInt (n : ℕ) (hp : p.Prime) (h1 : n < p) (hp2 : p ≠ 2) : pInt p (w n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  exact pInt_sum (fun j _ => acoeff_pInt n 3 j hp h1)
+  exact pInt_sum (fun j hj => acoeff_pInt n 3 j hp h1
+    (by have := Finset.mem_range.mp hj; omega) hp2)
 
-lemma wt_pInt (n : ℕ) (hp : p.Prime) (h1 : n < p) : pInt p (wt n) := by
+lemma wt_pInt (n : ℕ) (hp : p.Prime) (h1 : n < p) (hp2 : p ≠ 2) : pInt p (wt n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  exact pInt_sum (fun j _ => atcoeff_pInt n 3 j hp h1)
+  exact pInt_sum (fun j hj => atcoeff_pInt n 3 j hp h1
+    (by have := Finset.mem_range.mp hj; omega) hp2)
 
-lemma vv_pInt (n : ℕ) (hp : p.Prime) (h1 : n < p) : pInt p (vv n) := by
+lemma vv_pInt (n : ℕ) (hp : p.Prime) (h1 : n < p) (hp2 : p ≠ 2) : pInt p (vv n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  refine pInt_sum (fun i _ => pInt_sum (fun j hj => pInt_mul (acoeff_pInt n i j hp h1) ?_))
+  refine pInt_sum (fun i _ => pInt_sum (fun j hj =>
+    pInt_mul (acoeff_pInt n i j hp h1 (by have := Finset.mem_range.mp hj; omega) hp2) ?_))
   exact Hh_pInt i j hp (by have := Finset.mem_range.mp hj; omega)
 
-lemma vt_pInt (n : ℕ) (hp : p.Prime) (h1 : n < p) : pInt p (vt n) := by
+lemma vt_pInt (n : ℕ) (hp : p.Prime) (h1 : n < p) (hp2 : p ≠ 2) : pInt p (vt n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  refine pInt_sum (fun i _ => pInt_sum (fun j hj => pInt_mul (atcoeff_pInt n i j hp h1) ?_))
+  refine pInt_sum (fun i _ => pInt_sum (fun j hj =>
+    pInt_mul (atcoeff_pInt n i j hp h1 (by have := Finset.mem_range.mp hj; omega) hp2) ?_))
   exact Hh_pInt i j hp (by have := Finset.mem_range.mp hj; omega)
 
-lemma pn_pInt (n : ℕ) (hp : p.Prime) (h1 : n < p) : pInt p (pn n) := by
+lemma pn_pInt (n : ℕ) (hp : p.Prime) (h1 : n < p) (hp2 : p ≠ 2) : pInt p (pn n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  exact pInt_sub (pInt_mul (wt_pInt n hp h1) (vv_pInt n hp h1))
-    (pInt_mul (w_pInt n hp h1) (vt_pInt n hp h1))
+  exact pInt_sub (pInt_mul (wt_pInt n hp h1 hp2) (vv_pInt n hp h1 hp2))
+    (pInt_mul (w_pInt n hp h1 hp2) (vt_pInt n hp h1 hp2))
 
 /-! ## The congruences `res p (w n) = 0`, `res p (wt n) = 0` (the heart) -/
 
@@ -181,27 +277,28 @@ theorem pn_ne_zero (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (h1 : n < p) (h2 : p ≤ 2
 theorem w_congruence' (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
     (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) : 1 ≤ padicValRat p (w n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  exact bridge (w_pInt n hp h1) (w_ne_zero n hn p h1 h2 h5)
+  exact bridge (w_pInt n hp h1 (by omega)) (w_ne_zero n hn p h1 h2 h5)
     (res_congruence_w n hp h1 h2 h5)
 
 /-- **(W) for `w̃`** — discharged. -/
 theorem wtilde_congruence' (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
     (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) : 1 ≤ padicValRat p (wt n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  exact bridge (wt_pInt n hp h1) (wt_ne_zero n hn p h1 h2 h5)
+  exact bridge (wt_pInt n hp h1 (by omega)) (wt_ne_zero n hn p h1 h2 h5)
     (res_congruence_wt n hp h1 h2 h5)
 
 /-- **(CB₁)** — discharged. `res p (p_n) = res(w̃)·res(v) − res(w)·res(ṽ) = 0`. -/
 theorem pn_valuation' (n : ℕ) (hn : 1 ≤ n) (p : ℕ) (hp : p.Prime)
     (h1 : n < p) (h2 : p ≤ 2 * n) (h5 : 5 ≤ p) : 1 ≤ padicValRat p (pn n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  refine bridge (pn_pInt n hp h1) (pn_ne_zero n hn p h1 h2 h5) ?_
+  have hp2 : p ≠ 2 := by omega
+  refine bridge (pn_pInt n hp h1 hp2) (pn_ne_zero n hn p h1 h2 h5) ?_
   have hz : res p (pn n)
       = res p (wt n) * res p (vv n) - res p (w n) * res p (vt n) := by
-    rw [pn, res_sub (pInt_mul (wt_pInt n hp h1) (vv_pInt n hp h1))
-        (pInt_mul (w_pInt n hp h1) (vt_pInt n hp h1)),
-      res_mul (wt_pInt n hp h1) (vv_pInt n hp h1),
-      res_mul (w_pInt n hp h1) (vt_pInt n hp h1)]
+    rw [pn, res_sub (pInt_mul (wt_pInt n hp h1 hp2) (vv_pInt n hp h1 hp2))
+        (pInt_mul (w_pInt n hp h1 hp2) (vt_pInt n hp h1 hp2)),
+      res_mul (wt_pInt n hp h1 hp2) (vv_pInt n hp h1 hp2),
+      res_mul (w_pInt n hp h1 hp2) (vt_pInt n hp h1 hp2)]
   rw [hz, res_congruence_w n hp h1 h2 h5, res_congruence_wt n hp h1 h2 h5]
   ring
 

@@ -36,7 +36,21 @@ Whole project builds green (sorries tracked below; build must stay green).
   a clean final: (a) prove nonvanishing, (b) restate main thms as
   `x=0 ∨ 1≤padicValRat`, or (c) keep the residue-congruence form as canonical.
 
-## Sorry inventory (14 total; ZERO required at completion)
+## Round-2 integration update
+- **Worker C (Lemma C) DONE.** FINDING: `integrality_a`/`integrality_at` are FALSE as
+  originally stated — need `j ≤ n` (else a pole diff `m−j` can be `≡0 mod p`) and `p ≠ 2`
+  (else the `n/2−j` factor gives a `1/2`). Worker proved the TRUE `integrality_a_core`,
+  `integrality_at_core` (extra hyps `j ≤ n`, `p ≠ 2`) and `integrality_H` fully, sorry-free.
+  The public `integrality_a/at` retain 1 sorry each (impossible branch) — REMOVE them once
+  callers use the cores. `Main` now uses the cores (both hyps hold: `j∈range(n+1)⇒j≤n`,
+  `5≤p⇒p≠2`).
+- **Residue infra in `Main` NOW PROVEN sorry-free**: `res_divInt`, `pInt_den`, `res_add`,
+  `res_mul`, `res_eq_zero_iff`, `res_neg/sub/sum`, all `pInt` closure + `pInt` of
+  w/wt/vv/vt/pn. The 3 main theorems reduce to ONLY: `res_congruence_w/wt` (reordering,
+  needs `Decay`) + `w/wt/pn_ne_zero` (nonvanishing).
+- Workers A1 (`pf_cleared`, building PowerSeries foundations) and A2 (`Decay`) still running.
+
+## Sorry inventory (updated; ZERO required at completion)
 - `Defs.lean` (3): `w_congruence`, `wtilde_congruence`, `pn_valuation` (frozen stubs;
   proven as `Main.*'`; remove once Main is fully closed — import cycle prevents proving
   in Defs).

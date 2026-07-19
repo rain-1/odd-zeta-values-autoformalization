@@ -34,6 +34,27 @@ General nonvanishing `w_n, w̃_n, p_n ≠ 0` (all `n` on domain) is unproved (nu
 theorems above. If closed, the disjuncts collapse to the sharp `1 ≤ padicValRat`. A finite
 witness (`n = 3`) is in `Numeric.lean`.
 
+## L5 — finite-range corrected law (`12·d_n⁵·P_n ∈ ℤ`)
+
+Kernel-verified per `n`, one file per `n` (`Cbcert/FiniteLaw/N⟨n⟩.lean`) so lake
+parallelizes and ranges split across machines. `P_n = (−1)^{n+1}·p_n/C(2n,n)` off
+the **canonical** `pn` (`Defs.lean`) and `d_n` (`ErrorExhibit.lean`). Each file:
+`pn_val_⟨n⟩` (the expensive canonical `norm_num` reduction), `pn_ne_zero_⟨n⟩` (free
+byproduct — sharpens `Main.pn_valuation`'s disjunct on the range), `law_⟨n⟩ :
+CorrectedLaw n` (witness `m` inlined; kernel only CHECKS). Aggregate
+`Cbcert/FiniteLaw/All.lean`: `law_upto`, `pn_ne_zero_upto`. No native_decide, no
+sorry, axioms `[propext, Classical.choice, Quot.sound]`.
+
+- **Ground-truth gate** (`scripts/l5_gate.py`, exact Fractions, adapts
+  `lemma_cb_explore.py`): `12·d_n⁵·P_n ∈ ℤ` verified for `n = 2..24` — the corrected
+  law is NOT falsified anywhere in range (any failure would be a headline).
+- **Scaling** (this box, `native_decide` banned ⇒ `norm_num` kernel reduction):
+  `n=3`≈90 s, `n=4`≈204 s, `n=5`≈354 s; growth ≈1.8×/step; ~7 GB RSS peak (1 job at
+  a time under the shared-mem cap). Verified range **n=2..8** (see the per-n log).
+- **Extend:** `scripts/l5_gen.py NSTART NEND` (generator, exact witnesses) +
+  `scripts/l5_remote.sh HOST NSTART NEND [JOBS]` (remote driver; point at `kbld`
+  once SSH exists). Then add imports to `All.lean` + bump the `Icc` bound.
+
 ## Module table
 
 | module | content | status |

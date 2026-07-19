@@ -51,10 +51,18 @@ L4  Error exhibit                                           [in flight, 2026-07-
     cross-references in docstrings. Companion P̂₂ factor-2 failure optional.
     Module: CBCert/ErrorExhibit.lean.
 
-L5  Finite-range corrected law                              [deferred — cheap]
-    12·d_n⁵·p_n ∈ ℤ for all n ≤ N, by kernel computation (house rule: no
-    native_decide, so N is compute-bound; even N ≈ 20–30 is meaningful).
-    Pure engineering on top of L0.
+L5  Finite-range corrected law                              [DONE n=2..8, 2026-07-19]
+    12·d_n⁵·P_n ∈ ℤ (P_n = (−1)^{n+1} p_n/C(2n,n)) kernel-verified per n, one
+    file per n (`Cbcert/FiniteLaw/N⟨n⟩.lean`) so lake parallelizes and ranges
+    split across machines. Aggregate `law_upto : ∀ n∈Icc 2 8, CorrectedLaw n`
+    (`Cbcert/FiniteLaw/All.lean`), axioms std, no native_decide, no sorry. Free
+    byproduct `pn_ne_zero_⟨n⟩` upgrades `Main.pn_valuation`'s disjunct to the
+    sharp form on the verified range. House rule (no native_decide) makes N
+    compute-bound: norm_num kernel reduction grows ~1.8×/step (n=8 ≈ 35 min).
+    Ground-truth gate `scripts/l5_gate.py` (exact Fractions, n=2..24 all integral
+    — corrected law NOT falsified). Extend: `scripts/l5_gen.py NSTART NEND` +
+    `scripts/l5_remote.sh HOST NSTART NEND` (remote-ready, point at kbld once
+    SSH exists). Pure engineering on top of L0.
 
 L6  The open mathematics                                    [BLOCKED — no paper proof]
     What a full `12·d_n⁵·P_n ∈ ℤ` theorem for ALL n still needs, in order:

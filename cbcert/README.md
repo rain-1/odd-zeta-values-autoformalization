@@ -1,10 +1,12 @@
 # cbcert — Lean 4 formalizations around the Brown–Zudilin ζ(5) work
 
-Lake project (Lean `v4.33.0-rc1`, Mathlib pinned). Two strands live here:
+Lake project (Lean `v4.33.0-rc1`, Mathlib pinned). Three strands live here:
 
 - **Frobenius-certificate theorem** (Tier 1, **complete** — zero sorries) —
   `Cbcert/Main.lean`, documented below; see also `SPEC.md`, `PROGRAM.md`, `PROGRESS.md`.
 - **Error exhibit** (complete) — `Cbcert/ErrorExhibit.lean`, documented below.
+- **Finite-range corrected law** (`12·d_n⁵·P_n ∈ ℤ`, kernel-verified `n = 2 … 8`,
+  extensible across machines) — `Cbcert/FiniteLaw/`, documented below.
 
 Build everything and run the axiom audit:
 
@@ -87,6 +89,87 @@ phrasing was subtly unsound, a statement error caught by formalization).
    `n = 2, 3` against `worthiness/lemma_cb_explore.py` (`all_data`), and exhibits nonvanishing
    at `n = 3`. The scope note: general nonvanishing of `w_n, w̃_n, p_n` is an explicitly-open
    mini-campaign (see `PROGRESS.md`).
+
+---
+
+## Finite-range corrected law — `12·d_n⁵·P_n ∈ ℤ`, kernel-verified per `n`
+
+**Modules:** `Cbcert/FiniteLaw.lean` (definitions + reduction tactic),
+`Cbcert/FiniteLaw/N⟨n⟩.lean` (**one file per `n`**), `Cbcert/FiniteLaw/All.lean`
+(aggregate). Sorry-free, **no `native_decide`** (pure kernel reduction via
+`norm_num`); axioms `[propext, Classical.choice, Quot.sound]`. Generator +
+ground-truth gate + remote driver in `scripts/`.
+
+### What it proves
+
+The Brown–Zudilin paper's experimental `d_n⁵·P_n ∈ ℤ` is false at `n = 2` (see the
+Error exhibit below); the **corrected law** is `12·d_n⁵·P_n ∈ ℤ`, where
+`P_n = (−1)^{n+1}·p_n/C(2n,n)` is built from the project's **canonical** `pn`
+(`Cbcert/Defs.lean`, reduced through `Bseries`/`acoeff`) and `d_n = lcm(1,…,n)`
+(`Cbcert/ErrorExhibit.lean`). Each `Cbcert/FiniteLaw/N⟨n⟩.lean` proves, for its `n`:
+
+| Lean name | statement |
+|---|---|
+| `pn_val_⟨n⟩` | `pn n = ⟨exact rational⟩` (the expensive canonical kernel reduction) |
+| `pn_ne_zero_⟨n⟩` | `pn n ≠ 0` (free byproduct; sharpens `Main.pn_valuation`'s disjunct at `n`) |
+| `law_⟨n⟩` | `CorrectedLaw n` := `∃ m : ℤ, 12·d_n⁵·P_n = m` (integer witness `m` supplied literally) |
+
+The aggregate (`Cbcert/FiniteLaw/All.lean`):
+
+| Lean name | statement |
+|---|---|
+| `law_upto` | `∀ n ∈ Finset.Icc 2 8, CorrectedLaw n` (**verified range `n = 2 … 8`**) |
+| `pn_ne_zero_upto` | `∀ n ∈ Finset.Icc 2 8, pn n ≠ 0` |
+
+The witnesses `m` are computed in exact `Fraction` arithmetic by `scripts/l5_gen.py`
+and inlined, so the kernel only *checks* the equation (checking ≪ deciding). The
+`12` is sharp (the `{2,3}`-ceilings; `worthiness/CONJECTURE.md`).
+
+### Extending the range (more `n`, more machines)
+
+The per-`n` files are independent leaves, so a range splits trivially across cores
+or hosts. **Locally:**
+
+```bash
+cd cbcert
+python3 scripts/l5_gate.py 2 30          # exact-arithmetic gate: is 12·d_n⁵·P_n ∈ ℤ? (must PASS)
+python3 scripts/l5_gen.py 9 12           # emit Cbcert/FiniteLaw/N9..N12.lean (witnesses inlined)
+# add `import Cbcert.FiniteLaw.N9 … N12` to All.lean and bump the `Icc 2 8` bound in law_upto
+lake build Cbcert.FiniteLaw.All          # -j1 recommended: each heavy n peaks ~7 GB RSS
+```
+
+Cost is compute-bound by the `native_decide` ban: `norm_num` kernel reduction of
+`pn n` grows ≈ 1.8×/step (`n=3` ≈ 90 s, `n=5` ≈ 6 min, `n=8` ≈ 35 min on this box).
+Pick `N` so the sequential build fits your budget; `n=2..8` is ≈ 75 min.
+
+**On another machine** (remote driver — installs elan + toolchain, gets the Mathlib
+cache, generates + builds the assigned range, rsyncs results back):
+
+```bash
+cd cbcert
+scripts/l5_remote.sh HOST NSTART NEND [JOBS]     # e.g. scripts/l5_remote.sh kbld 9 16 4
+```
+
+Point `HOST` at `kbld` once its SSH credentials exist (until then the script simply
+fails to connect — it does not assume kbld is reachable). After it rsyncs the
+`N⟨n⟩.lean` back, wire the new imports into `All.lean` and `git add` the range.
+
+### Human-verification recipe
+
+1. **Gate independently:** `python3 scripts/l5_gate.py 2 24` — reproduces `12·d_n⁵·P_n`
+   in exact arithmetic and asserts it is an integer for every `n` (adapts
+   `worthiness/lemma_cb_explore.py`'s `all_data`). Any non-integer would falsify the
+   corrected law.
+2. **Build + audit axioms:**
+   ```bash
+   lake build Cbcert.FiniteLaw.All
+   lake env lean -c /dev/stdin <<< 'import Cbcert.FiniteLaw.All
+   open Cbcert.FiniteLaw
+   #print axioms law_upto
+   #print axioms law_8'
+   ```
+   Each must read `[propext, Classical.choice, Quot.sound]`.
+3. **No `sorry` / `native_decide`:** `grep -rnE 'sorry|native_decide|admit' Cbcert/FiniteLaw*` (docstring hits only).
 
 ---
 

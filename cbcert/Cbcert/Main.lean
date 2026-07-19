@@ -67,6 +67,11 @@ lemma pInt_sub [Fact p.Prime] {x y : ℚ} (hx : pInt p x) (hy : pInt p y) :
 
 lemma pInt_one : pInt p 1 := by simp [pInt]
 
+lemma pInt_natCast (m : ℕ) : pInt p ((m : ℚ)) := zero_le_padicValRat_of_nat m
+
+lemma pInt_intCast [Fact p.Prime] (m : ℤ) : pInt p ((m : ℚ)) := by
+  rw [pInt, padicValRat.of_int, padicValInt]; positivity
+
 lemma pInt_pow [Fact p.Prime] {x : ℚ} (hx : pInt p x) (k : ℕ) : pInt p (x ^ k) := by
   induction k with
   | zero => simpa using (pInt_one : pInt p 1)

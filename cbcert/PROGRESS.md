@@ -93,6 +93,24 @@ Whole project builds green (sorries tracked below; build must stay green).
    variant of `certificate` with target `F_i(j)=j(n−j)[i=3]+(2j−n)[i=4]−[i=5]`; Lemma A range
    `M≤4n+2` (top index `2p+1≤4n+1` needs `p≤2n`, why `p=2n+1` is excluded).
 
+## Reordering recipe for `res_congruence_w` (the last new content; needs `Decay`)
+Goal: `res p (w n) = 0`. Add small helpers to `Main` first:
+- `res_intCast (m:ℤ) : res p ((m:ℚ)) = (m:ZMod p)` — via `res_divInt m 1` (`(m:ℚ)=Rat.divInt m 1`
+  by `Rat.intCast_eq_divInt`; `¬(p:ℤ)∣1`).
+- `res_one : res p 1 = 1`; `res_pow (hx:pInt p x)(k) : res p (x^k) = (res p x)^k` — induction via
+  `res_mul` + `pInt_pow`.
+Then:
+1. `res p (w n) = ∑_j res (acoeff n 3 j)`  [`res_sum`, `acoeff_pInt`].
+2. Show `∑_j res(acoeff n 3 j) = ∑_{M∈{3,p+2,2p+1}} c_M · res (EM n M (acoeff n))` where
+   `c_3=1,c_{p+2}=-2,c_{2p+1}=1`. Route: push `res` through `EM` (res_sum/res_mul/res_intCast/
+   res_pow), giving `res(EM n M a) = ∑_{i∈Icc 1(min6M)} (Cneg i (M-i):ZMod p) ∑_j (j:ZMod p)^(M-i) res(a_{i,j})`.
+   Reorder `∑_M c_M ∑_i ∑_j → ∑_j ∑_{i∈Icc 1 6} (∑_{M:i≤min6M} c_M·Cneg·j^(M-i)) res(a_{i,j})`;
+   the inner `∑_M` bracket is EXACTLY `Certificate.certificate`'s LHS with `x=(j:ZMod p)`, `=δ_{i,3}`;
+   collapse `∑_i δ_{i,3} res(a) = res(a_{3,j})`. (Care: match `Icc 1 (min 6 M)` to the certificate's
+   `if i≤3` guard — for `M=3`, `min 6 3 = 3`.)
+3. `res (EM n M (acoeff n)) = res 0 = 0` by `Decay.decay_a` (each M in range: `3,2p+1≤4n+1≤4n+4`),
+   so the whole sum is `0`. `wt` identical with `atcoeff`/`decay_at` (range `≤4n+2`, `2p+1≤4n+1`).
+
 ## Confirmed conventions (locked into Defs)
 - `Cneg i r = (-1)^r·C(i+r-1,r)`; certificate (w) `(c_3,c_{p+2},c_{2p+1})=(1,-2,1)`.
 - `ã_{i,j}=j(n-j)a_{i,j}+(2j-n)a_{i+1,j}-a_{i+2,j}` (idx>6→0 via `acoeff`).

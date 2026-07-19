@@ -1,0 +1,407 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+
+\DeclareMathOperator{\ord}{ord}
+\DeclareMathOperator{\lcm}{lcm}
+\newcommand{\Fp}{\mathbb{F}_p}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\bin}[2]{\binom{#1}{#2}}
+\newcommand{\wtd}{\widetilde}
+\newcommand{\lean}[1]{\texttt{#1}}
+
+\title{A machine-verified erratum and its repair:\\
+Brown--Zudilin's $\zeta(5)$ denominators and the\\
+Frobenius certificate, formalized in Lean~4}
+\author{}
+\date{19 July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Brown and Zudilin's paper on cellular rational approximations to $\zeta(5)$
+\cite{BZ22} states, as an experimental observation, the integrality
+$d_n^5 P_n \in \Z$ for the rational coefficients of its totally symmetric
+linear forms, where $d_n = \lcm(1,\dots,n)$. The paper's own displayed value
+$P_2 = 1190161/384$ contradicts this inclusion, failing by a factor of exactly
+$12$; the claim is still present, unamended, in the January 2026 revision. We
+present a Lean~4 formalization, mechanically verified by the Lean kernel with
+zero \lean{sorry}s and only the three standard axioms, of: (i)~the
+contradiction, with $P_2$ \emph{derived} from the construction rather than
+transcribed; (ii)~its sharp repair at $n = 2$: $c \, d_2^5 P_2 \in \Z$ if and
+only if $12 \mid c$ (companion form: if and only if $2 \mid c$); and (iii)~the
+theorem that proves the corrected law on the clean interval --- the
+\emph{Frobenius certificate} theorem of \cite{CBcert}: for every $n \ge 1$
+and every prime $p$ with $5 \le p$, $n < p \le 2n$, the harmonic functionals
+satisfy $w_n \equiv \wtd{w}_n \equiv 0 \pmod p$, and hence
+$p \mid p_n$. The formalization exposed two statement-level errors in our own
+paper-level drafts, which we document. The complete development builds in
+one \lean{lake build} and is publicly available.
+\end{abstract}
+
+\section{Introduction}
+
+The irrationality theory of odd zeta values rests on rational linear forms in
+zeta values whose coefficients must be cleared of denominators at a controlled
+exponential cost: for a weight-$5$ form the benchmark cost is $d_n^5$, with
+$d_n = \lcm(1,2,\dots,n) \sim e^n$. In the totally symmetric cellular
+construction of Brown and Zudilin \cite{BZ22}, the linear form
+\begin{equation}\label{eq:In}
+I_n \;=\; Q_n\bigl(2\zeta(5) + 4\zeta(3)\zeta(2)\bigr)
+\;-\; 4\widehat{P}_n\,\zeta(2) \;-\; 2P_n
+\end{equation}
+carries rational coefficient ladders $Q_n$, $\widehat{P}_n$, $P_n$, and the
+paper states (in the display labeled \lean{dn-totsym}, presented explicitly as
+an experimental observation from ``an extensive computation of the rational
+coefficients''):
+\begin{equation}\label{eq:claim}
+Q_n,\;\; d_n^2 d_{2n}\widehat{P}_n,\;\; d_n^5 P_n \;\in\; \Z
+\qquad (n = 0, 1, 2, \dots).
+\end{equation}
+The same paper displays (in the block following the definition of $I_n$) the
+exact values
+\begin{equation}\label{eq:displays}
+Q_2 = 2989, \qquad
+\widehat{P}_2 = \frac{344923}{96}, \qquad
+P_2 = \frac{1190161}{384}.
+\end{equation}
+Since $d_2 = 2$ and $384 = 2^7\cdot 3$, we have
+$d_2^5 P_2 = 1190161/12 \notin \Z$: the third inclusion of \eqref{eq:claim}
+fails already at $n = 2$, by a factor of exactly $12$
+(and the second fails by a factor of exactly $2$:
+$d_2^2 d_4 \widehat{P}_2 = 344923/2$). The corrected law
+\begin{equation}\label{eq:corrected}
+12\, d_n^5 P_n \in \Z,
+\end{equation}
+conjecturally with the $\{2,3\}$-ceilings sharp, has substantial computational
+support, and its clean-interval part is a theorem: the \emph{Frobenius
+certificate} theorem of the companion paper \cite{CBcert} shows that every
+prime $n < p \le 2n$ (the primes of $\bin{2n}{n}$, which the na\"ive
+partial-fraction bound admits into the denominator) in fact divides the
+numerator $p_n$.
+
+This note reports a complete formalization of the erratum, its sharp $n=2$
+repair, and the clean-interval theorem in Lean~4 over Mathlib. Every theorem
+below is verified by the Lean kernel; the development contains zero
+\lean{sorry}s, uses no \lean{native\_decide}, adds no axioms, and each named
+theorem reports exactly the standard axiom triple
+\lean{[propext, Classical.choice, Quot.sound]}. The trust base is the Lean
+kernel and the printed displays of \cite{BZ22} quoted above --- nothing else.
+
+Two purposes motivate machine verification here. First, an erratum to a
+published paper should meet a higher evidentiary standard than the claim it
+corrects; a kernel-checked derivation of $P_2$ from the construction, ending
+in a formal negation of \eqref{eq:claim} at $n=2$, is the strongest form of
+such a statement we know how to produce. Second, the formalization is a test
+of a design thesis: proofs shaped as \emph{finite certificates plus one small
+uniform identity} formalize at low cost. The clean-interval theorem has
+exactly this shape, and the entire development --- definitions, numeric
+gates, five lemma modules, assembly --- was completed in a single day. As a
+byproduct the formalization caught two statement-level errors in our own
+drafts (Section~\ref{sec:caught}), neither of which affects the mathematics,
+both of which would likely have survived human refereeing.
+
+\section{The construction and the formal objects}\label{sec:objects}
+
+Fix $n \ge 1$ and set
+\begin{equation}\label{eq:Rn}
+R_n(k) \;=\; (n!)^4\,\Bigl(k+\frac n2\Bigr)\,
+\frac{\prod_{j=1}^{n}(k-j)\,\prod_{j=1}^{n}(k+n+j)}{\prod_{j=0}^{n}(k+j)^6},
+\end{equation}
+Zudilin's totally symmetric rational function \cite{Zu02}. Its partial
+fractions
+\[
+R_n(k) \;=\; \sum_{i=1}^{6}\sum_{j=0}^{n} \frac{a_{i,j}}{(k+j)^i},
+\qquad
+\wtd a_{i,j} \;=\; j(n-j)\,a_{i,j} + (2j-n)\,a_{i+1,j} - a_{i+2,j}
+\]
+(indices above $6$ read as zero; the $\wtd a$ are the partial fractions of
+$-k(k+n)R_n(k)$) define the functionals
+\[
+u = \sum_j a_{5,j}, \quad
+w = \sum_j a_{3,j}, \quad
+v = \sum_{i,j} a_{i,j} H_j^{(i)}, \qquad
+H_j^{(i)} = \sum_{m=1}^{j} m^{-i},
+\]
+their tilded companions, and the determinant ladders
+\begin{equation}\label{eq:ladders}
+q_n = u\wtd w - \wtd u w, \qquad
+p_n = \wtd w v - w \wtd v, \qquad
+\wtd p_n = u \wtd v - \wtd u v.
+\end{equation}
+The Brown--Zudilin coefficients of \eqref{eq:In} correspond via
+$P_n = (-1)^{n+1} p_n / \bin{2n}{n}$ (the display following
+\eqref{eq:claim} in \cite{BZ22}, which ties the cellular normalization to
+\cite{Zu02}).
+
+In Lean, all of these are \emph{computable} functions on $\Q$: the primary
+definition of $a_{i,j}$ is the truncated local Taylor expansion of
+$B_j(k) = (k+j)^6 R_n(k)$ at $k = -j$ (module \lean{Cbcert/Defs.lean}), and
+the partial-fraction property is then a \emph{theorem}
+(\lean{pf\_cleared}, module \lean{Cbcert/PartialFraction.lean}): the cleared
+polynomial identity
+\[
+N_n(k) \;=\; \sum_{i,j} a_{i,j}\,(k+j)^{6-i}\prod_{m \ne j}(k+m)^6,
+\]
+proven for all $n$. Computability is what makes the development
+self-auditing: a numeric gate (\lean{Cbcert/Numeric.lean}) reduces the full
+definition chain by kernel computation at $n = 2$,
+\[
+w = \tfrac{6125}{4},\quad \wtd w = 1764,\quad u = 469,\quad \wtd u = 552,\quad
+v = \tfrac{74463}{32},\quad \wtd v = \tfrac{43085}{16},\quad
+p_2 = \wtd w v - w\wtd v = -\tfrac{1190161}{64},
+\]
+and at $n = 3$, in exact agreement with the independent reference
+implementation; the frozen definitions were gated on this agreement before
+any lemma work began. Note $P_2 = (-1)^{3} p_2/\bin{4}{2} = 1190161/384$,
+matching \eqref{eq:displays} exactly.
+
+\section{The machine-verified erratum}\label{sec:erratum}
+
+\begin{theorem}[{\lean{Cbcert/ErrorExhibit.lean}}]\label{thm:erratum}
+Define $P_2$ by the construction of Section~\ref{sec:objects}
+\textup{(}derived, not transcribed\textup{)}. Then, verified by the Lean
+kernel with standard axioms:
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item \lean{P2\_eq}: $P_2 = 1190161/384$, and likewise
+$Q_2 = 2989$, $\widehat P_2 = 344923/96$ --- the construction reproduces
+\emph{all three} displayed values \eqref{eq:displays} of \cite{BZ22}.
+\item \lean{bz\_inclusion\_fails}: $d_2^5\,P_2 \notin \Z$. In particular the
+inclusion $d_n^5 P_n \in \Z$ of \eqref{eq:claim} is false at $n = 2$.
+\item \lean{clearing\_iff}: for every $c \in \mathbb{N}$,
+$\;c\,d_2^5\,P_2 \in \Z \iff 12 \mid c$. The repair factor $12$ of
+\eqref{eq:corrected} is sharp at $n=2$.
+\item \lean{companion\_inclusion\_fails}, \lean{companion\_clearing\_iff}:
+$d_2^2 d_4 \widehat P_2 \notin \Z$, and
+$c\,d_2^2 d_4 \widehat P_2 \in \Z \iff 2 \mid c$.
+\end{enumerate}
+\end{theorem}
+
+The Lean statements are short enough to read in full (unicode transliterated):
+
+\begin{quote}\small\ttfamily
+theorem bz\_inclusion\_fails :\\
+\hspace*{1em}$\lnot$ $\exists$ m : $\Z$, (d 2 : $\Q$)\^{}5 * P$_2$ = (m : $\Q$)\\[2pt]
+theorem clearing\_iff (c : $\mathbb{N}$) :\\
+\hspace*{1em}($\exists$ m : $\Z$, (c : $\Q$) * (d 2)\^{}5 * P$_2$ = m) $\leftrightarrow$ 12 $\mid$ c
+\end{quote}
+
+\noindent
+where \lean{d} is the genuine running $\lcm(1,\dots,n)$. Each definition and
+theorem carries a docstring citing the source labels of \cite{BZ22}
+(\lean{dn-totsym} for the claim, the \lean{I\_n} display block for the
+values), so a reader can hold the PDF next to the Lean file. Two remarks on
+scope. The claim \eqref{eq:claim} is presented in \cite{BZ22} as an
+experimental observation, not a theorem; what is exhibited here is a false
+printed claim and its sharp correction, not a broken proof. And the bridge
+between the cellular normalization of \cite{BZ22} and the construction of
+Section~\ref{sec:objects} is the paper's own stated correspondence to
+\cite{Zu02}; it is corroborated \emph{inside} the formalization by
+Theorem~\ref{thm:erratum}(i), which reproduces all three displayed values
+simultaneously from one derivation chain.
+
+\section{The Frobenius-certificate theorem, formalized}\label{sec:cert}
+
+The mathematical content, proven in \cite{CBcert}: for a prime $p$ with
+$n < p \le 2n$, the Frobenius identity $k^p - k \equiv (k+j)^p - (k+j)
+\pmod p$ makes $\varphi = (k^p - k)^2$ congruent to $(k+j)^2$ modulo
+$(k+j)^6$ at every pole $-j$, while $\deg \varphi = 2p \le 4n + 2$ keeps
+$\varphi R_n$ decaying at infinity; the residue-sum theorem on $\mathbb P^1$
+then forces $\sum_j a_{3,j} \equiv 0 \pmod p$. In certificate form this is
+the three-term relation with coefficients $(c_3, c_{p+2}, c_{2p+1}) =
+(1, -2, 1)$ among the decay relations
+\[
+E_M \;=\; \sum_{i=1}^{\min(6,M)} \bin{-i}{M-i} \sum_{j} j^{M-i}\, a_{i,j}
+\;=\; 0 \qquad (1 \le M \le 4n+4),
+\]
+which are the coefficients of the expansion of $R_n$ at infinity.
+
+\begin{theorem}[{\lean{Cbcert/Main.lean}}]\label{thm:cert}
+For every $n \ge 1$ and every prime $p$ with $5 \le p$ and $n < p \le 2n$,
+verified by the Lean kernel with standard axioms:
+\[
+\text{\lean{res\_congruence\_w}}:\; p \mid w_n, \qquad
+\text{\lean{res\_congruence\_wt}}:\; p \mid \wtd w_n, \qquad
+\text{\lean{res\_congruence\_pn}}:\; p \mid p_n,
+\]
+where $p \mid x$ for a $p$-integral rational $x$ means $\mathrm{res}_p(x) =
+0$ under the residue homomorphism $\mathrm{res}_p$ to $\Z/p$. Equivalently
+\textup{(}\lean{pn\_valuation} etc.\textup{)}: $p_n = 0$ or
+$\mathrm{ord}_p(p_n) \ge 1$.
+\end{theorem}
+
+The last statement of Theorem~\ref{thm:cert} is the clean-interval
+central-binomial cancellation $(\mathrm{CB}_1)$: every prime of the window
+$(n, 2n]$, $p \ge 5$, divides $p_n$.
+
+\subsection*{Architecture}
+
+The proof formalizes in four independent modules plus an assembly, mirroring
+\cite{CBcert}:
+
+\begin{center}
+\begin{tabular}{lll}
+module & content & status \\
+\hline
+\lean{Defs.lean} & all definitions (computable over $\Q$) & frozen, gated \\
+\lean{Certificate.lean} & Lemma B: the $\Fp$ certificate identity & proven \\
+\lean{PartialFraction.lean} & \lean{pf\_cleared}: the all-$n$ cleared identity & proven \\
+\lean{Decay.lean} & Lemma A: $E_M(a) = E_M(\wtd a) = 0$ & proven \\
+\lean{Integrality.lean} & Lemma C: $p$-integrality of $a, \wtd a, H$ & proven \\
+\lean{Main.lean} & residue map, reordering, main theorems & proven \\
+\lean{Numeric.lean} & kernel-reduction gates at $n = 2, 3$ & proven \\
+\lean{ErrorExhibit.lean} & Theorem~\ref{thm:erratum} & proven \\
+\end{tabular}
+\end{center}
+
+\emph{Lemma B} is pure binomial arithmetic in $\Z/p$: for $p \ge 5$,
+$1 \le i \le 6$ and every $x \in \Z/p$,
+\[
+\sum_{M \in \{3,\, p+2,\, 2p+1\}} c_M \bin{-i}{M-i}\, x^{M-i}
+\;=\; \delta_{i,3} \qquad\text{in } \Z/p,
+\]
+proven from $x^p = x$ and $p \mid \bin{p}{m}$ for $0 < m < p$. It is the
+mathematically novel part of \cite{CBcert} and was the \emph{easiest} module
+to formalize --- a data point for the certificate-shaped design thesis.
+
+\emph{Lemma A} never needed the anticipated Laurent-series machinery: with
+the cleared identity \lean{pf\_cleared} in hand, the decay relations become
+the statement that $E_M(a)$ is the coefficient of $X^M$ in
+$R_n(1/X) = X^{4n+5}\,\wtd N(X)/\wtd D(X)$ with $\wtd D(0) = 1$, an
+elementary computation in $\Q[[X]]$. The load-bearing insight in
+\lean{pf\_cleared} itself was that the truncated-multiplication primitive
+used by the computable definitions \emph{is} the Cauchy product, so the
+Taylor-coefficient definition of $a_{i,j}$ composes directly into the
+polynomial identity.
+
+\emph{Lemma C} bounds every denominator of $a_{i,j}$, $\wtd a_{i,j}$
+($j \le n$) and $H_j^{(i)}$ by primes $\le n < p$: the pole differences
+$|j - j'| \le n$ are the only sources.
+
+\emph{Assembly.} A residue homomorphism $\mathrm{res}_p$ is developed on the
+$p$-integral subring of $\Q$ (compatible with $+$, $\times$, and with
+$\mathrm{res}_p(x) = 0 \iff x = 0 \vee \mathrm{ord}_p(x) \ge 1$), and a
+coefficient-agnostic reordering lemma turns Lemmas A + B + C into
+$\mathrm{res}_p\bigl(\sum_j b_{3,j}\bigr) = 0$ for both coefficient systems
+$b \in \{a, \wtd a\}$ at once; $p \mid p_n$ then follows from
+\eqref{eq:ladders} by ring arithmetic. All three certificate indices satisfy
+$M \le 4n+4$ (respectively $4n+2$ for $\wtd a$) precisely because
+$p \le 2n$; the case $p = 2n+1$ is genuinely excluded.
+
+\section{What the formalization caught}\label{sec:caught}
+
+Two statement-level errors in our own paper-level drafts were discovered and
+repaired during formalization. We record them because both are invisible to
+ordinary numerical testing on the intended domain, and both concern the
+\emph{statements}, not the proofs.
+
+\begin{enumerate}[label=\textup{(\arabic*)}]
+\item \textbf{The valuation phrasing is unsound at zero.} The intended
+statement $\mathrm{ord}_p(p_n) \ge 1$ was originally frozen as
+$1 \le \lean{padicValRat}\ p\ (p_n)$. Mathlib defines
+$\lean{padicValRat}\ p\ 0 = 0$, so this phrasing silently asserts
+$p_n \ne 0$ --- a genuinely separate arithmetic fact (true numerically for
+$n \le 60$; open in general, and \emph{not} needed for any downstream
+denominator application). The canonical theorems are therefore stated in
+residue form, with the faithful disjunction
+$p_n = 0 \vee 1 \le \lean{padicValRat}\ p\ (p_n)$ provided as a corollary.
+General nonvanishing is documented as an explicitly open problem, not a
+hidden hypothesis.
+\item \textbf{The integrality lemma needs its hypotheses.} As first staged,
+Lemma C quantified over all pole indices $j$ and all primes $p > n$. Both
+restrictions matter: the formal coefficient function evaluated out of range
+or at $p = 2$ produces genuine counterexamples (at $n = 1$:
+$a_{5,0} = 9/2$, and the out-of-range $a_{5,2} = 9/128$ with
+$\mathrm{ord}_2 = -7$). The proven lemma carries $j \le n$ and $p$ odd; the
+false general wrappers were deleted.
+\end{enumerate}
+
+Neither finding affects \cite{CBcert}, whose arguments always operate in
+range with $p \ge 5$; both are exactly the kind of boundary defect that
+survives refereeing.
+
+\section{Scope and open problems}\label{sec:scope}
+
+The formalized results are: the erratum and its sharp $n = 2$ repair
+(Theorem~\ref{thm:erratum}), and the clean-interval theorem
+(Theorem~\ref{thm:cert}) --- the part of the corrected law
+\eqref{eq:corrected} that is a theorem on paper. Explicitly \emph{not}
+formalized, because they are not yet theorems on paper: the full corrected
+law for all $n$ (its remaining gap is a Dwork-type descent congruence, for
+which extensive exact computational evidence exists, including a uniform
+$\bmod\ p^5$ jet on the $a = 1$ band); and the general nonvanishing
+$w_n, \wtd w_n, p_n \ne 0$. The finite-range law
+$12\, d_n^5 p_n' \in \Z$ for $n \le N$ by kernel computation is routine
+future work on top of the present definitions.
+
+\section{Verification}\label{sec:verify}
+
+The development lives in the \lean{cbcert/} directory of the public
+repository \cite{repo}, pinned to Lean toolchain
+\lean{v4.33.0-rc1} and a fixed Mathlib commit. To verify:
+\lean{lake exe cache get \&\& lake build} (the full build reports
+$\approx 8669$ jobs and finishes with no \lean{sorry} warnings), then
+\lean{\#print axioms} on any theorem named above; each reports exactly
+\lean{[propext, Classical.choice, Quot.sound]}. The repository README
+contains the recipe, including which displays of \cite{BZ22} to compare
+against which Lean docstrings.
+
+\subsection*{Provenance}
+
+The formalization was produced on 19 July 2026 in a single orchestrated
+session by a fleet of LLM agents (Claude, Anthropic), following the
+statement-first protocol described above: definitions frozen against exact
+numeric gates before lemma work, statements corrected only under the
+documented-erratum discipline of Section~\ref{sec:caught}. As with any
+formal development, correctness rests on the Lean kernel and the pinned
+toolchain, not on the process that produced the proof scripts.
+
+\begin{thebibliography}{9}
+
+\bibitem{BZ22}
+\textsc{F.~Brown, W.~Zudilin},
+On cellular rational approximations to $\zeta(5)$,
+arXiv:2210.03391 [math.NT] (2022; revised 26 January 2026).
+
+\bibitem{Zu02}
+\textsc{W.~Zudilin},
+A third-order Ap\'ery-like recursion for $\zeta(5)$,
+\emph{Mat. Zametki} \textbf{72} (2002), no.~5, 796--800;
+English transl., \emph{Math. Notes} \textbf{72} (2002), no.~5--6, 733--737.
+
+\bibitem{CBcert}
+A Frobenius certificate for central-binomial cancellation in Zudilin's
+symmetric $\zeta(5)$ construction, companion paper, this repository
+(\lean{worthiness/cb\_certificate.tex}), 17 July 2026.
+
+\bibitem{Lean4}
+\textsc{L.~de Moura, S.~Ullrich},
+The Lean 4 theorem prover and programming language,
+\emph{CADE 28}, Lecture Notes in Comput. Sci. \textbf{12699} (2021), 625--635.
+
+\bibitem{mathlib}
+\textsc{The mathlib Community},
+The Lean mathematical library,
+\emph{CPP 2020}, ACM (2020), 367--381.
+
+\bibitem{repo}
+Odd zeta values: machine verifications (repository),
+\url{https://github.com/rain-1/odd-zeta-values-autoformalization}.
+
+\end{thebibliography}
+
+\end{document}

@@ -190,6 +190,27 @@ prove Theorem~\ref{thm:main} in \S\ref{sec:proof}, record the resulting explicit
 $\Fp$-certificate and the exact prime window in \S\ref{sec:remarks}, and state
 honestly in \S\ref{sec:phase2} what remains (the primes $p\le n$).
 
+The conceptual formulation worth foregrounding is this. The certificate must
+prescribe the $6$-jet of a polynomial at each of the $n+1$ poles --- a Hermite
+interpolation problem imposing $6(n+1)$ linear conditions --- while the residue
+theorem tolerates degree at most $4n+3$. Over a field of characteristic zero
+the problem is overdetermined by $2n+2$ conditions and generically has no
+solution; this is exactly why the characteristic-zero relations at infinity
+(the $E_M$ window of \S\ref{sec:remarks}) cannot force the congruence by
+themselves. In characteristic $p$ the Frobenius endomorphism supplies
+$(k^p-k)^2$, which satisfies all $6(n+1)$ jet conditions \emph{simultaneously}
+at degree only $2p$; the certificate then extracts the desired Laurent
+coefficient at every pole at once, and the global residue theorem annihilates
+their sum. In one sentence: \emph{Frobenius turns an overdetermined
+characteristic-zero Hermite interpolation problem into a low-degree
+interpolation certificate in characteristic $p$, and global residue duality
+does the rest.} Both the exact prime window (the degree-at-infinity budget
+$2p+\deg Q\le 4n+3$ computed in \S\ref{sec:remarks}, with the weight-$2$
+companion fixing the endpoint $p\le 2n$) and the generalization to arbitrary
+polynomial weights $Q$ (the remark closing \S\ref{sec:proof}) are immediate
+from this formulation --- the mechanism is \emph{Frobenius-assisted global jet
+interpolation plus residue duality}, not a bespoke identity.
+
 \section{A residue extraction over an arbitrary field}\label{sec:extract}
 
 We work over a field $\mathbb K$ and use the residue theorem on $\mathbb P^1$:

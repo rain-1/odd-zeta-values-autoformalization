@@ -230,6 +230,16 @@ E_M \;=\; \sum_{i=1}^{\min(6,M)} \bin{-i}{M-i} \sum_{j} j^{M-i}\, a_{i,j}
 \]
 which are the coefficients of the expansion of $R_n$ at infinity.
 
+Conceptually: the certificate must prescribe a $6$-jet at each of the $n+1$
+poles ($6(n+1)$ linear conditions) under a degree budget of $4n+3$ imposed by
+the residue theorem --- an overdetermined Hermite interpolation problem in
+characteristic zero, which is why the characteristic-zero $E_M$ relations
+alone cannot force the congruence. Frobenius solves it in characteristic $p$
+at degree $2p$, within budget precisely on the prime window; the mechanism is
+\emph{Frobenius-assisted global jet interpolation plus residue duality}, and
+it generalizes to arbitrary polynomial weights $Q$ with
+$2p + \deg Q \le 4n+3$ \cite{CBcert}.
+
 \begin{theorem}[{\lean{Cbcert/Main.lean}}]\label{thm:cert}
 For every $n \ge 1$ and every prime $p$ with $5 \le p$ and $n < p \le 2n$,
 verified by the Lean kernel with standard axioms:

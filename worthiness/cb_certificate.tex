@@ -27,7 +27,7 @@
 \title{A Frobenius certificate for central-binomial cancellation\\
 in Zudilin's symmetric $\zeta(5)$ construction}
 \author{}
-\date{17 July 2026}
+\date{17 July 2026. Revised: 19 July 2026.}
 
 \begin{document}
 \maketitle
@@ -109,7 +109,11 @@ R_n(k)=\sum_{i=1}^{6}\sum_{j=0}^{n}\frac{a_{i,j}}{(k+j)^i}
 \end{equation}
 has coefficients $a_{i,j}\in\Q$, each a $\Z$-linear combination of $(n!)^4$,
 $(\tfrac n2-j)$ and reciprocals of integers $m-j$ with $|m-j|\le n$; in
-particular every $a_{i,j}$ is \emph{$p$-integral} for any prime $p>n$. Zudilin's
+particular every $a_{i,j}$ is \emph{$p$-integral} for any \emph{odd} prime
+$p>n$. (At $p=2$ this can fail for odd $n$, where the factor $\tfrac n2-j$ is
+half-integral --- e.g.\ $a_{5,0}=\tfrac92$ at $n=1$; the theorem below only
+uses $p\ge5$. The oddness hypothesis was added in the 19 July 2026 revision,
+prompted by the Lean formalization of Remark~\ref{rem:lean}.) Zudilin's
 first form and its companion are
 \[
 r_n=\sum_{k\ge1}R_n(k)=u_n\zt5+w_n\zt3-v_n,\qquad
@@ -165,6 +169,18 @@ Consequently, by Proposition~\textup{\ref{prop:reduction}}, the central-binomial
 divisibility \eqref{eq:CB} holds at every prime of the clean interval
 $n<p\le 2n$, for all $n$.
 \end{theorem}
+
+\begin{remark}[Machine verification]\label{rem:lean}
+This theorem, together with the consequent divisibility $p\mid p_n$, has been
+formalized and kernel-verified in Lean~4 over Mathlib: development
+\texttt{cbcert/} of this repository, writeup
+\texttt{cbcert/cbcert\_formalization.tex}; zero \texttt{sorry}s, axioms
+exactly \texttt{[propext, Classical.choice, Quot.sound]} on every named
+theorem. The formalized statements are cast in residue form
+($\mathrm{res}_p(w_n)=\mathrm{res}_p(\wt w_n)=\mathrm{res}_p(p_n)=0$), which
+is faithful without any nonvanishing hypothesis; the formalization also
+supplied the oddness restriction now stated before \eqref{eq:pf}.
+\end{remark}
 
 The proof is a two-line residue computation once the right polynomial is in hand.
 Its content is the polynomial itself, and its provenance is the Frobenius

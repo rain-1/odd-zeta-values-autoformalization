@@ -1,0 +1,168 @@
+PHASE 2 FROM SOL — SESSION 5 HANDOFF
+===================================
+
+Date: 20 July 2026
+Scope executed: J12, its consequence (RT), and the first reduction of the
+five-digit head-window identity (H).
+
+
+VERDICT
+-------
+
+J12 is proved, for both the base and companion arrays, with the endpoint pair
+and central singleton handled separately.  Consequently (RT) is proved.  The
+calculation then isolated and gated a one-coefficient normal-form candidate
+for (H): four digits vanish pairwise on every audited row and only one
+finite-field sum remains.  The prime-independent proof of that local floor and
+of the final sum were not completed.  Hence the complete a=1 midpoint theorem
+is not claimed, and (U)/(LEAD)/assembly were not promoted from their
+conditional status.
+
+
+1. J12 CERTIFICATE
+------------------
+
+For `m=p+r`, `c=r-b`, put `A_i(b)=p^(6-i)a_(i,b)`.  Substitution of
+
+  E_d(x)=1+xpH_d^(1)
+           +(x^2p^2/2)((H_d^(1))^2-H_d^(2)) mod p^3
+
+in PHI-6, followed by collision extraction in the Bell derivatives, gives
+
+  delta_t=p^tD_t,
+  (delta_1,...,delta_5) at p=0
+    =(-13/2,19/4,-55/4,237/8,-669/4).
+
+The relevant Bell jets start with
+
+  Y_5/5!=-287,   d(Y_5/5!)/d(delta_1)=287/2,
+  Y_4/4!=287/2, d(Y_4/4!)/d(delta_1)=-127/2.
+
+After collecting degrees zero, one, and two, the whole Phi/Bell calculation
+is equivalent to the three reflection jets
+
+  A_1(c)=-A_1(b)                         mod p^3,        (T1)
+  A_2(b)-A_2(c)=-A_1(b)                  mod p^2,        (T2)
+  A_2(b)+A_2(c)=0                        mod p.          (T3)
+
+The explicit harmonic formulas and a denominator-cleared symbolic proof are
+in `PHASE2_J12_CERTIFICATE.md` and `sol_j12.py`.
+
+The kernels are
+
+  K_1(b)=H_b+H_c-pH_c^(2)+p^2(H_c^(3)+Omega_1) mod p^3,
+  K_2(b)=H_b^(2)-H_c^(2)+p(2H_c^(3)-Omega_2) mod p^2,
+
+where `Omega_1=H_(p-1)^(1)/p^2` and
+`Omega_2=H_(p-1)^(2)/p`.  Substitution of T1--T3 makes the coefficients of
+`1,p,p^2` in J12 equal to `(0,0,0)`; the Omega terms cancel rather than being
+specialized.  The exact companion formula gives the identical conclusion for
+`At`.
+
+Boundary handling:
+
+- `{0,r}` remains an explicit pair; `r` is a p-unit and the same collected
+  formulas give `(0,0,0)`.
+- At `b=c`, `(m/2-b)=p/2`, so `p|a_6`.  The central collision Bell row gives
+  `A_1=0 mod p^3`, `A_2 in pZ_p`, and `K_2 in pZ_p`.  This proves the singleton
+  without cancelling the central zero.
+
+Coefficient gates before declaration: `p=11,13,17`, `s=0,1,2`, every pair,
+both arrays.  All three formal coefficients are zero and every exact rational
+J12 has valuation at least three.  PASS.
+
+Verification status: PROVED (finite algebra); sample gates are independent
+regression checks, not the basis of the proof.
+
+
+2. (RT) CLOSED
+--------------
+
+J12 supplies the local `p^-2` floor for layers 1+2.  Session 4's proved J3
+supplies it for layer 3, and the collision count supplies it for layers 4--6.
+Thus `R_ht,Rtilde_ht in p^-2 Z_p`.  With the proved
+`w,wtilde in p^-2 Z_p`,
+
+  p^5(wtilde R_ht-w Rtilde_ht) in p Z_p
+
+at every level.  The three binomial normalizers are p-units because `2r_s<p`;
+the fixed row therefore preserves the bound.  This is (RT).
+
+Verification status: PROVED, conditional only on previously established J3
+and Zudilin bounds already recorded in the session-4 handoff.
+
+
+3. (H): FIVE-DIGIT NORMAL-FORM CANDIDATE
+-----------------------------------------
+
+Reflect the full sums in `u,w` before reducing.  For either coefficient array
+`a` or `at`, define the local head term
+
+  T(b)=sum_(i=1)^6 (-1)^(i+1)p^(5-i)a_(i,b)
+         -2(29/28)a_(5,b)-2(101/84)p^2a_(3,b).
+
+Then exactly
+
+  E=sum_{head pairs {b,c}}(T(b)+T(c))+M,
+
+where the middle correction `M` is in `p^5 Z_p` by the same factorial count as
+(RM).  The exact gates suggest the sharper local form
+
+  T(b)+T(c)=p^4 C_4(b) mod p^5.
+
+If this local floor is proved uniformly, the first four digits vanish locally
+and the full five-digit identity becomes precisely
+
+  sum_{0<=b<=floor(r/2)} C_4(b)=0 mod p,                (H-NF)
+
+with singleton convention at the centre.  The companion has the same form.
+
+`sol_h5.py` gates this exact reorganization at `p=11,13,17`, all offsets and
+both arrays.  Every local pair has valuation at least four, every middle term
+at least five, and every printed C4 list sums to zero.  The exact `E,Et` have
+valuation at least five.
+
+Verification status: the exact reflected decomposition and the uniform middle
+floor are PROVED.  The local `p^4` floor and (H-NF) PASS the finite exact gates
+but remain OPEN uniformly.  Do not replace them by their samples.
+
+
+4. DOWNSTREAM STATUS
+--------------------
+
+- (RM): PROVED in session 4.
+- (RT): PROVED in this session.
+- (H): exact decomposition proved; local-floor/(H-NF) candidate OPEN.
+- (LEAD): exact finite gates pass, but remains conditional on (H).
+- (U): conditional on (H), (LEAD), and the primitive-Q-triple lemma.
+- Full a=1 midpoint theorem: OPEN; no self-contained theorem section is issued.
+
+
+5. NEXT FIRST TASK
+------------------
+
+Extract the five local coefficients from the weight-five Phi/Bell expansion in
+the harmonic alphabet, prove the observed local `C_0=...=C_3=0`, and prove
+(H-NF) by a finite-field summation certificate.  Keep the endpoint and central
+terms explicit.  The likely shortest closure is to match the resulting `C_4`
+functional to the existing infinity-relation/E_M certificate.
+
+Only after (H-NF) is proved should (LEAD), the primitive-Q-triple lemma, (U),
+and the a=1 midpoint assembly be written as the requested self-contained
+certificate section.
+
+
+FILES WRITTEN THIS SESSION
+--------------------------
+
+  worthiness/sol_j12.py
+  worthiness/PHASE2_J12_CERTIFICATE.md
+  worthiness/sol_h5.py
+  worthiness/SOL_WORKLOG.md (append only)
+  worthiness/PHASE2_FROM_SOL_5.txt
+
+
+Signed,
+
+Sol
+20 July 2026

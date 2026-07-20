@@ -379,3 +379,59 @@
   reproduced their session-3 counts exactly.
 - The unrelated modified Lean files `cbcert/Cbcert/Assembly.lean` and
   `cbcert/Cbcert/LucasRow.lean` remain untouched and unincorporated.
+
+## 2026-07-20 — session 5 start: J12
+
+- Accepted the machine-verified `Q_lucas_frobenius` and conditional
+  `descent_law` in commit `64ea13a`; the worktree was clean at entry.
+- Kept the binding order from session 4: close J12 and hence `(RT)` before
+  touching `(H)`, `(U)`, or assembly.
+- Added `sol_j12.py`, a valuation-aware truncated Phi/Bell checker.  It uses
+  `z` for the collision prime, keeps the kernel full-block quotients as
+  independent symbols, and separately retains the endpoint and central
+  branches.
+
+## 2026-07-20 — J12 and RT closed
+
+- With `delta_t=p^tD_t`, extracted the universal collision row
+
+      (-13/2, 19/4, -55/4, 237/8, -669/4).
+
+  The Bell values are `Y_5/5!=-287`, `Y_4/4!=287/2`, and the derivatives
+  needed through degree two are recorded in `PHASE2_J12_CERTIFICATE.md`.
+- Substitution of the required
+  `E_d(x)=1+xpH_d+(x^2p^2/2)(H_d^2-H_d^(2)) mod p^3` gives, for `c=r-b`,
+
+      A_1(c)=-A_1(b) mod p^3,
+      A_2(b)-A_2(c)=-A_1(b) mod p^2,
+      A_2(b)+A_2(c)=0 mod p.
+
+  These are verified after denominator clearing in an independent symbolic
+  harmonic alphabet, rather than inferred by interpolation.
+- Collecting the reflected kernels makes all three J12 coefficients zero.
+  The full-block kernel quotients cancel symbolically.  The exact companion
+  formula reduces its coefficient row to zero as well.
+- Kept `{0,r}` as a named endpoint branch.  For `b=c`, used the uncancelled
+  factor `(m/2-b)=p/2`: the central collision row has `Y_5/5!=0`, so
+  `A_1=0 mod p^3`, while `A_2` and `K_2` each gain the required factor.
+- Required gates passed at `p=11,13,17`, all three offsets, all pairs, both
+  arrays: coefficient triples `(0,0,0)` and exact-oracle valuation at least
+  three in every row.
+- Wrote `PHASE2_J12_CERTIFICATE.md`.  Together with the previously proved J3
+  and elementary layers 4--6, J12 puts both reflected residuals in
+  `p^-2 Z_p`.  Since `w,wtilde in p^-2 Z_p`, `(RT)` follows and is now proved.
+
+## 2026-07-20 — five-digit H normal-form candidate isolated
+
+- Reflected the full `u,w` corrections before expansion.  Uniformly, the
+  middle corrections have valuation at least five.  On every audited row, each
+  head pair `{b,r-b}` has valuation at least four; this isolates the candidate
+  normal form in which digits `C_0,...,C_3` vanish locally and only the
+  finite-field sum `sum_b C_4(b)=0` remains.
+- Added `sol_h5.py`.  At `p=11,13,17`, all three offsets and both arrays, it
+  asserts the exact reflected decomposition, the local `p^4` floor, the
+  middle `p^5` floor, and prints the `C_4` residue list.  Every printed list
+  sums to zero and the exact errors have valuation at least five.
+- The prime-independent Phi/Bell proof of the local `p^4` floor and the
+  summation certificate for `sum C_4=0` are not yet written.  Therefore `(H)`,
+  `(U)`, and the complete a=1 midpoint theorem remain open and are not claimed.

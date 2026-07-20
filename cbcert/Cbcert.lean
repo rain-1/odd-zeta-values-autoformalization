@@ -7,3 +7,5 @@ import Cbcert.Integrality
 import Cbcert.Main
 import Cbcert.ErrorExhibit
 import Cbcert.FiniteLaw.All
+import Cbcert.LucasRow
+import Cbcert.Assembly

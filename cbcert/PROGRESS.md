@@ -34,6 +34,26 @@ General nonvanishing `w_n, w̃_n, p_n ≠ 0` (all `n` on domain) is unproved (nu
 theorems above. If closed, the disjuncts collapse to the sharp `1 ≤ padicValRat`. A finite
 witness (`n = 3`) is in `Numeric.lean`.
 
+## L6-staging wave 1 — two theorems (Goal 2)
+
+Two new modules; statement freeze committed with numeric gates, then proofs.
+
+- **T1 `Cbcert/LucasRow.lean`** — Lucas–Frobenius `q`-row:
+  `Q (a*p+r) ≡ Q a · Q r (mod p)` for prime `p`, `r < p`, where `Q n` is the
+  Brown–Zudilin double-binomial sum (weight-0, manifestly ℕ). Mathlib HAS Lucas
+  (`Mathlib/Data/Nat/Choose/Lucas.lean`: `Choose.choose_modEq_choose_mod_mul_choose_div`
+  single-digit + `lucas_theorem`) — no need to reprove it. Numeric gate `Q 0..4`
+  (`decide`) = `1,21,2989,714549,217515501` (`Q 2 = 2989` matches `ErrorExhibit.Q2_eq`).
+  Proof route mirrors `salvage_v3_lucas_proof.py` (carry-kill + factorization).
+  Status: STATED; 1 sorry (main thm).
+- **T2 `Cbcert/Assembly.lean`** — conditional assembly of Sol's master reduction.
+  `descent_law : hD → ∀ n≥1, ∀ p prime ≥5, −5·⌊log_p n⌋ ≤ v_p(P n)`, `P := BZP`.
+  `hD` (open, NEVER proven here) = the verified descent `v_p(P m) ≥ v_p(P (m/p)) − 5`
+  for `p ≤ m` (`salvage_v7.py`, 332 descents/0 violations). Faithfulness + trap-free
+  argument in the module docstring. Terminal integrality `P_pIntegral_terminal`
+  (PROVEN piece: `Main.pn_pInt` + band `res_congruence_pn` + one-digit Kummer).
+  Status: STATED; 2 sorry (`P_pIntegral_terminal`, `descent_law`).
+
 ## L5 — finite-range corrected law (`12·d_n⁵·P_n ∈ ℤ`)
 
 Kernel-verified per `n`, one file per `n` (`Cbcert/FiniteLaw/N⟨n⟩.lean`) so lake

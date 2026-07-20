@@ -77,6 +77,21 @@ L6-staging  Two theorems landed (wave 1, 2026-07-20)         [cbcert — DONE, s
        whole p≥5 corrected law is now exactly one hypothesis (`hD`) away.** This is
        the assembly skeleton onto which any future proof of (D) drops in directly.
 
+Phase 2 progress (2026-07-20, with Sol/GPT-5.6)         [reduced to ONE open problem]
+    The full p≥5 law ⟺ the one-step descent (D) [master reduction, PROVED + Lean].
+    (D) → per-digit-block: ordinary propagation + ≤4 singular gates (midpoint at
+    2r+5=0, ≤3 cubic at a₀(r)=0); explicit certificate rows; exceptional primes
+    {7,29,107,557,673}∪{43,701}. The a=1 MIDPOINT gate is PROVED (paper, exact-verified):
+    Φ/Bell determinant chain — J12/(RT) 8-order cancellation, (H) whose residual IS the
+    infinity relation E₁, (Q3) non-vanishing via the exact Casoratian. IMPOSSIBILITY THEOREM:
+    the cubic gate CANNOT be closed by recurrence+Casoratian alone (the det-1 basis change
+    (Q,P,P̂)→(Q,P+P̂,P̂) preserves both). ⟹ whole difficulty localized to ONE object:
+    the P-column of the one-digit Frobenius CONNECTION matrix (vector Dwork twist, from the
+    period/order-2 Barnes determinant — NOT the recurrence). Writeup: worthiness/phase2_progress.tex.
+    Evidence: n≤360, p≤73, 5989 descents, 0 violations (evidence, not proof).
+    STATUS 2026-07-20: consolidated per River's call; the connection coefficient (Problem 1
+    of phase2_progress.tex) is posed as open / community-facing, not under active grind.
+
 L6  The open mathematics                                    [BLOCKED — no paper proof]
     What a full `12·d_n⁵·P_n ∈ ℤ` theorem for ALL n still needs, in order:
     (a) q_n ∈ ℤ uniformly (cited from BZ cellular integrality; a formalizable

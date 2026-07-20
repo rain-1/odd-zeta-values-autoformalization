@@ -1,0 +1,337 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{problem}[theorem]{Problem}
+
+\DeclareMathOperator{\ord}{ord}
+\DeclareMathOperator{\lcm}{lcm}
+\DeclareMathOperator{\disc}{disc}
+\DeclareMathOperator{\Res}{Res}
+\DeclareMathOperator{\adj}{adj}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Zp}{\Z_p}
+\newcommand{\bin}[2]{\binom{#1}{#2}}
+\newcommand{\Ph}{\widehat{P}}
+\newcommand{\vp}{v_p}
+
+\title{Phase 2 of the Brown--Zudilin $\zeta(5)$ denominator law:\\
+reduction to a single period connection coefficient}
+\author{}
+\date{20 July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The corrected denominator law $12\,d_n^5 P_n \in \Z$ for Brown--Zudilin's
+totally symmetric cellular approximations to $\zeta(5)$ splits into two
+regimes. The large primes $n < p \le 2n$ (Phase~1) are a theorem: the
+Frobenius certificate, now also kernel-verified in Lean~4. This note reports
+the state of the small primes $p \le n$ (Phase~2). We prove that the entire
+$p \ge 5$ law is equivalent to a single one-step descent $(\mathrm D)$;
+that $(\mathrm D)$ reduces, via the Ap\'ery-like recurrence shared by the
+coefficient triple $(Q_n, P_n, \Ph_n)$, to finitely many
+\emph{singular gates} per base-$p$ digit block; and that the generic
+\emph{midpoint gate} at $a = 1$ is a theorem, through an explicit certificate
+chain whose non-vanishing input is supplied by the exact Casoratian. We then
+prove a precise \emph{impossibility} result: the remaining \emph{cubic gate}
+cannot be closed by the recurrence and Casoratian alone, because a
+determinant-one change of basis preserves both while altering which solution
+is regular. The whole difficulty is thereby localized to one transcendental
+input --- the $P$-column of the one-digit Frobenius connection matrix, a
+vector-valued Dwork congruence for these harmonic companion sequences ---
+which we pose as the open problem. All computational claims are exact; the
+adversarial evidence base for $(\mathrm D)$ stands at $n \le 360$, $p \le 73$,
+$5{,}989$ descents, zero violations.
+\end{abstract}
+
+\section{Setup and the corrected law}
+
+For $n \ge 1$ let
+\[
+R_n(k) = (n!)^4\Bigl(k+\tfrac n2\Bigr)
+\frac{\prod_{j=1}^n (k-j)\,\prod_{j=1}^n(k+n+j)}{\prod_{j=0}^n(k+j)^6},
+\]
+Zudilin's totally symmetric rational function \cite{Zu02}. Its partial
+fractions define the functionals $u,w,v$ and their companions $\widetilde u,
+\widetilde w, \widetilde v$ (obtained from $-k(k+n)R_n$), and the coefficient
+ladders
+\[
+q_n = u\widetilde w - \widetilde u w, \qquad
+p_n = \widetilde w v - w\widetilde v, \qquad
+\widetilde p_n = u\widetilde v - \widetilde u v.
+\]
+The Brown--Zudilin normalized coefficients are $Q_n = (-1)^{n+1}q_n/\bin{2n}n$,
+$P_n = (-1)^{n+1}p_n/\bin{2n}n$, $\Ph_n = (-1)^{n+1}\widetilde p_n/\bin{2n}n$;
+$Q_n$ is a positive integer (the double-binomial period), and the target is
+\begin{equation}\label{eq:law}
+12\, d_n^5\, P_n \in \Z, \qquad d_n = \lcm(1,\dots,n),
+\end{equation}
+with the constant $12 = 2^2\cdot 3$ conjecturally sharp. Brown and Zudilin
+state \eqref{eq:law} without the $12$ as an experimental observation; that
+uncorrected form fails already at $n=2$ (their displayed $P_2 = 1190161/384$
+gives $d_2^5 P_2 = 1190161/12 \notin \Z$), and \eqref{eq:law} is the sharp
+repair \cite{cbcert,errata}.
+
+Because the crude tier $d_{2n}^5 P_n \in \Z$ is elementary, a failure of
+\eqref{eq:law} at a prime $p \ge 5$ can occur only when $p^k \in (n, 2n]$ for
+some $k \ge 1$. The case $k=1$, i.e.\ $n < p \le 2n$, is Phase~1:
+$p \mid p_n$, proved by the Frobenius certificate $(k^p-k)^2$ and the
+residue theorem \cite{cbcert}, and kernel-verified in Lean~4 \cite{lean}.
+This note concerns $p \le n$.
+
+\section{The master reduction to a one-step descent}
+
+Since $\vp(P_n) = \vp(p_n) - \vp\bin{2n}n$ and Kummer's theorem controls
+$\vp\bin{2n}n$ by base-$p$ carries, the carries cancel identically in the
+$P$-normalization, leaving a single clean statement.
+
+\begin{definition}[the descent $(\mathrm D)$]
+\[
+(\mathrm D):\qquad
+\vp(P_n) \ge \vp\bigl(P_{\lfloor n/p\rfloor}\bigr) - 5
+\qquad (p \ge 5,\ p \le n).
+\]
+\end{definition}
+
+\begin{theorem}[master reduction]\label{thm:master}
+$(\mathrm D)$ implies $\vp(P_n) \ge -5\lfloor\log_p n\rfloor$ for every $n$
+and every prime $p \ge 5$ --- equivalently, the $p$-part of the corrected
+law \eqref{eq:law} at all primes $p \ge 5$.
+\end{theorem}
+
+\begin{proof}
+Iterate $(\mathrm D)$ down the digit chain $n \mapsto \lfloor n/p\rfloor
+\mapsto \cdots \mapsto n_L$ with $n_L < p$, $L = \lfloor \log_p n\rfloor$,
+giving $\vp(P_n) \ge \vp(P_{n_L}) - 5L$. At the terminal index either
+$2n_L < p$, whence $P_{n_L} \in \Zp$ by Zudilin's denominator theorem
+(neither $d_{n_L}$ nor $\bin{2n_L}{n_L}$ meets $p$), or $n_L < p \le 2n_L$,
+whence Phase~1 supplies the one missing power of $p$. In both cases
+$\vp(P_{n_L}) \ge 0$.
+\end{proof}
+
+Theorem~\ref{thm:master} is formalized in Lean~4 as \texttt{descent\_law},
+with $(\mathrm D)$ an explicit hypothesis; the $\{2,3\}$-part of the constant
+$12$ is a separate finite obligation \cite{lean}. Thus the whole law reduces
+to $(\mathrm D)$.
+
+\section{The gate structure}
+
+The triple $(Q_n, P_n, \Ph_n)$ satisfies one Ap\'ery-like third-order
+recurrence \cite{Zu02}. In the $\bin{2n}n$-normalization it reads
+$\sum_{i=0}^3 c_i(m) Y_{m+i} = 0$ with, crucially,
+\begin{equation}\label{eq:c3}
+c_3(m) = 2(m+3)^5(2m+5)\,a_0(m), \qquad
+a_0(m) = 41218 m^3 + 198849 m^2 + 320790 m + 173057.
+\end{equation}
+The fifth power $(m+3)^5$ is intrinsic: it is the exact per-digit loss of
+$(\mathrm D)$, not a fitted constant. Reducing the recurrence over a discrete
+valuation ring of residue characteristic $p \ge 5$ and writing $n = ap+r$,
+$0 \le r < p$, one has $c_i(ap+r) \equiv c_i(r) \pmod p$, so on a digit block
+the recurrence has unit leading coefficient and propagates $p$-integrality
+except at the residues where
+\[
+(2r+5)\,a_0(r) \equiv 0 \pmod p.
+\]
+The boundary factor $(r+3)^5$ contributes only the sanctioned five-order loss
+at $r = p-3$.
+
+\begin{proposition}[finite-gate lemma]\label{prop:gates}
+Each base-$p$ digit block reduces to ordinary integral propagation plus at
+most four \emph{singular gates}: one \emph{midpoint} gate at the root of
+$2r+5$, and at most three \emph{cubic} gates at the roots of $a_0$. The
+gates are represented by explicit small-integer certificate rows: an exact
+$\Z[m]$ identity
+\[
+128\,c_i(m) = 7 R_i + (2m+5)H_i(m), \quad (R_0,R_1,R_2) = (11907,-334374,-19292),
+\]
+for the midpoint gate, and $D\,c_i(m) = A_i(m) + a_0(m)K_i(m)$ with
+$D = 2^5\cdot 37^5\cdot 557^2$ for the cubic gate. The exceptional primes are
+exactly $\{7,29,107,557,673\}$ (from $\disc a_0$) and $\{43,701\}$ (from
+$\Res_m(a_0, 2m+5)$).
+\end{proposition}
+
+This is the per-$(n,p)$-witness-plus-uniform-identity shape needed both for a
+proof and for eventual formalization.
+
+\section{The $a=1$ midpoint gate is a theorem}
+
+Fix an odd prime $p$ outside the exceptional set, put $r = (p-5)/2$ and
+$N = p + r = (3p-5)/2$, so $2N+5 = 3p$. Write
+$M_p = 11907\,P_N - 334374\,P_{N+1} - 19292\,P_{N+2}$ and
+$e_p = \min_{0\le s\le 2}\vp(P_{N+s})$.
+
+\begin{theorem}[$a=1$ midpoint gate]\label{thm:mid}
+$\vp(M_p) \ge e_p + 1$; equivalently the midpoint gate at $a=1$ holds in
+saturated form, $\vp(M_p) \ge -4$ with $e_p = -5$.
+\end{theorem}
+
+The proof is an exact determinant assembly (DET-MID) in which neither regular
+residual is discarded before the determinant is formed, reduced through the
+head/middle/tail chambers of the pole index. It combines five established
+facts:
+\begin{enumerate}[label=\textup{(\roman*)},nosep]
+\item the $Q$-coordinate vanishes mod $p$, from the machine-verified
+Lucas--Frobenius congruence $Q_{ap+r}\equiv Q_aQ_r$ and the midpoint row;
+\item (RM) the middle regular determinant lies in $p^4\Zp$, by a factorial
+block count;
+\item (RT) the reflected head+tail regular determinant lies in $p\Zp$ --- an
+eight-order cancellation whose inputs are individually non-integral, proved
+by an exact $\Phi$/Bell substitution reducing it to three reflection-jet
+identities (T1)--(T3) in the harmonic alphabet (certificate ``J12''), with
+the boundary pair and central collision handled as explicit sub-cases;
+\item (H) the five-digit head-window normal form, whose local coefficients
+are $(0,0,0,0,-(a_{1,b}+a_{1,r-b})/84)$; the residual sum
+$\sum_b C_4(b) \equiv 0 \pmod p$ is \emph{exactly} the first infinity
+relation $E_1 = 0$, so (H) needs no new input;
+\item (Q3) the non-vanishing $\lnot(Q_r \equiv Q_{r+1} \equiv Q_{r+2} \equiv 0)$.
+\end{enumerate}
+
+\begin{lemma}[(Q3), via the Casoratian]\label{lem:q3}
+For every prime $p \ge 11$, not all of $Q_r, Q_{r+1}, Q_{r+2}$ vanish mod $p$.
+\end{lemma}
+
+\begin{proof}
+The fundamental matrix of $(Q,P,\Ph)$ at rows $(n,n+1,n+2)$ has Casoratian
+\begin{equation}\label{eq:cas}
+\det \mathcal Y_n = \frac{(-1)^{n-1}a_0(n)}
+{16\,(n+1)^4(n+2)^5(2n+1)(2n+3)\bin{2n}n},
+\end{equation}
+uniform from $\det\mathcal Y_{n+1}/\det\mathcal Y_n = -c_0/c_3$ and the base
+value $\det\mathcal Y_1 = 13591/34560$. At $n = r = (p-5)/2$ every denominator
+factor is a $p$-unit and $2r < p$ makes $\bin{2r}r$ a unit, so by the
+integrality lemma the $P$ and $\Ph$ columns are $p$-integral and
+$\det\mathcal Y_r$ is a $p$-unit \emph{unless} $p \mid a_0(r)$. An all-zero
+$Q$-column would force $\det\mathcal Y_r \equiv 0$, a contradiction. Finally
+$8a_0((p-5)/2) = 41218p^3 - 220572p^2 + 397530p - 241144$ with
+$241144 = 8\cdot 43\cdot 701$, so $p \mid a_0(r)$ only for $p \in \{43,701\}$,
+handled by direct double-binomial certificates
+($[Q_{19},Q_{20},Q_{21}] \equiv [33,0,26]\bmod 43$;
+$[Q_{348},Q_{349},Q_{350}] \equiv [472,350,182]\bmod 701$).
+\end{proof}
+
+The non-vanishing input is thus the recurrence's Casoratian, not a closed form:
+the corresponding half-period modular coefficient \emph{can} vanish mod $p$
+(e.g.\ $Q_{(p-1)/2}\equiv 0 \bmod 19$), so only the determinantal argument
+succeeds.
+
+\section{The obstruction at the cubic gate}
+
+The cubic gate --- regularity of $P$ at a root of $a_0$ --- does not yield to
+the same method, and the failure is structural.
+
+\begin{theorem}[impossibility for recurrence $+$ Casoratian]\label{thm:imposs}
+No argument using only the scalar recurrence and its Casoratian can prove the
+cubic gate for $P$. Concretely, the determinant-one substitution
+\[
+(Q_n, P_n, \Ph_n)\ \longmapsto\ (Q_n,\ P_n + \Ph_n,\ \Ph_n)
+\]
+preserves both the recurrence and the Casoratian \eqref{eq:cas}, yet exchanges
+the regularity of the second column at a root of $a_0$. Hence these data do
+not distinguish $P$ from $P+\Ph$.
+\end{theorem}
+
+At a simple root of $a_0$ the reduced fundamental matrix has rank two; its
+adjugate is rank one and satisfies the explicit first-order recurrence
+$c_3(n)\adj\mathcal Y_{n+1} = \adj\mathcal Y_n\,\Lambda$ with $\Lambda$ the
+companion block. The adjugate is regular exactly where the determinant
+vanishes --- the classical Cramer/connection mechanism --- but its first jet
+identifies only the regular two-plane, and the saturated null direction is
+genuinely mixed (e.g.\ $(30,9,30)$ at $(p,r)=(43,19)$), not the pure $\Ph$
+axis. The exact oracle over every $a_0$-root prime below $50$ confirms $P$ is
+\emph{ordinarily} regular there (no $\Ph$-subtraction is needed), but that is
+a statement the toolkit cannot prove.
+
+\section{The remaining problem}
+
+Everything now rests on one input. Writing $\ell_r$ for the cubic certificate
+row:
+
+\begin{problem}[the vector Dwork connection coefficient]\label{prob:conn}
+Prove
+\[
+\ell_r\bigl(p^5 P_N,\ p^5 P_{N+1},\ p^5 P_{N+2}\bigr) \equiv 0 \pmod p,
+\]
+equivalently determine the $P$-column of the one-digit Frobenius connection
+matrix relating the period vector at $n = ap+r$ to that at $\lfloor n/p\rfloor
+= a$. This is a vector-valued Dwork congruence for the harmonic companion
+sequences $(Q,P,\Ph)$ and must be read off the hypergeometric/period
+determinant, not the recurrence.
+\end{problem}
+
+Several independent lines converge on Problem~\ref{prob:conn}: a linear
+$\Z/p^2$-span experiment shows the actual gain is bilinear, invisible to any
+linear certificate; the salvage of the primal Barnes integral collapses the
+symmetric family to an order-two kernel
+$\mathcal R_n(s,t) = n!\,(s{+}1)_n(t{+}1)_n(s{+}t{+}n{+}2)_n
+/[(s{+}n{+}1)_{n+1}^2(t{+}n{+}1)_{n+1}^2]$ times a universal sine kernel,
+which is the natural home for such a connection coefficient; and the
+impossibility Theorem~\ref{thm:imposs} shows no recurrence-only route can
+substitute for it. A general matrix Dwork theory provides the architecture,
+but no off-the-shelf theorem covers these particular sequences.
+
+\section{Evidence and formalization status}
+
+\paragraph{Evidence.} All coefficient data are exact
+($\mathrm{Fraction}$/$\Z$), extended to $n = 360$ by the recurrence and
+cross-validated against direct partial-fraction computation at $151$ points.
+An adversarial sweep found no violation of \eqref{eq:law} or $(\mathrm D)$
+over $n \le 360$, $p \le 73$: $5{,}989$ descents, zero failures, including the
+previously untested three-digit descents at $p = 5,7$. The law rides the
+boundary --- slack $0$ at $p = 2$ for every $n$, so the constant $12$ is
+exactly sharp throughout. This is evidence, not proof.
+
+\paragraph{Formalization (Lean 4, kernel-verified, standard axioms).}
+Proved and machine-checked: the erratum with its sharp repair; the Phase~1
+certificate theorem $p \mid p_n$ for $n < p \le 2n$; the corrected law
+$12 d_n^5 P_n \in \Z$ for $n \le 8$ with non-vanishing; the Lucas--Frobenius
+row $Q_{ap+r}\equiv Q_aQ_r$; and the master reduction Theorem~\ref{thm:master}
+as the conditional theorem $(\mathrm D)\Rightarrow$ full law. The $a=1$
+midpoint gate (Theorem~\ref{thm:mid}) and the impossibility
+(Theorem~\ref{thm:imposs}) are proved on paper with every step exact-verified,
+and are natural next formalization targets once the cubic gate is understood.
+
+\paragraph{Summary.} Phase~2 is reduced --- unconditionally, through a chain
+of exact and in part machine-checked steps --- to Problem~\ref{prob:conn}, a
+single period connection coefficient. The recurrence-based toolkit is provably
+exhausted at that point; closing it requires the period determinant.
+
+\section*{Acknowledgments}
+
+The Phase~2 reduction reported here --- the master descent $(\mathrm D)$, the
+finite-gate structure, the $\Phi$/Bell certificate chain closing the $a=1$
+midpoint gate (J12, (RT), (H), (H-NF)$=E_1$, and (Q3) via the Casoratian),
+and the impossibility Theorem~\ref{thm:imposs} localizing the whole difficulty
+to Problem~\ref{prob:conn} --- is due in its mathematical substance to Sol
+(a GPT-5.6 instance), across a sustained multi-session collaboration. Each
+step was exact-verified before being recorded, and the negative results (the
+falsified clean-diagonal Frobenius form, the exhausted recurrence toolkit)
+were established with the same rigor as the positive ones.
+
+\begin{thebibliography}{9}
+\bibitem{Zu02} W.~Zudilin, \emph{A third-order Ap\'ery-like recursion for
+$\zeta(5)$}, Mat. Zametki \textbf{72} (2002), 796--800.
+\bibitem{cbcert} \emph{A Frobenius certificate for central-binomial
+cancellation in Zudilin's symmetric $\zeta(5)$ construction}, this repository,
+17--19 July 2026.
+\bibitem{lean} \emph{A machine-verified erratum and its repair: Brown--Zudilin's
+$\zeta(5)$ denominators and the Frobenius certificate, formalized in Lean~4},
+this repository, 19--20 July 2026.
+\bibitem{errata} F.~Brown, W.~Zudilin, \emph{On cellular rational
+approximations to $\zeta(5)$}, arXiv:2210.03391.
+\end{thebibliography}
+
+\end{document}

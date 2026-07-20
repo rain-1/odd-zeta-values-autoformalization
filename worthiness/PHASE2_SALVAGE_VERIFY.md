@@ -248,6 +248,81 @@ reproduces `v_p(P_n) ≥ −5⌊log_p n⌋` with **0 failures** and 0 non-integr
 terminals across p∈{5,7,11,13}. (D) is the correct single reduction and it holds
 on the whole grid.
 
-## V8 — the order-2 Barnes kernel (Sol §S8)
+## V8 — the order-2 Barnes kernel (Sol §S8)  (R_n VALIDATED; anchor obstacle recorded)
 
-See `salvage_v8_barnes.py` and the note appended below.
+Normalization pinned from the cached BZ source (arXiv:2210.03391), eq. (intJ):
+for the totally symmetric family (all `p_j=q_k=n` except `p_3=2n`) the double
+Barnes integrand, stripped of `1/(2πi)²` and the prefactor `1/C(2n,n)`, is
+`G_n(s,t)=Γ(n+1+s)³Γ(−s)Γ(n+1+t)³Γ(−t)Γ(2n+2+s+t)Γ(−n−1−s−t)
+/[Γ(2n+2+s)²Γ(2n+2+t)²]`, on contours `Re s=−c₁`, `Re t=−c₂`
+(`0<c₁<1+n`, `0<c₂<1+n`, `c₁+c₂>1+n`).
+
+**TEST 1 (`salvage_v8_barnes.py`) — Sol's collapsed R_n is exactly correct.**
+Numerically (mpmath, 60 dps),
+
+>   **G_n(s,t) = ((−1)^n / n!) · R_n(s,t) · π³/(sin πs · sin πt · sin π(s+t))**
+
+holds as an EXACT identity — the ratio `G_n/(R_n·kernel)` is the constant
+`(−1)^n/n!` (verified n=1,2,3,4; spread over independent (s,t) points ~1e-61, i.e.
+machine zero). So §S8's `R_n(s,t)=n!(s+1)_n(t+1)_n(s+t+n+2)_n/[(s+n+1)²_{n+1}
+(t+n+1)²_{n+1}]` and the universal sine kernel are the correct collapse of the BZ
+integrand, with the explicit constant `(−1)^n/n!` pinned (the leftover `n!` cancels
+`R_n`'s, so `G_n=(−1)^n·[rational]·kernel`). **§S8 R_n VALIDATED.** The poles are
+indeed order ≤ 2 per variable (`(s+n+1)²_{n+1}` is a squared Pochhammer), as Sol
+noted.
+
+**TEST 2 — the period, and the obstacle.** The 1-D `_3F2` reduction (eq. 3F2J),
+`J_n = ((n!)^8/((2n+1)!)^4)∫_0^∞ _3F2(n+1,n+1,n+1;2n+2,2n+2;−z)² z^{2n+1}
+/(1+z)^{2n+1} dz`, evaluates cleanly to 40+ digits:
+`J_1 = 4.8293004901459013…×10⁻⁴`, `J_2 = 1.150472320434…×10⁻⁷`.
+But **isolating the ζ(5) anchor `2Q_n` cannot be done from `J_n` alone**: BZ give
+`J = 2Q_n(ζ(5)+2ζ(2)ζ(3)) + [ℚ-linear form of weight <5]`, and the value is a
+near-total cancellation (`J_n` is tiny while `2Q_n(ζ5+2ζ2ζ3)` is O(10²–10⁴)), so
+the weight-<5 tail is essential and is precisely the MZV decomposition BZ call "a
+difficult technical task" (Remark rem-decom). **Obstacle for Sol:** a single-number
+"`= 2Q_n·(ζ5+2ζ2ζ3)`" anchor is not extractable without redoing that
+decomposition; the clean, decomposition-free confirmation of §S8 is TEST 1 (the
+R_n/kernel identity), which is complete.
+
+---
+
+## Final summary & recommended next move
+
+**(1) V6 headline.** The desingularization shortcut is real but does **not** hand
+over the p≥5 theorem "for free." The order-3 operator's leading coefficient
+`2(n+3)^5(2n+5)a₀(n)` does **not** desingularize: the midpoint `(2n+5)` and cubic
+`a₀` are TRUE singularities (the third companion P̂ leaks p-adic order at them,
+systematically at `p=2n+5`). They are apparent only *for the specific solutions
+P, Q*, for which the induction with only the `(n+3)^5` loss holds with zero
+violations and gives `v_p(P_n)≥−5⌊log_p n⌋` (263/308 tight). The whole p≥5 law
+thereby reduces to ONE clean statement — `(2n+5)·a₀(n)` divides the numerator
+combination `c0 P_n+c1 P_{n+1}+c2 P_{n+2}` to the needed p-adic order — but this is
+solution-specific (not generic desingularization) and is essentially the original
+descent (D) in new clothes. It is NOT closed; no unproved-Dwork-free proof follows.
+
+**(2) V3 Lucas.** Verified on a wide grid AND reconstructed as a certificate-shaped
+proof (carry-kill + factorization + box summation), verified exactly over 2.19M
+summands. Complete modulo the standard base-p carry lemma (verified, 0 exceptions).
+This q-row is genuinely in hand.
+
+**(3) Corrected exact forms.** §S2 recurrence confirmed with `a₀(n+?)=a₀(n+1)`;
+§S3 Casoratian corrected to
+`(−1)^{n−1}a₀(n)/[16(n+1)^4(n+2)^5(2n+1)(2n+3)C(2n,n)]` (constant 1/16, not 1/4).
+
+**(4) (D) grid.** 0 violations / 332 descents, overwhelmingly tight; §S1 assembly
+reproduces the full law with Phase-1 as the proven terminal boundary.
+
+**(5) Other.** V1 signs `(+,−,−)` cyclic; V2 confirmed; V8 R_n validated (constant
+`(−1)^n/n!`), MZV-anchor isolation recorded as the obstacle.
+
+**(6) Recommended next move.** Attack the single surviving obligation from V6d:
+prove `ord_p(c0 P_n + c1 P_{n+1} + c2 P_{n+2}) ≥ ord_p((2n+5)a₀(n)) + min_i
+ord_p(P_{n+i})` for p≥5. This is a finite-shape, solution-specific p-adic
+divisibility — the same content as the vector-Dwork (D), but now anchored to an
+exact, verified recurrence with explicit `c_i`, `a₀`, and an exact Casoratian
+witnessing the P̂-singularity. Concretely: study `P mod a₀` and `P mod (2n+5)`
+using the recurrence (a₀ is an irreducible cubic modulus, `2n+5` a linear one),
+i.e. prove `P` sits in the regular local solution sublattice at these true
+singularities. Do **not** pursue a generic ore_algebra desingularization — the P̂
+leak proves it cannot exist. The Barnes route (V8) needs the full MZV decomposition
+before it can anchor anything; lower priority.

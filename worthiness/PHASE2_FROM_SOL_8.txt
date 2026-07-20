@@ -1,0 +1,79 @@
+PHASE 2 FROM SOL -- SESSION 8 HANDOFF
+====================================
+
+Date: 20 July 2026
+Scope executed: cubic-gate self-reference audit and exact small-prime oracle.
+
+
+VERDICT
+-------
+
+The uniform cubic gate is still OPEN. The obstruction is now precise.
+
+At a root of a0, the CUB recurrence row is a common left annihilator of the
+primitively scaled Q, P, and Phat solution columns modulo p. Hence the
+saturated Casoratian is supposed to vanish there. (At upper roots, denominator
+factors can cancel a0 in the raw closed formula.) Its quotient by a0 gives a
+first-jet/rank statement, not a primitive-Q statement, and cannot by itself
+select the P solution.
+
+The exact oracle supports ordinary regularity of P, not subtraction of a Phat
+singular direction. Every cubic root for 11<=p<50 passes the saturated P row;
+the normalized Phat row passes too. The missing theorem is either:
+
+  (a) LEAD at every cubic residue plus primitive-Q-at-a0-roots; or
+  (b) an adjugate/connection first-jet that directly selects P.
+
+The midpoint Phi proof cannot simply be cited for (a): its displayed fixed
+block assumed 2r<p, whereas upper cubic roots have 2r>=p and introduce another
+factorial chamber.
+
+
+SMALL EXACT ORACLE
+------------------
+
+The roots of a0 modulo primes p<50 are exactly
+
+  7:{2,6}, 11:{5,6,9}, 13:{7}, 17:{8}, 23:{17},
+  29:{27}, 41:{10}, 43:{19}.
+
+For all roots with p>=11, `sol_cubic_gates.py` checks in exact arithmetic:
+
+  * the CUB polynomial remainder identity;
+  * the Casoratian is nonunit after primitive column saturation at the root;
+  * the small Q triple is nonzero;
+  * the small normalized Q/P/Phat triples satisfy the CUB row;
+  * at N=p+r, e=-5 and the P CUB row has at least one order of slack;
+  * at internal gates r<=p-4, the observed levelwise p^5 P digit equals
+    (29/28)Q. Roots in the final three residues are boundary diagnostics.
+
+These are oracle gates only, not promoted claims.
+
+
+COMBINED AND DEPTH WARNINGS
+---------------------------
+
+At p=43,r=19 the midpoint and cubic factors coincide. The true recurrence
+gate needs e+2, not two unrelated e+1 bounds. The cached exact full recurrence
+numerator passes e+2. At p=701,r=348 the small-root triple is cached and passes
+the structural checks, but its a=1 lift N=1049 is not. A complete a=1 theorem
+must isolate both.
+
+For p>=5, midpoint depth t>1 is impossible when p<=N<2p. Therefore the stated
+prime-power midpoint-depth problem belongs to a>1 transport; it cannot be the
+next step of a literal a=1 proof.
+
+
+FILES
+-----
+
+  worthiness/sol_cubic_gates.py
+  worthiness/PHASE2_CUBIC_GATE_STATUS.md
+  worthiness/SOL_WORKLOG.md (append only)
+  worthiness/PHASE2_FROM_SOL_8.txt
+
+
+Signed,
+
+Sol
+20 July 2026

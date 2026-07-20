@@ -522,3 +522,33 @@
   `p^5M_p in pZ_p`, or `v_p(M_p)>=-4=e_p+1`.
 - Issued the complete certificate-shaped theorem for the **a=1 midpoint band
   only**.  General `a`, prime-power midpoint depth, and cubic gates remain open.
+
+## 2026-07-20 -- session 8: cubic self-reference characterized
+
+- Rechecked the Session-2 quadratic CUB remainder exactly and enumerated every
+  root of `a0` for primes below 50:
+
+      7:{2,6}, 11:{5,6,9}, 13:{7}, 17:{8}, 23:{17},
+      29:{27}, 41:{10}, 43:{19}.
+
+- Found the structural reason the midpoint Casoratian proof cannot be mirrored.
+  At `a0(r)=0 mod p`, the CUB recurrence row is a common left annihilator of
+  all three primitively scaled solution columns.  Their saturated Casoratian
+  therefore has the expected rank drop; at upper roots, raw denominator factors
+  can cancel the visible `a0(r)` valuation.  Dividing `a0` away gives a first
+  jet but does not prove the Q column primitive and does not select P.
+- Exact cached gates at every listed root with `p>=11` show: the small Q triple
+  is nonzero; normalized Q, P, and Phat all satisfy the CUB row; at `N=p+r`,
+  `e=-5`, the P row gains at least one order, and at internal gates `r<=p-4`
+  the observed leading digits obey `p^5P=(29/28)Q mod p`.  Roots in the final
+  three residues meet the digit-boundary factor and are diagnostics only.
+- The missing uniform input is now explicit: either prove LEAD in every cubic
+  chamber plus primitive-Q at roots of `a0`, or compute an adjugate/connection
+  first jet selecting P.  The midpoint Phi formula assumes `2r<p`; upper roots
+  have an additional factorial block, so the existing proof does not cover it.
+- Flagged the combined gate `p=43,r=19`: midpoint and cubic depth add, requiring
+  `e+2`.  The cached full recurrence numerator passes.  At `p=701,r=348` the
+  cached small-root Q/P/Phat structure passes, but the a=1 lift `N=1049` is
+  unavailable.  Also proved the scope observation that midpoint depth greater
+  than one cannot occur in an `a=1` block for `p>=5`; that problem necessarily
+  belongs to later-digit transport.

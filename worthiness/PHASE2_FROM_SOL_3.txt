@@ -1,0 +1,177 @@
+PHASE 2 FROM SOL — SESSION 3 HANDOFF
+===================================
+
+Date: 20 July 2026
+Scope executed: a=1 midpoint gate only, in saturated determinant form.
+
+
+VERDICT
+-------
+
+The generic a=1 midpoint gate is not proved.  I did complete the exact
+two-residual determinant assembly requested in the session-2 directive, reduce
+it into three explicit chambers, close its Q-coordinate contribution by the
+existing Lucas theorem, and isolate the sole dangerous cancellation as a
+reflected head-tail determinant.  The committed n<=360 ladder gives 45/45
+generic midpoint witnesses, 44 exactly tight.  This is finite evidence.
+
+
+1. EXACT CERTIFICATE AND DETERMINANT IDENTITIES
+-----------------------------------------------
+
+For an odd prime p put
+
+  r=(p-5)/2,  N=p+r=(3p-5)/2,  2N+5=3p,
+  M_p=11907 P_N-334374 P_(N+1)-19292 P_(N+2),
+  e_p=min_{0<=s<=2}v_p(P_(N+s)).
+
+Outside p=7, the exact midpoint polynomial row from sol_local_regular.py makes
+the desired gate precisely
+
+  Z_p=p^(-e_p-1) M_p in Z_p.                              (MID-Z)
+
+At each m=N+s write v=Sing+R, vt=Singt+Rt, and
+
+  E=p^5 Sing-(29/28)u-(101/84)p^2w,
+  Et=p^5 Singt-(29/28)ut-(101/84)p^2wt.
+
+Then, exactly over Q,
+
+  p^5 p_m-(29/28)q_m
+    =wt_m E_m-w_m Et_m+p^5(wt_m R_m-w_m Rt_m).             (DET-m)
+
+With alpha_s=R_s(-1)^(N+s+1)/C(2(N+s),N+s), summing the three
+levels gives
+
+  p^5 M_p
+   =(29/28) sum_s alpha_s q_(N+s)
+    +sum_s alpha_s(wt E-w Et)_(N+s)
+    +sum_C sum_s alpha_s p^5(wt R_C-w Rt_C)_(N+s),         (DET-MID)
+
+where C=head,middle,tail.  This is the requested saturated determinant shape;
+neither regular residual is removed before the determinant is formed.
+
+
+2. EXACT CHAMBER REDUCTION
+--------------------------
+
+For m=p+r_m the chambers are
+
+  head=[0,r_m], middle=[r_m+1,p-1], tail=[p,p+r_m].
+
+Both base and companion coefficients obey
+
+  a_(i,m-j)=(-1)^(i+1)a_(i,j),
+  at_(i,m-j)=(-1)^(i+1)at_(i,j).
+
+Thus tail reflection j=m-b gives, separately for R and Rt,
+
+  R_head+R_tail
+   =sum_(i,b) a_(i,b)[H_b^(i)+(-1)^(i+1)(H_(m-b)^(i)-p^(-i))],
+
+and the identical formula with a replaced by at.  The middle chamber is kept
+separate.  sol_midpoint_gate.py asserts these exact rational identities at all
+assembled rows, including the central-zero branch.
+
+
+3. Q COORDINATE: CLOSED
+------------------------
+
+Lucas gives Q_(p+t)=Q_1 Q_t mod p.  The recurrence at t=r has p|c3(r),
+and the exact coefficient reduction 128 c_i=7R_i+(2r+5)H_i gives
+
+  11907 Q_r-334374 Q_(r+1)-19292 Q_(r+2)=0 mod p
+
+for p!=2,7.  Therefore the Q term in DET-MID vanishes mod p.  This uses only
+the integer/Lucas theorem for Q.  It makes no a0-apparency claim for Q and is
+fully compatible with the new (306,7) order injection.  Apparency observations
+remain targeted strictly at P.
+
+
+4. VERIFICATION STATUS
+----------------------
+
+New checker: worthiness/sol_midpoint_gate.py.
+
+Cache mode loads the committed ladder and never regenerates it.  Over all
+nonexceptional midpoint rows with N+2<=360:
+
+  primes 11<=p<=239: 45
+  MID-Z violations: 0
+  e_p=-5: 45/45
+  exact tightness v_p(M_p)=e_p+1: 44/45
+  sole extra-order row: p=131
+
+Full Phi/Bell + two-residual assembly at p=11,13,17,19,23,31,37 passed:
+
+  - Bell coefficients equal direct coefficients at every noncentral position;
+  - the central zero is handled by the direct regular Taylor branch;
+  - both residual chamber sums reproduce v-Sing and vt-Singt exactly;
+  - E and Et equal sol_hw_allr.error exactly;
+  - DET-m, DET-MID, normalized P, and the n<=360 ladder agree exactly.
+
+In these rows e_p=-5, so the target scale in p^5 M_p is p^1.  Relative to it:
+
+  Q piece                         valuation offset 0
+  head-error determinant         offset >=2
+  regular middle                 offset >=6
+  regular head, tail separately  offset -3 or -2
+  reflected head+tail determinant offset >=5
+
+The last line is an eight-order cancellation in the generic samples.  It is
+the main new structural fact, but remains finite exact evidence.
+
+Final commands all passed:
+
+  python3 -m py_compile worthiness/sol_midpoint_gate.py
+  PYTHONPATH=worthiness python3 worthiness/sol_local_regular.py 75
+  PYTHONPATH=worthiness python3 worthiness/sol_hw_allr.py
+  PYTHONPATH=worthiness python3 worthiness/sol_midpoint_gate.py all \
+      --primes 11,13,17,19,23,31,37
+  git diff --check
+
+
+5. HONEST FRONTIER
+------------------
+
+MID-Z is not yet a theorem.  DET-MID plus Lucas reduces it to four explicit
+generic statements:
+
+  (U) e_p=-5 (or valuation bounds scaled to the actual e_p);
+  (H) the three-level head-error determinant lies in p Z_p;
+  (RT) the reflected head+tail regular determinant lies in p Z_p;
+  (RM) the middle regular determinant lies in p Z_p.
+
+The computations show large margins for H, RT, and RM.  RT is the real gate:
+its head and tail inputs are individually nonintegral, so it cannot be replaced
+by separate residual estimates.  No symbolic Phi/Bell reduction proving RT
+uniformly was completed, and no claim to that effect is made.
+
+
+6. NEXT FIRST TASK
+------------------
+
+Prove (RT) first.  Substitute the exact Phi factorial blocks and Bell layers
+into the paired kernel above for the three fixed offsets r,r+1,r+2.  Reduce
+modulo p only after forming wt*R-w*Rt and the coefficient row
+(11907,-334374,-19292).  Preserve the b=0 and b=r_s boundary terms explicitly.
+The numerical eight-order jump makes this the most constrained identity and
+the best falsifiable symbolic target.  Once RT is closed, RM and H are already
+well above the needed floor in every exact sample; close them, then derive (U)
+from the leading p^5 P digits.  Do not move to p^t or the cubic gate before
+these four midpoint obligations are certificates.
+
+
+FILES WRITTEN THIS SESSION
+--------------------------
+
+  worthiness/sol_midpoint_gate.py
+  worthiness/PHASE2_MIDPOINT_GATE.md
+  worthiness/SOL_WORKLOG.md (append only)
+  worthiness/PHASE2_FROM_SOL_3.txt
+
+
+Signed,
+
+Sol
+20 July 2026

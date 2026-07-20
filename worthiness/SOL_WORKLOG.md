@@ -184,3 +184,100 @@
   and the pre-existing modified `worthiness/ct_run/barnes_long.log`; neither was
   touched or incorporated in this work.
 
+## 2026-07-20 — session 3 start: a=1 midpoint gate only
+
+- Accepted the session-2 handoff and the independent falsification extension:
+  the cached exact ladders now run through `n=360`; the law and (D) have zero
+  violations on the stated grid, including both accessible `k=3` bands.  This
+  is exact finite evidence, not proof, and the cache will be loaded rather than
+  regenerated.
+- Incorporated the refinement at `(n,p)=(306,7)`: `a0`-apparency is a target
+  specific observation for `P` only.  `Q` loses one 7-adic order there and is
+  used below only through its already established integer/Lucas role.
+- Fixed the sole task to the generic a=1 midpoint row.  For odd prime `p`, set
+  `r=(p-5)/2`, `N=p+r=(3p-5)/2`; then `2N+5=3p`, so the desired simple-gate
+  certificate (outside the stated exceptional set) is
+
+      v_p(11907 P_N-334374 P_{N+1}-19292 P_{N+2}) >= e+1,
+      e=min_{0<=s<=2} v_p(P_{N+s}).
+
+- Recovered the exact determinant bookkeeping omitted by the old scalar
+  head-window test.  If `v=Sing+R`, `vt=Singt+Rt` and
+  `E=p^5 Sing-rho_1 u-sigma_1 p^2 w` (with tilded analogue), then exactly
+
+      p^5 p_N-rho_1 q_N = wt_N E_N-w_N Et_N
+                             +p^5(wt_N R_N-w_N Rt_N).
+
+  Thus both regular residuals must remain separate until the determinant is
+  formed; proving the scalar head errors alone cannot prove the midpoint row.
+
+## 2026-07-20 — midpoint determinant assembly and chamber split
+
+- Added `worthiness/sol_midpoint_gate.py`.  Its `cache` mode loads (and never
+  regenerates) `falsify_data/ladder_P.json`.  Its `assembly` mode extends the
+  Bell reconstruction to all pole positions, derives the companion array,
+  emits both regular residuals, and retains the chambers
+  `[0,r_s]`, `[r_s+1,p-1]`, `[p,p+r_s]` separately at each of the three levels
+  `N+s` (`r_s=(N+s)-p`) until the determinant is formed.
+- The even-level central-zero branch cannot use `a_6 Y_m`: its logarithmic
+  derivatives have a pole although `B_j` is regular.  The checker therefore
+  uses the direct Taylor coefficient at exactly that one index and asserts
+  Bell=direct at every noncentral index.  This is an exact handling of the
+  branch, not a cancellation of zero times infinity.
+- Proved the bookkeeping identity (pure algebra) and asserted it exactly in the
+  checker.  With `alpha_s=R_s(-1)^(N+s+1)/C(2(N+s),N+s)` and
+  `(R_0,R_1,R_2)=(11907,-334374,-19292)`, one has
+
+      p^5 M = rho_1 sum_s alpha_s q_(N+s)
+              + sum_s alpha_s(wt E-w Et)_(N+s)
+              + sum_C sum_s alpha_s p^5(wt R_C-w Rt_C)_(N+s),
+
+  where `M=sum_s R_s P_(N+s)` and `C=head,middle,tail`.  Every equality is
+  over `Q`, before taking valuations.
+- Also reduced the tail chamber exactly by `j=N+s-b` using the proved
+  reflection laws for both arrays,
+
+      a[i,N+s-b]=(-1)^(i+1)a[i,b],
+      at[i,N+s-b]=(-1)^(i+1)at[i,b].
+
+  Consequently `R_head+R_tail` is the explicit single head sum with kernel
+  `H_b^(i)+(-1)^(i+1)(H_(N+s-b)^(i)-p^(-i))`; the checker asserts this for the
+  untilded and tilded residuals separately before taking their determinant.
+- Exact assembly at `p=11,13,17,19,23,31,37` passed every gate: Bell coefficients,
+  central branch, direct residual decomposition, scalar `E,E~` agreement with
+  `sol_hw_allr.error`, determinant identity, normalization, and equality with
+  the committed ladder.  Here `e=-5` and the target scale in `p^5 M` is `p^1`.
+  Relative valuations `v_p(piece)-1` were:
+
+      q: 0; head determinant: 2 (3 at p=11);
+      regular head/tail individually: -3 or -2;
+      regular middle: 6 or 7;
+      regular head+tail after reflection/determinant/three-level assembly: 5.
+
+  Thus the dangerous regular chambers cancel by eight p-orders in the generic
+  samples.  This cancellation is exact finite evidence; no uniform symbolic
+  proof of its divisibility has yet been obtained.
+- Cache-only midpoint sweep through `N+2<=360`, excluding the declared finite
+  exceptional primes, tested 45 generic primes (`11<=p<=239`): zero witness
+  violations, 44 exactly tight; `p=131` has one extra order.  In all 45 rows
+  `e=-5`.  This extends beyond the falsification campaign's stated `p<=73`
+  solely because the committed ladder itself contains every level through 360;
+  it remains finite evidence.
+
+## 2026-07-20 — session 3 verification and close
+
+- Wrote `worthiness/PHASE2_MIDPOINT_GATE.md`, separating the rigorous algebraic
+  reduction, the Q/Lucas component, exact finite evidence, and the four explicit
+  remaining proof obligations.  In particular it does not infer Q-apparency
+  from the Lucas row and does not advertise the observed chamber jump as a
+  symbolic proof.
+- Final cross-checks passed:
+  `python3 -m py_compile worthiness/sol_midpoint_gate.py`;
+  `PYTHONPATH=worthiness python3 worthiness/sol_local_regular.py 75`;
+  `PYTHONPATH=worthiness python3 worthiness/sol_hw_allr.py`;
+  and `PYTHONPATH=worthiness python3 worthiness/sol_midpoint_gate.py all
+  --primes 11,13,17,19,23,31,37`.  The inherited checkers reproduced their
+  session-2 counts exactly, and all new exact assertions passed.
+- `git diff --check` passed.  Concurrent modified files
+  `cbcert/Cbcert/Assembly.lean` and `cbcert/Cbcert/LucasRow.lean` were not touched
+  or incorporated.

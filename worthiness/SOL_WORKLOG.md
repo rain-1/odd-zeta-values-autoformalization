@@ -281,3 +281,101 @@
 - `git diff --check` passed.  Concurrent modified files
   `cbcert/Cbcert/Assembly.lean` and `cbcert/Cbcert/LucasRow.lean` were not touched
   or incorporated.
+
+## 2026-07-20 — session 4 start: reflected midpoint determinant
+
+- Resumed exactly from commit `fd94414` and accepted session 3 section 6 as the
+  binding task.  Scope is the generic `a=1` midpoint only: prove `(RT)` first,
+  then `(RM)`, `(H)`, and `(U)` if `(RT)` closes; no `p^t` or cubic-gate work.
+- Preserved the pre-existing modified Lean files
+  `cbcert/Cbcert/Assembly.lean` and `cbcert/Cbcert/LucasRow.lean`; session-4 work
+  is confined to `worthiness/`.
+- Re-ran the exact assembly oracle at `p=11,13,17` before symbolic changes.
+  Every rational identity passed.  Relative to the required `p^1` scale in
+  `p^5 M_p`, the reflected head+tail determinant has offset `5` at all three
+  primes (absolute valuation `6`), while head and tail separately have offsets
+  `-2,-3,-2`.  This reproduces the eight-order alarm and fixes the oracle
+  baseline against which every subsequent symbolic layer will be checked.
+
+## 2026-07-20 — exact Phi substitution and the local reflected-pair lemma
+
+- Extended `sol_midpoint_gate.py` with an exact fixed-block factorial function
+  `Phi(A,b)=(Ap+b)!` and the closed factorial form of `a_(6,b)`.  For
+  `m=p+r_s`, `r_s=(p-5)/2+s`, `s=0,1,2`, every reflected-head term uses the
+  carry-free blocks
+
+      m!       = Phi(1,r_s),       (m+b)! = Phi(1,r_s+b),
+      (2m-b)!  = Phi(2,2r_s-b),    (m-b)! = Phi(1,r_s-b),
+      b!       = Phi(0,b).
+
+  The checker asserts this exact `a_6` formula against both Bell and direct
+  coefficients for every `0<=b<=r_s`, including `b=0,r_s`.
+- Added `symbolic-rt` mode.  It forms the reflected kernel, both residuals,
+  their determinant, and only then the coefficient row, and asserts exact
+  equality with the chamber oracle.  At `p=11,13,17`, the assembled `(RT)` row
+  has valuation `6`, exactly reproducing the session-3 alarm.  The raw Bell
+  layers and raw endpoint pieces remain nonintegral, so no premature modular
+  cancellation has been introduced.
+- A second reflection inside the head, `b <-> r_s-b`, isolates the useful
+  local bound.  For both `a` and `at`, and for every local pair (the endpoint
+  pair `{0,r_s}` and a central singleton included), the exact floors at all
+  three offsets are
+
+      (layers 1+2, layer 3, layer 4, layer 5, layer 6)
+        >= (-2, -2, -2, -1, 0).
+
+  On the oracle primes the last two actual floors are `0,0`.  The same ledger
+  passed at `p=19,23,31,37` without changing the proof target.
+- The normalized algebra behind the only nontrivial local floors is now
+  isolated.  Put `A_i(b)=p^(6-i)a_(i,b)` (and similarly `At_i`) and let `K_i(b)`
+  be the reflected kernel.  For `c=r_s-b`, the needed jet identities are
+
+      A_1(b)K_1(b)+A_1(c)K_1(c)
+        +p[A_2(b)K_2(b)+A_2(c)K_2(c)] = 0 mod p^3,
+      A_3(b)K_3(b)+A_3(c)K_3(c) = 0 mod p,
+
+  with a singleton convention at `b=c`; identical identities hold for `At`.
+  The second identity follows transparently from the Phi unit
+  `a_6(c)=-a_6(b) mod p`, symmetry of the leading Bell collision jet, and
+  `K_3(c)=K_3(b) mod p` (the singleton has `p|a_6`).  The first is the remaining
+  three-digit Phi/Bell collection; the exact checker verifies its valuation at
+  every local pair but a prime-independent written collection of its three
+  coefficients is still required before `(RT)` can honestly be marked proved.
+
+## 2026-07-20 — downstream RM/H/U oracle audit
+
+- Added `rm-h-u` mode and ran it at `p=11,13,17`.  The middle residuals have
+  valuations at least `4`, their level determinants after `p^5` have valuations
+  `8,7,7`, and the three-level `(RM)` rows have valuations `8,7,7`.  This comes
+  from the easy middle Phi count and is far above the needed floor.
+- The head errors `E,Et` have valuation at least `5`; with `w,wt>=-2`, the
+  head determinants have valuation at least `3`, and the `(H)` rows have
+  valuations `4,3,3`.  This exactly matches `sol_hw_allr.py`; however the
+  prime-independent weight-five Phi/Bell proof of `E,Et in p^5 Z_p` is the
+  previously documented head-window identity and is not silently promoted
+  from exact samples to a theorem.
+- The exact leading-digit identity is
+
+      p^5 P_(p+t) = (29/28) Q_(p+t) mod p
+
+  in all nine audited levels.  The digit triples are respectively
+  `[0,7,8]`, `[5,8,2]`, `[7,5,8]`, so at least one is a unit and `(U)` follows
+  conditionally once `(RT),(RM),(H)` are theorems and the standard primitive
+  `Q`-triple lemma is supplied.  No `p^t` or cubic-gate work was started.
+
+## 2026-07-20 — session 4 verification and close
+
+- Wrote signed `worthiness/PHASE2_FROM_SOL_4.txt`.  It records the exact Phi
+  blocks, the local reflected-pair reduction, `(RM)`'s uniform valuation proof,
+  and the honest open status of `J12`, `(H)`, and conditional `(U)`.
+- Final verification passed:
+  `python3 -m py_compile worthiness/sol_midpoint_gate.py`;
+  `PYTHONPATH=worthiness python3 worthiness/sol_midpoint_gate.py all --primes
+  11,13,17`; `PYTHONPATH=worthiness python3 worthiness/sol_local_regular.py 75`;
+  `PYTHONPATH=worthiness python3 worthiness/sol_hw_allr.py`; and
+  `git diff --check`.
+- The midpoint cache still has 45/45 generic witnesses and 44 tight rows.  All
+  new exact gates reproduced the assembly oracle.  The inherited checkers
+  reproduced their session-3 counts exactly.
+- The unrelated modified Lean files `cbcert/Cbcert/Assembly.lean` and
+  `cbcert/Cbcert/LucasRow.lean` remain untouched and unincorporated.

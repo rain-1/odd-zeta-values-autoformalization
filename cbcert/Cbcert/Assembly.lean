@@ -87,7 +87,51 @@ and the band `Main.res_congruence_pn` + one-digit Kummer `ord_p C(2n,n) = 1`
 (for `n < p ≤ 2n`). Does NOT use `hD`. -/
 theorem P_pIntegral_terminal (n p : ℕ) (hn : 1 ≤ n) (hp : p.Prime) (h5 : 5 ≤ p)
     (hlt : n < p) : 0 ≤ padicValRat p (P n) := by
-  sorry
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hp2 : p ≠ 2 := by omega
+  -- Unfold `P n = (-1)^{n+1} · pn n / C(2n,n)`.
+  show (0 : ℤ) ≤ padicValRat p ((-1) ^ (n + 1) * pn n / (Nat.choose (2 * n) n : ℚ))
+  -- `C(2n,n) > 0`, hence nonzero.
+  have hCpos : 0 < Nat.choose (2 * n) n := Nat.choose_pos (by omega)
+  have hC0 : ((Nat.choose (2 * n) n : ℕ) : ℚ) ≠ 0 := by exact_mod_cast hCpos.ne'
+  have hCeq : Nat.choose (2 * n) n = Nat.choose (n + n) n := by rw [two_mul]
+  -- Zero case: `pn n = 0 ⇒ P n = 0`.
+  by_cases hpn : pn n = 0
+  · rw [hpn]; simp
+  -- The sign factor is `p`-adically trivial.
+  have hsign : ((-1 : ℚ)) ^ (n + 1) ≠ 0 := pow_ne_zero _ (by norm_num)
+  have hnum : ((-1 : ℚ)) ^ (n + 1) * pn n ≠ 0 := mul_ne_zero hsign hpn
+  have hneg1 : padicValRat p (-1 : ℚ) = 0 := by
+    rw [show (-1 : ℚ) = -(1 : ℚ) from by ring, padicValRat.neg, padicValRat.one]
+  have hs0 : padicValRat p (((-1 : ℚ)) ^ (n + 1)) = 0 := by
+    rw [padicValRat.pow, hneg1, mul_zero]
+  rw [padicValRat.div hnum hC0, padicValRat.mul hsign hpn, hs0, zero_add]
+  -- Goal: `0 ≤ v_p(pn n) − v_p(C(2n,n))`.
+  by_cases hB : p ≤ 2 * n
+  · -- Band `n < p ≤ 2n`: `v_p(pn n) ≥ 1` and `v_p(C(2n,n)) = 1` (one-digit Kummer).
+    have hlt2 : n + n < p ^ 2 := by
+      have h2 : 2 ≤ p := hp.two_le
+      calc n + n < 2 * p := by omega
+        _ ≤ p * p := by nlinarith
+        _ = p ^ 2 := (pow_two p).symm
+    have hvC : padicValRat p ((Nat.choose (2 * n) n : ℚ)) ≤ 1 := by
+      rw [← padicValRat_of_nat, hCeq,
+        padicValNat_choose' (n := n) (k := n) (b := 2)
+          (Nat.log_lt_of_lt_pow' (by norm_num) hlt2)]
+      exact_mod_cast le_trans (Finset.card_filter_le _ _) (by simp)
+    have hpn1 : (1 : ℤ) ≤ padicValRat p (pn n) := by
+      rcases Cbcert.Main.pn_valuation n hn p hp hlt hB h5 with h | h
+      · exact absurd h hpn
+      · exact h
+    linarith [hvC, hpn1]
+  · -- Range `2n < p`: `v_p(pn n) ≥ 0` and `p ∤ C(2n,n)`.
+    have hvC : padicValRat p ((Nat.choose (2 * n) n : ℚ)) = 0 := by
+      rw [← padicValRat_of_nat, hCeq,
+        padicValNat_choose' (n := n) (k := n) (b := 1)
+          (Nat.log_lt_of_lt_pow' (by norm_num) (by rw [pow_one]; omega))]
+      simp
+    rw [hvC, sub_zero]
+    exact Cbcert.Main.pn_pInt n hp hlt hp2
 
 /-- **T2 — conditional assembly.** Under the open descent `hD`, the `p ≥ 5` part of
 the corrected Brown–Zudilin law holds for every `n ≥ 1`:
@@ -95,6 +139,28 @@ the corrected Brown–Zudilin law holds for every `n ≥ 1`:
 theorem descent_law (hD : DescentHyp) :
     ∀ (n : ℕ), 1 ≤ n → ∀ (p : ℕ), p.Prime → 5 ≤ p →
       (-5 : ℤ) * (Nat.log p n : ℤ) ≤ padicValRat p (P n) := by
-  sorry
+  intro n
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    intro hn p hp h5
+    haveI : Fact p.Prime := ⟨hp⟩
+    by_cases hnp : n < p
+    · -- Terminal `n < p`: `Nat.log p n = 0`, RHS `= 0`.
+      have hlog : Nat.log p n = 0 := Nat.log_eq_zero_iff.mpr (Or.inl hnp)
+      rw [hlog, Nat.cast_zero, mul_zero]
+      exact P_pIntegral_terminal n p hn hp h5 hnp
+    · -- Descent `p ≤ n`: apply the IH at `a = n/p` and `hD` at `n`.
+      push_neg at hnp
+      have hpn1 : 1 < p := hp.one_lt
+      have ha1 : 1 ≤ n / p := Nat.div_pos hnp (by omega)
+      have han : n / p < n := Nat.div_lt_self (by omega) hpn1
+      have hlog : Nat.log p n = Nat.log p (n / p) + 1 := by
+        rw [Nat.log_div_base]
+        have : 1 ≤ Nat.log p n := Nat.log_pos hpn1 hnp
+        omega
+      have hIH := ih (n / p) han ha1 p hp h5
+      have hDn := hD n p hp h5 hnp
+      rw [hlog]; push_cast
+      linarith [hIH, hDn]
 
 end Cbcert.Assembly

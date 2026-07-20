@@ -1,0 +1,236 @@
+PHASE 2 FROM SOL — SESSION 4 HANDOFF
+===================================
+
+Date: 20 July 2026
+Scope executed: the generic a=1 midpoint, beginning with the reflected
+head+tail regular determinant (RT).  No p^t-depth or cubic-gate work was done.
+
+
+VERDICT
+-------
+
+The generic a=1 midpoint gate is still not proved.  Session 4 substituted the
+exact fixed Phi factorial blocks into every reflected-head coefficient, kept
+all six Bell layers and both companion flags, preserved b=0 and b=r_s, and
+formed the determinant and the three-level coefficient row before any modular
+conclusion.  This found a local b <-> r_s-b cancellation which reduces (RT) to
+one explicit three-digit Bell-jet congruence.  The exact oracle verifies that
+congruence at every local pair for p=11,13,17 (and the diagnostic extension
+19,23,31,37), but its prime-independent coefficient collection was not closed.
+Consequently (RT), and hence the midpoint theorem, are not claimed.
+
+
+1. EXACT PHI/BELL SUBSTITUTION
+------------------------------
+
+For s=0,1,2 put
+
+  r_s=(p-5)/2+s,  m_s=p+r_s.
+
+For every 0<=b<=r_s one has 2r_s<p, so all factorials in a_(6,b) have fixed,
+carry-free blocks:
+
+  m_s!       = Phi(1,r_s),
+  (m_s+b)!   = Phi(1,r_s+b),
+  (2m_s-b)!  = Phi(2,2r_s-b),
+  (m_s-b)!   = Phi(1,r_s-b),
+  b!         = Phi(0,b),
+
+where
+
+  Phi(A,d)=p^A A! (p-1)!^A d!
+           product_(t=0)^(A-1) E_(p-1)(t) E_d(A)=(Ap+d)!,
+  E_d(x)=product_(h=1)^d (1+xp/h).
+
+Thus, exactly,
+
+  a_(6,b)=(-1)^m Phi(1,r_s)^4 (m/2-b)
+           Phi(1,r_s+b) Phi(2,2r_s-b)
+           /[Phi(0,b)^7 Phi(1,r_s-b)^7].                 (PHI-6)
+
+The checker asserts (PHI-6) against the Bell and direct coefficients at every
+b, including b=0 and b=r_s.  The remaining layers are the complete Bell layers
+
+  a_(6-k,b)=a_(6,b) Y_k(D_1,...,D_k)/k!,  0<=k<=5,
+
+and the companion is formed only afterward.  Every equality is exact over Q.
+
+Verification status: PHI-6, Phi=(Ap+d)!, Bell=direct, and companion=direct all
+PASS exactly in the oracle.  These are algebraic identities, not conjectures.
+
+
+2. REFLECTED KERNEL AND THE NEW LOCAL REDUCTION
+-----------------------------------------------
+
+For m=p+r and 0<=b<=r define
+
+  K_i(b)=H_b^(i)+(-1)^(i+1)(H_(m-b)^(i)-p^(-i)).
+
+The exact head-tail reflection is
+
+  R_ht=sum_(i,b) a_(i,b) K_i(b),
+  Rt_ht=sum_(i,b) at_(i,b) K_i(b).                       (PAIR)
+
+No modular reduction is made here.  The session-3 determinant is then formed:
+
+  RT=sum_(s=0)^2 alpha_s p^5
+       (wt_(m_s) R_ht(m_s)-w_(m_s) Rt_ht(m_s)),          (RT-exact)
+
+  alpha_s=R_s(-1)^(m_s+1)/C(2m_s,m_s),
+  (R_0,R_1,R_2)=(11907,-334374,-19292).
+
+Now pair the remaining head indices by c=r-b, retaining {0,r} as an explicit
+endpoint pair and using a singleton when b=c.  Put
+
+  A_i(b)=p^(6-i)a_(i,b),  At_i(b)=p^(6-i)at_(i,b).
+
+PHI-6 and collision extraction give A_i,At_i in Z_p; K_i(b) is integral after
+the displayed p-pole is removed.  Layers i>=4 therefore already have the floor
+needed for R_ht,Rt_ht in p^(-2)Z_p.  The remaining local statements are
+
+  J12(b): A_1(b)K_1(b)+A_1(c)K_1(c)
+          +p[A_2(b)K_2(b)+A_2(c)K_2(c)] = 0 mod p^3,
+
+  J3(b):  A_3(b)K_3(b)+A_3(c)K_3(c) = 0 mod p,           (J)
+
+and the identical two congruences with A replaced by At.
+
+J3 is closed: modulo p, PHI-6 gives a_6(c)=-a_6(b), the leading Bell collision
+jet is b-independent, and K_3(c)=K_3(b).  At a central singleton p|a_6, so the
+same statement holds.  The companion follows from
+
+  At_i=b(m-b)A_i+p(2b-m)A_(i+1)-p^2 A_(i+2).
+
+J12 is the remaining obstruction.  Expanding E_d(x) through p^2 and the Bell
+polynomials through total weight five makes it a finite three-coefficient
+identity, but that prime-independent collection has not been written to zero.
+The exact oracle checks v_p(J12)>=3 at every local pair, including {0,r}, for
+all three offsets and both arrays.  This is exact finite evidence, not proof.
+
+If J12 is proved, summing the local pairs gives R_ht,Rt_ht in p^(-2)Z_p.
+Together with the proved Zudilin bound w,wt in p^(-2)Z_p, each already-formed
+term in (RT-exact) belongs to p Z_p.  The binomial normalizers are p-units, so
+the fixed coefficient row preserves the bound and (RT) follows.
+
+Oracle valuations at p=11,13,17:
+
+  v_p(RT)=6,6,6.
+
+The local floors (layers 1+2, layer 3, layer 4, layer 5, layer 6) are uniformly
+
+  (-2,-2,-2,0,0)
+
+for base and companion at all nine levels.  Raw row layers and raw endpoints
+remain below zero; hence the check retains the numerical eight-order alarm and
+would expose a transcription error.
+
+
+3. (RM): CLOSED AS A VALUATION LEMMA
+------------------------------------
+
+In the middle chamber r+1<=j<=p-1, the factorial count in the closed a_6 form
+has no p-factor in j! or (m-j)! and at least six p-factors in the numerator.
+Each logarithmic derivative can lose at most its weight, hence
+
+  v_p(a_(i,j))>=i,  v_p(at_(i,j))>=i.
+
+Since H_j^(i) is p-integral in this chamber,
+
+  R_mid,Rt_mid in p Z_p.
+
+Using w,wt in p^(-2)Z_p gives
+
+  p^5(wt R_mid-w Rt_mid) in p^4 Z_p,
+
+level by level, and therefore after the three-level coefficient row.  This is
+stronger than (RM).  The oracle actual row valuations at p=11,13,17 are 8,7,7.
+
+Verification status: the factorial valuation proof is uniform; the checker
+gives exact agreement and large-margin diagnostics.  (RM) is proved.
+
+
+4. (H): REDUCED, NOT CLOSED
+---------------------------
+
+The head errors are
+
+  E=p^5 Sing-(29/28)u-(101/84)p^2w,
+  Et=p^5 Singt-(29/28)ut-(101/84)p^2wt.
+
+The exact Phi/Bell oracle gives v_p(E),v_p(Et)>=5 at every audited level.  With
+w,wt>=-2 this puts each head-error determinant in p^3 Z_p; the three-level row
+has valuations 4,3,3 at p=11,13,17.
+
+However, the uniform assertion E,Et in p^5 Z_p is exactly the weight-five
+head-window identity documented as open in PHASE2_DWORK_ASSEMBLY.md.  Session 4
+did not produce a prime-independent normal-form proof of its five vanishing
+digits.  Therefore (H) remains unproved despite the large exact margin.
+
+
+5. (U): LEADING DIGITS, CONDITIONAL
+-----------------------------------
+
+Once (RT), (RM), and (H) hold, DET-m reduces levelwise to
+
+  p^5 P_(p+t) = (29/28) Q_(p+t) mod p.                  (LEAD)
+
+The checker verifies (LEAD) exactly at all nine audited levels.  The leading
+p^5P digit triples for p=11,13,17 are
+
+  [0,7,8],  [5,8,2],  [7,5,8],
+
+respectively, identical to the (29/28)Q digits.  Each triple contains a unit,
+so e_p=-5 in these samples.  A uniform (U) proof requires (LEAD), hence the
+open (RT)/(H), plus the standard primitive-Q-triple lemma showing that the
+three Q digits cannot vanish simultaneously.  Thus (U) is conditional, not
+claimed.
+
+
+6. CHECKER AND FALSIFICATION STATUS
+-----------------------------------
+
+Updated checker: worthiness/sol_midpoint_gate.py.
+
+New modes:
+
+  symbolic-rt  exact Phi/Bell/reflected-kernel/local-pair ledger;
+  rm-h-u       middle, head-error, and leading-digit ledger.
+
+At p=11,13,17 every reorganized expression equals the exact chamber assembly.
+The checker also passed the diagnostic primes 19,23,31,37 for the local (RT)
+ledger.  No mismatch with the assembly oracle occurred, so no transcription
+rollback was needed.
+
+
+7. HONEST FRONTIER / NEXT FIRST TASK
+------------------------------------
+
+Do not move to p^t depth or the cubic gate.  First close J12 in section 2 by
+substituting
+
+  E_d(x)=1+xp H_d^(1)
+           +(x^2p^2/2)((H_d^(1))^2-H_d^(2)) mod p^3
+
+into PHI-6, expanding p^5 a_1 and p^4 a_2 through the required digits, and
+collecting J12 for c=r_s-b.  Keep the endpoint pair {0,r_s} separate and handle
+the central singleton via p|a_6.  Gate each of its three coefficients against
+p=11,13,17 before declaring it zero.  After J12, (RT) closes immediately.
+
+Then return to the five-digit head-window normal form E,Et in p^5Z_p for (H).
+(RM) is already proved.  Only after (RT) and (H) are theorems should (LEAD) and
+the primitive-Q-triple lemma be used to close (U) and assemble the complete
+midpoint proof.
+
+
+FILES WRITTEN OR UPDATED THIS SESSION
+-------------------------------------
+
+  worthiness/sol_midpoint_gate.py
+  worthiness/SOL_WORKLOG.md (append only)
+  worthiness/PHASE2_FROM_SOL_4.txt
+
+
+Signed,
+
+Sol
+20 July 2026

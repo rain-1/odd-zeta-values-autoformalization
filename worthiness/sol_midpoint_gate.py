@@ -27,7 +27,7 @@ All reported grid results are finite exact evidence, never a proof.
 """
 
 from fractions import Fraction
-from math import comb
+from math import comb, factorial
 import argparse
 import hashlib
 
@@ -49,6 +49,40 @@ from sol_local_regular import MID_ROW
 RHO = Fraction(29, 28)
 SIG = Fraction(101, 84)
 EXCEPTIONAL = {7, 29, 43, 107, 557, 673, 701}
+
+
+def E_block(x, length, p):
+    """Exact block unit prod_{h=1}^length (1+xp/h)."""
+    out = Fraction(1)
+    for h in range(1, length + 1):
+        out *= 1 + Fraction(x * p, h)
+    return out
+
+
+def Phi(A, b, p):
+    """Exact fixed-block factorial Phi(A,b)=(Ap+b)!, 0<=b<p."""
+    assert A >= 0 and 0 <= b < p
+    out = Fraction(p**A * factorial(A) * factorial(p - 1)**A * factorial(b))
+    for t in range(A):
+        out *= E_block(t, p - 1, p)
+    out *= E_block(A, b, p)
+    assert out == factorial(A * p + b)
+    return out
+
+
+def a6_phi_head(p, m, b):
+    """The exact Phi-block form of a_(6,b), including both boundaries."""
+    rs = m - p
+    assert 0 <= b <= rs and 2 * rs < p
+    # Closed factorial form of B_b(0), with the five fixed p-blocks exposed.
+    return (
+        Fraction((-1)**m)
+        * Phi(1, rs, p)**4
+        * (Fraction(m, 2) - b)
+        * Phi(1, rs + b, p)
+        * Phi(2, 2 * rs - b, p)
+        / (Phi(0, b, p)**7 * Phi(1, rs - b, p)**7)
+    )
 
 
 def midpoint_level(p):
@@ -111,6 +145,10 @@ def level_assembly(p, m):
     at = companion_coefficients(m, a)
     direct_at = companion_coefficients(m, direct)
     assert at == direct_at
+
+    # Fixed Phi blocks for the entire reflected head, including b=0,rs.
+    for b in range(rs + 1):
+        assert a6_phi_head(p, m, b) == a[6, b], (p, m, b, "Phi-a6")
 
     d = all_data(m)
     assert a == d["a"] and at == d["at"]
@@ -190,12 +228,143 @@ def level_assembly(p, m):
     sign = (-1) ** (m + 1)
     P = Fraction(sign) * praw / C
     Q = Fraction(sign) * q / C
+    pair_terms = {}
+    for i in range(1, 7):
+        for b in range(rs + 1):
+            kernel = (harmonic(b, i)
+                      + Fraction((-1) ** (i + 1))
+                      * (harmonic(m - b, i) - Fraction(1, p**i)))
+            pair_terms[i, b] = Fraction(p**5) * kernel * (wt * a[i, b] - w * at[i, b])
+    assert sum(pair_terms.values(), Fraction(0)) == regular["head"] + regular["tail"]
     return {
         "P": P, "Q": Q, "q": q, "praw": praw, "alpha_unit": Fraction(sign, C),
         "E": E, "Et": Et, "head_det": head_det, "regular": regular,
         "R": R, "Rt": Rt,
         "pair_R": pair_R, "pair_Rt": pair_Rt,
+        "w": w, "wt": wt, "a": a, "at": at, "rs": rs,
+        "pair_terms": pair_terms,
     }
+
+
+def fmt_val(x, p):
+    return "inf" if x == 0 else str(valuation(x, p))
+
+
+def rt_symbolic_check(primes):
+    """Exact Phi/Bell substitution ledger for (RT), before any mod-p step.
+
+    This does not call a congruence a proof: it gates every reorganized sum
+    against level_assembly and displays the valuations of the three-level row,
+    its six Bell layers, and its explicit b=0/interior/b=rs pieces.
+    """
+    print("SYMBOLIC-RT Phi/Bell reflected-kernel ledger [EXACT ORACLE GATE]")
+    for p in primes:
+        assert sp.isprime(p) and p >= 11 and p not in EXCEPTIONAL
+        _, N = midpoint_level(p)
+        lev = [level_assembly(p, N + s) for s in range(3)]
+        alpha = [Fraction(MID_ROW[s]) * lev[s]["alpha_unit"] for s in range(3)]
+        oracle = sum((alpha[s] * (lev[s]["regular"]["head"]
+                                  + lev[s]["regular"]["tail"])
+                      for s in range(3)), Fraction(0))
+        expanded = sum((alpha[s] * sum(lev[s]["pair_terms"].values(), Fraction(0))
+                        for s in range(3)), Fraction(0))
+        assert expanded == oracle
+
+        layer = {
+            i: sum((alpha[s] * sum((value for (ii, _), value
+                                     in lev[s]["pair_terms"].items() if ii == i),
+                                    Fraction(0))
+                    for s in range(3)), Fraction(0))
+            for i in range(1, 7)
+        }
+        assert sum(layer.values(), Fraction(0)) == oracle
+        boundary = {}
+        for name in ("b=0", "interior", "b=rs"):
+            subtotal = Fraction(0)
+            for s in range(3):
+                rs = lev[s]["rs"]
+                for (i, b), value in lev[s]["pair_terms"].items():
+                    selected = ((name == "b=0" and b == 0)
+                                or (name == "b=rs" and b == rs)
+                                or (name == "interior" and 0 < b < rs))
+                    if selected:
+                        subtotal += alpha[s] * value
+            boundary[name] = subtotal
+        assert sum(boundary.values(), Fraction(0)) == oracle
+
+        local_floors = {"base": [], "companion": []}
+        for s in range(3):
+            m, rs = N + s, lev[s]["rs"]
+            for label, arr in (("base", lev[s]["a"]), ("companion", lev[s]["at"])):
+                floors = []
+                for layers in ((1, 2), (3,), (4,), (5,), (6,)):
+                    vals = []
+                    for b in range(rs // 2 + 1):
+                        bs = (b,) if b == rs - b else (b, rs - b)
+                        term = Fraction(0)
+                        for bb in bs:
+                            for i in layers:
+                                kernel = (harmonic(bb, i)
+                                          + Fraction((-1) ** (i + 1))
+                                          * (harmonic(m - bb, i) - Fraction(1, p**i)))
+                                term += arr[i, bb] * kernel
+                        vals.append(valuation(term, p))
+                    floors.append(min(vals))
+                local_floors[label].append(tuple(floors))
+                assert floors[0] >= -2 and floors[1] >= -2 and floors[2] >= -2
+                assert floors[3] >= -1 and floors[4] >= 0
+
+        print(f"  p={p}: Phi blocks=Bell a6=direct at all b: PASS; "
+              f"expanded RT=oracle: PASS; v(RT)={fmt_val(oracle,p)}")
+        print("    per level s=0,1,2 before coefficient-row cancellation: "
+              + ", ".join(
+                  f"s={s}:v={fmt_val(alpha[s] * sum(lev[s]['pair_terms'].values(), Fraction(0)), p)}"
+                  for s in range(3)))
+        print("    after row, Bell layers i=1..6: "
+              + ", ".join(f"i={i}:v={fmt_val(layer[i],p)}" for i in range(1,7)))
+        print("    after row, explicit boundaries: "
+              + ", ".join(f"{name}:v={fmt_val(value,p)}" for name, value in boundary.items()))
+        print("    local b<->rs-b floors (L12,L3,L4,L5,L6), endpoints included:")
+        for s in range(3):
+            print(f"      s={s}: base={local_floors['base'][s]}, "
+                  f"companion={local_floors['companion'][s]}")
+        print("    eight-order alarm: reflected row has v>=6: "
+              + ("PASS" if valuation(oracle, p) >= 6 else "FAIL"))
+        assert valuation(oracle, p) >= 6
+
+
+def rm_h_u_ledger(primes):
+    """Exact oracle ledger for the obligations following (RT)."""
+    print("RM/H/U midpoint ledger [EXACT ORACLE GATE]")
+    for p in primes:
+        _, N = midpoint_level(p)
+        lev = [level_assembly(p, N + s) for s in range(3)]
+        alpha = [Fraction(MID_ROW[s]) * lev[s]["alpha_unit"] for s in range(3)]
+        rm = sum((alpha[s] * lev[s]["regular"]["middle"] for s in range(3)),
+                 Fraction(0))
+        hh = sum((alpha[s] * lev[s]["head_det"] for s in range(3)), Fraction(0))
+        print(f"  p={p}: v(RM row)={fmt_val(rm,p)}, v(H row)={fmt_val(hh,p)}")
+        print("    level valuations s:(Rmid,R~mid,p5det; E,E~,head-det): "
+              + ", ".join(
+                  f"{s}:({fmt_val(lev[s]['R']['middle'],p)},"
+                  f"{fmt_val(lev[s]['Rt']['middle'],p)},"
+                  f"{fmt_val(lev[s]['regular']['middle'],p)};"
+                  f"{fmt_val(lev[s]['E'],p)},"
+                  f"{fmt_val(lev[s]['Et'],p)},"
+                  f"{fmt_val(lev[s]['head_det'],p)})"
+                  for s in range(3)))
+        lead = []
+        qlead = []
+        for s in range(3):
+            pp = Fraction(p**5) * lev[s]["P"]
+            qq = RHO * lev[s]["Q"]
+            assert valuation(pp, p) >= 0 and valuation(qq, p) >= 0
+            lead.append(mod_p_integral(pp, p))
+            qlead.append(mod_p_integral(qq, p))
+            assert lead[-1] == qlead[-1]
+        assert any(x != 0 for x in lead)
+        print(f"    leading p^5 P digits={lead}; rho*Q digits={qlead}; "
+              "digit identity=PASS; at least one unit=PASS")
 
 
 def cache_check():
@@ -281,13 +450,19 @@ def assembly_check(primes):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=("cache", "assembly", "all"), nargs="?", default="all")
+    parser.add_argument("mode", choices=("cache", "assembly", "symbolic-rt",
+                                         "rm-h-u", "all"),
+                        nargs="?", default="all")
     parser.add_argument("--primes", default="11,13,17,19,23")
     args = parser.parse_args()
     if args.mode in ("cache", "all"):
         cache_check()
     if args.mode in ("assembly", "all"):
         assembly_check([int(x) for x in args.primes.split(",") if x])
+    if args.mode in ("symbolic-rt", "all"):
+        rt_symbolic_check([int(x) for x in args.primes.split(",") if x])
+    if args.mode in ("rm-h-u", "all"):
+        rm_h_u_ledger([int(x) for x in args.primes.split(",") if x])
 
 
 if __name__ == "__main__":

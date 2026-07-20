@@ -64,6 +64,19 @@ L5  Finite-range corrected law                              [DONE n=2..8, 2026-0
     `scripts/l5_remote.sh HOST NSTART NEND` (remote-ready, point at kbld once
     SSH exists). Pure engineering on top of L0.
 
+L6-staging  Two theorems landed (wave 1, 2026-07-20)         [cbcert — DONE, sorry-free]
+    T1 Cbcert/LucasRow.lean: the Lucas–Frobenius q-row congruence
+       `Q(ap+r) ≡ Q a · Q r (mod p)` (p prime, r<p) for the Brown–Zudilin
+       double-binomial `Q_n` — the FIRST ROW of the Frobenius matrix, now a Lean
+       theorem (Mathlib's Lucas + base-p reindex + carry-kill factorization).
+    T2 Cbcert/Assembly.lean: Sol's master reduction as `descent_law`, with the open
+       descent `hD` (= verified (D), salvage_v7 332/0) an EXPLICIT hypothesis.
+       Conclusion `v_p(P n) ≥ −5·⌊log_p n⌋` for all n≥1, p≥5, proved by digit-chain
+       induction with the terminal cases discharged from the PROVEN cbcert band +
+       one-digit Kummer. `sorryAx`-free (hD is a hypothesis, not an axiom): **the
+       whole p≥5 corrected law is now exactly one hypothesis (`hD`) away.** This is
+       the assembly skeleton onto which any future proof of (D) drops in directly.
+
 L6  The open mathematics                                    [BLOCKED — no paper proof]
     What a full `12·d_n⁵·P_n ∈ ℤ` theorem for ALL n still needs, in order:
     (a) q_n ∈ ℤ uniformly (cited from BZ cellular integrality; a formalizable

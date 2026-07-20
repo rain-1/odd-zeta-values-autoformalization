@@ -34,25 +34,35 @@ General nonvanishing `w_n, w̃_n, p_n ≠ 0` (all `n` on domain) is unproved (nu
 theorems above. If closed, the disjuncts collapse to the sharp `1 ≤ padicValRat`. A finite
 witness (`n = 3`) is in `Numeric.lean`.
 
-## L6-staging wave 1 — two theorems (Goal 2)
+## L6-staging wave 1 — two theorems (Goal 2) — COMPLETE, sorry-free
 
-Two new modules; statement freeze committed with numeric gates, then proofs.
+Two new modules. Full build green; axioms of all three theorems exactly
+`[propext, Classical.choice, Quot.sound]` (no `sorryAx`, no `native_decide`).
 
-- **T1 `Cbcert/LucasRow.lean`** — Lucas–Frobenius `q`-row:
-  `Q (a*p+r) ≡ Q a · Q r (mod p)` for prime `p`, `r < p`, where `Q n` is the
-  Brown–Zudilin double-binomial sum (weight-0, manifestly ℕ). Mathlib HAS Lucas
-  (`Mathlib/Data/Nat/Choose/Lucas.lean`: `Choose.choose_modEq_choose_mod_mul_choose_div`
-  single-digit + `lucas_theorem`) — no need to reprove it. Numeric gate `Q 0..4`
-  (`decide`) = `1,21,2989,714549,217515501` (`Q 2 = 2989` matches `ErrorExhibit.Q2_eq`).
-  Proof route mirrors `salvage_v3_lucas_proof.py` (carry-kill + factorization).
-  Status: STATED; 1 sorry (main thm).
-- **T2 `Cbcert/Assembly.lean`** — conditional assembly of Sol's master reduction.
-  `descent_law : hD → ∀ n≥1, ∀ p prime ≥5, −5·⌊log_p n⌋ ≤ v_p(P n)`, `P := BZP`.
-  `hD` (open, NEVER proven here) = the verified descent `v_p(P m) ≥ v_p(P (m/p)) − 5`
-  for `p ≤ m` (`salvage_v7.py`, 332 descents/0 violations). Faithfulness + trap-free
-  argument in the module docstring. Terminal integrality `P_pIntegral_terminal`
-  (PROVEN piece: `Main.pn_pInt` + band `res_congruence_pn` + one-digit Kummer).
-  Status: STATED; 2 sorry (`P_pIntegral_terminal`, `descent_law`).
+- **T1 `Cbcert/LucasRow.lean`** — Lucas–Frobenius `q`-row, **DONE, sorry-free**:
+  `Q_lucas_frobenius : (Q (a*p+r):ℤ) ≡ Q a · Q r [ZMOD p]` for prime `p`, `r < p`,
+  where `Q n = ∑_{k,l∈range(n+1)} C(n+k,n)C(n,k)²C(n+l,n)C(n,l)²C(n+k+l,n)` (ℕ).
+  Mathlib HAS Lucas (`Choose.choose_modEq_choose_mod_mul_choose_div_nat`) — used, not
+  reproven. Proof mirrors `salvage_v3_lucas_proof.py`: base-`p` reindex
+  (`Finset.sum_bij'` over `range((a+1)*p) → range(a+1)×range p`, out-of-range terms
+  vanish via `Nat.choose_eq_zero_of_lt`), per-summand factorization `POINT`
+  (`S(ap+r)(bp+s)(cp+t) ≡ S a b c · S r s t`, cased on `s+t<p` survivor vs carry-kill),
+  then `Finset.sum_mul_sum`. Numeric gate `Q 0..4 = 1,21,2989,714549,217515501`
+  (`decide`; `Q 2 = 2989` matches `ErrorExhibit.Q2_eq`).
+  Bridge `Q n = (−1)^{n+1} q_n/C(2n,n)` STAGED (honest note in docstring; not needed
+  for the congruence).
+- **T2 `Cbcert/Assembly.lean`** — conditional assembly of Sol's master reduction,
+  **DONE, sorry-free**. `descent_law (hD : DescentHyp) : ∀ n≥1, ∀ p prime ≥5,
+  −5·(Nat.log p n) ≤ v_p(P n)`, `P := BZP`. `hD` (open, NEVER proven here;
+  `sorryAx`-free because it is a *hypothesis*) = the verified descent
+  `v_p(P (m/p)) − 5 ≤ v_p(P m)` for `p ≤ m` (`salvage_v7.py`, 332 descents /
+  0 violations). Faithfulness + `padicValRat`-at-zero trap-freeness argued in the
+  docstring (the `v_p(0)=0` convention makes the induction close with NO nonvanishing
+  hypothesis). Terminal `P_pIntegral_terminal` proven from the PROVEN cbcert lemmas
+  (`Main.pn_pInt` for `p>2n`; band `Main.pn_valuation` + one-digit Kummer
+  `padicValNat_choose'` for `n<p≤2n`); induction via `Nat.strong_induction_on` +
+  `Nat.log_div_base`. **The full `p ≥ 5` corrected law is now exactly one hypothesis
+  (`hD`) away.**
 
 ## L5 — finite-range corrected law (`12·d_n⁵·P_n ∈ ℤ`)
 

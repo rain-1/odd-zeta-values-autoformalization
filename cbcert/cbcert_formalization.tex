@@ -27,7 +27,7 @@
 Brown--Zudilin's $\zeta(5)$ denominators and the\\
 Frobenius certificate, formalized in Lean~4}
 \author{}
-\date{19 July 2026}
+\date{19 July 2026. Revised: 20 July 2026.}
 
 \begin{document}
 \maketitle
@@ -49,7 +49,14 @@ theorem that proves the corrected law on the clean interval --- the
 and every prime $p$ with $5 \le p$, $n < p \le 2n$, the harmonic functionals
 satisfy $w_n \equiv \wtd{w}_n \equiv 0 \pmod p$, and hence
 $p \mid p_n$. The formalization exposed two statement-level errors in our own
-paper-level drafts, which we document. The complete development builds in
+paper-level drafts, which we document. A second wave
+(Section~\ref{sec:wave2}) adds: the corrected law kernel-verified for
+$n \le 8$ with nonvanishing; a Lucas--Frobenius congruence
+$Q_{ap+r} \equiv Q_a Q_r \pmod p$ for the cellular coefficient (whose
+formalization caught a gap in the original proof sketch); and the
+\emph{conditional assembly}: the descent hypothesis $(\mathrm D)$ implies the
+full law at every prime $p \ge 5$ --- so the complete corrected law is now,
+formally, one explicit hypothesis away. The complete development builds in
 one \lean{lake build} and is publicly available.
 \end{abstract}
 
@@ -344,19 +351,111 @@ Neither finding affects \cite{CBcert}, whose arguments always operate in
 range with $p \ge 5$; both are exactly the kind of boundary defect that
 survives refereeing.
 
+\section{The second wave: finite range, the Lucas--Frobenius row, and the
+conditional assembly}\label{sec:wave2}
+
+Three further results were formalized on 19--20 July 2026, extending the
+development from ``the band theorem plus the erratum'' toward the full
+corrected law.
+
+\subsection*{The corrected law for $n \le 8$, with nonvanishing}
+
+Modules \lean{Cbcert/FiniteLaw/N2..N8.lean} verify, by pure kernel
+computation (no \lean{native\_decide}), the full corrected law
+$12\,d_n^5 P_n \in \Z$ for every $n \le 8$, together with $p_n \ne 0$ at each
+such $n$ --- so on this range the disjunctive main theorems collapse to the
+sharp valuation form unconditionally. An exact-arithmetic gate confirmed the
+law out to $n = 24$ in Python before any Lean statement was generated, and
+each Lean file checks a precomputed integer witness rather than searching.
+(The kernel cost grows $\approx 1.75\times$ per level and does not
+parallelize within a level; $n \le 8$ was chosen deliberately, and the
+independent adversarial sweep described below now covers $n \le 360$.)
+
+\subsection*{The Lucas--Frobenius row}
+
+For the manifestly integral Brown--Zudilin double-binomial coefficient
+\[
+Q_n \;=\; \sum_{k,l=0}^{n} \bin{n+k}{n}\bin nk^2 \bin{n+l}{n}\bin nl^2
+\bin{n+k+l}{n},
+\]
+module \lean{Cbcert/LucasRow.lean} proves, sorry-free with standard axioms:
+
+\begin{quote}\small\ttfamily
+theorem Q\_lucas\_frobenius (a r p : $\mathbb N$) (hp : p.Prime) (hr : r < p) :\\
+\hspace*{1em}(Q (a*p + r) : $\Z$) $\equiv$ (Q a : $\Z$) * (Q r : $\Z$) [ZMOD p]
+\end{quote}
+
+\noindent
+This is the ``$q$-row'' of the conjectural Frobenius structure on the period
+lattice: the diagonal of the descent, proven unconditionally. The proof uses
+Mathlib's Lucas theorem
+(\lean{Choose.choose\_modEq\_choose\_mod\_mul\_choose\_div\_nat}) per binomial
+factor. Formalization again caught a genuine gap in the human proof sketch:
+on summands with a base-$p$ carry, the five per-factor Lucas splits do
+\emph{not} hold simultaneously, so one cannot simply multiply five
+congruences; the correct argument exhibits a single common vanishing factor
+on the carry branch. The sketch was right in spirit and wrong in mechanism
+--- precisely the kind of defect that survives refereeing.
+
+\subsection*{The conditional assembly: one hypothesis from the full law}
+
+Module \lean{Cbcert/Assembly.lean} formalizes the master reduction: define
+
+\begin{quote}\small\ttfamily
+def DescentHyp : Prop :=\\
+\hspace*{1em}$\forall$ (m p : $\mathbb N$), p.Prime $\to$ 5 $\le$ p $\to$ p $\le$ m $\to$\\
+\hspace*{2em}padicValRat p (P (m / p)) $-$ 5 $\le$ padicValRat p (P m)
+\end{quote}
+
+\noindent
+--- exactly the descent $(\mathrm D)$: one base-$p$ digit down costs at most
+five $p$-adic orders. Then, sorry-free with standard axioms:
+
+\begin{quote}\small\ttfamily
+theorem descent\_law (hD : DescentHyp) :\\
+\hspace*{1em}$\forall$ n $\ge$ 1, $\forall$ p prime, 5 $\le$ p $\to$
+($-$5)$\cdot$(Nat.log p n) $\le$ padicValRat p (P n)
+\end{quote}
+
+\noindent
+The proof iterates $(\mathrm D)$ down the digit chain and discharges both
+terminal cases from theorems already in the development: $2n_L < p$ via the
+integrality lemmas (Lemma C), and $n_L < p \le 2n_L$ via the certificate
+theorem (Theorem~\ref{thm:cert}) plus a one-carry Kummer lemma. Two design
+points matter. First, the statement is \emph{trap-free}: under Mathlib's
+$\lean{padicValRat}\ p\ 0 = 0$ convention the induction closes with no
+nonvanishing hypotheses anywhere. Second, \lean{hD} is a \emph{hypothesis},
+not an axiom --- the axiom audit shows the standard triple only, and the
+theorem states formally and exactly what remains open: prove $(\mathrm D)$,
+and the full corrected law at every $p \ge 5$ follows by composition of
+kernel-verified pieces.
+
+$(\mathrm D)$ itself is the object of an active proof campaign (with the
+collaborating model Sol), which has reduced it, on paper, through a chain of
+exact certificate-shaped reductions --- per-digit gates at the true
+singularities of the underlying Ap\'ery-like recurrence, then a single $a=1$
+midpoint gate, currently one explicit congruence from closure --- each step
+verified in exact arithmetic before use. The adversarial evidence base for
+$(\mathrm D)$ now stands at $n \le 360$, $p \le 73$: $5{,}989$ exact
+descents, zero violations, including the previously untested three-digit
+descent ranges, with the law riding the boundary (slack $0$) at $p = 2$ for
+every $n$ --- the constant $12$ is exactly sharp throughout. Finite evidence,
+not proof; but the formal statement of what it is evidence \emph{for} is now
+frozen in \lean{DescentHyp}.
+
 \section{Scope and open problems}\label{sec:scope}
 
 The formalized results are: the erratum and its sharp $n = 2$ repair
-(Theorem~\ref{thm:erratum}), and the clean-interval theorem
-(Theorem~\ref{thm:cert}) --- the part of the corrected law
-\eqref{eq:corrected} that is a theorem on paper. Explicitly \emph{not}
-formalized, because they are not yet theorems on paper: the full corrected
-law for all $n$ (its remaining gap is a Dwork-type descent congruence, for
-which extensive exact computational evidence exists, including a uniform
-$\bmod\ p^5$ jet on the $a = 1$ band); and the general nonvanishing
-$w_n, \wtd w_n, p_n \ne 0$. The finite-range law
-$12\, d_n^5 p_n' \in \Z$ for $n \le N$ by kernel computation is routine
-future work on top of the present definitions.
+(Theorem~\ref{thm:erratum}); the clean-interval theorem
+(Theorem~\ref{thm:cert}); the finite-range law with nonvanishing for
+$n \le 8$; the Lucas--Frobenius row; and the conditional assembly
+$(\mathrm D) \Rightarrow$ full law at $p \ge 5$
+(Section~\ref{sec:wave2}). Explicitly \emph{not} formalized, because they
+are not yet theorems on paper: the descent $(\mathrm D)$ itself (the single
+remaining gap, object of the active campaign described above); the
+$\{2,3\}$-part of the constant $12$ (the fixed losses at $p = 2, 3$, a
+separate finite obligation); and the general nonvanishing
+$w_n, \wtd w_n, p_n \ne 0$ (not needed by anything above).
 
 \section{Verification}\label{sec:verify}
 
@@ -364,9 +463,13 @@ The development lives in the \lean{cbcert/} directory of the public
 repository \cite{repo}, pinned to Lean toolchain
 \lean{v4.33.0-rc1} and a fixed Mathlib commit. To verify:
 \lean{lake exe cache get \&\& lake build} (the full build reports
-$\approx 8669$ jobs and finishes with no \lean{sorry} warnings), then
-\lean{\#print axioms} on any theorem named above; each reports exactly
-\lean{[propext, Classical.choice, Quot.sound]}. The repository README
+$\approx 8680$ jobs and finishes with no \lean{sorry} warnings), then
+\lean{\#print axioms} on any theorem named above — including
+\lean{Q\_lucas\_frobenius}, \lean{descent\_law}, and the \lean{FiniteLaw}
+aggregate \lean{law\_upto}; each reports exactly
+\lean{[propext, Classical.choice, Quot.sound]} (in particular no
+\lean{sorryAx} in \lean{descent\_law}: the descent enters as a named
+hypothesis, not an axiom). The repository README
 contains the recipe, including which displays of \cite{BZ22} to compare
 against which Lean docstrings.
 

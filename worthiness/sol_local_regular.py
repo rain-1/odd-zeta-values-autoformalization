@@ -53,6 +53,12 @@ CUB_ROW = (
 for Ci, Ri in zip(C, CUB_ROW):
     assert sp.rem(Ci, A0).as_expr() == sp.cancel(Ri / CUB_D)
 
+DISC_A0 = int(sp.discriminant(A0))
+RES_MID_A0 = abs(int(sp.resultant(A0, MID)))
+assert sp.factorint(abs(DISC_A0)) == {2: 2, 3: 3, 7: 2, 29: 2,
+                                     107: 1, 557: 1, 673: 1}
+assert sp.factorint(RES_MID_A0) == {2: 3, 43: 1, 701: 1}
+
 
 def primes_dividing(x):
     return [int(p) for p in sp.factorint(abs(int(x))) if p >= 5]
@@ -144,12 +150,33 @@ def frobenius_last_row(hi):
     print("  Algebraic implication (proved, not finite): if every witness F/P_a is")
     print("  p-integral and Q_r is integral, then v_p(P_n)>=v_p(P_a)-5, i.e. (D).")
 
+    print("\n  Filtered diagonal strengthening: p^w Y_n/Y_a = Q_r (mod p)")
+    for key, wt in (("P", 5), ("Ph", 3)):
+        strong_bad = []
+        strong_total = 0
+        for p in list(sp.primerange(5, hi + 1)):
+            for nn in range(p, hi + 1):
+                aa, rr = divmod(nn, p)
+                Ya = Fraction(triple(aa)[key])
+                if Ya == 0:
+                    continue
+                F = Fraction(p**wt)*Fraction(triple(nn)[key]) \
+                    - Ya*Fraction(triple(rr)["Q"])
+                delta = vp(F, p) - vp(Ya, p)
+                strong_total += 1
+                if delta < 1:
+                    strong_bad.append((nn, p, aa, rr, delta))
+        print(f"    ({key},w={wt}): rows={strong_total}; failures={len(strong_bad)}; "
+              f"first={strong_bad[:8]}")
+
 
 if __name__ == "__main__":
     hi = int(sys.argv[1]) if len(sys.argv) > 1 else 60
     get_all(0, hi)
     print("Exact polynomial identity checks: PASS")
     print("Cubic row denominator:", CUB_D, "=", sp.factorint(CUB_D))
+    print("disc(a0):", DISC_A0, "=", sp.factorint(abs(DISC_A0)))
+    print("|Res(a0,2n+5)|:", RES_MID_A0, "=", sp.factorint(RES_MID_A0))
     local_regular(hi)
     residue_rows(hi)
     frobenius_last_row(hi)

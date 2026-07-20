@@ -1,0 +1,247 @@
+PHASE 2 FROM SOL — SESSION 2 HANDOFF
+===================================
+
+Date: 20 July 2026
+Target: solution-specific regularity of P at (2n+5)a0(n), equivalently (D).
+
+VERDICT
+-------
+
+I did not prove (D) this session. I did obtain an exact finite-gate reduction of
+the recurrence obstruction, explicit small uniform rows for both true singular
+factors, a division-free certificate form equivalent to the desired last
+Frobenius row at nonzero P_a, and substantially enlarged exact evidence. The
+generic operator-desingularization route remains dead.
+
+
+1. RIGOROUS EXACT ALGEBRA
+-------------------------
+
+Use the established normalized recurrence
+
+  c0(m)Y_m+c1(m)Y_{m+1}+c2(m)Y_{m+2}+c3(m)Y_{m+3}=0,
+  c3(m)=2(m+3)^5(2m+5)a0(m),
+  a0(m)=41218m^3+198849m^2+320790m+173057.
+
+Everything in this section was checked as an exact polynomial identity by
+worthiness/sol_local_regular.py; the displayed divisions have zero remainder
+over Z[m].
+
+1.1 Midpoint row (small uniform identity).
+
+There exist H_i(m) in Z[m] such that, coefficientwise for i=0,1,2,
+
+  128 c_i(m) = 7 R_i + (2m+5) H_i(m),
+
+where
+
+  (R_0,R_1,R_2)=(11907,-334374,-19292).
+
+Thus, if p is not 2 or 7, t=v_p(2m+5)>0,
+u=v_p(a0(m))=0, and e=min_{0<=i<=2}v_p(P_{m+i}), the full midpoint regularity
+condition is equivalent to the per-(m,p) certificate
+
+  v_p(11907 P_m-334374 P_{m+1}-19292 P_{m+2}) >= e+t.       (MID)
+
+This is valid at arbitrary prime-power depth t, not merely modulo p. Prime 7
+requires a shifted certificate because the constant row itself has the extra
+factor 7.
+
+1.2 Cubic row (small uniform identity).
+
+Put
+
+  D = 688444586089376 = 2^5*37^5*557^2,
+
+  A_0(m)=7502522434517190247m^2
+         +27377435999133628028m+23682487355887746399,
+
+  A_1(m)=14(3763413087280622569m^2
+         +11453615933815386820m+8744992879372731313),
+
+  A_2(m)=17052(1395403006376645m^2
+         +4537329573624116m+3700105031529293).
+
+There exist K_i(m) in Z[m] such that
+
+  D c_i(m) = A_i(m) + a0(m) K_i(m)       (i=0,1,2).
+
+Hence, whenever p does not divide D, u=v_p(a0(m))>0,
+t=v_p(2m+5)=0, and e is as above, cubic regularity is equivalent to
+
+  v_p(A_0(m)P_m+A_1(m)P_{m+1}+A_2(m)P_{m+2}) >= e+u.       (CUB)
+
+Again this is a full prime-power certificate, not only a first residue digit.
+Prime 37 has no root of a0 modulo 37, so the denominator D creates no actual
+gate there. Prime 557 needs a separate direct row.
+
+1.3 Exact exceptional-prime classification.
+
+  disc(a0) = -178513008142644
+           = -2^2*3^3*7^2*29^2*107*557*673,
+
+  |Res_m(a0(m),2m+5)| = 241144 = 2^3*43*701.
+
+Therefore cubic roots are simple for p>=5 outside
+{7,29,107,557,673}, and midpoint/cubic roots are disjoint outside {43,701}.
+A generic prime has at most four distinct singular residues: the midpoint and
+at most three cubic roots. At p=43 or 701 a combined certificate must account
+for the sum of the two valuations; separate MID and CUB bounds give only their
+maximum.
+
+1.4 Ordinary-step / finite-gate lemma (proved recurrence algebra).
+
+Let R be a DVR with residue characteristic p>=5. Fix a digit block ap+r.
+Because each c_i is an integer polynomial,
+
+  c_i(ap+r) = c_i(r) (mod p).
+
+For 0<=r<=p-4, if c3(r) is a unit, the recurrence has unit leading
+coefficient. It therefore:
+
+  (a) propagates integrality from three consecutive scaled block values to the
+      fourth; and
+  (b) propagates congruence between two integral block solutions modulo p.
+
+Consequently the only internal residues requiring solution-specific witnesses
+are roots of
+
+  (2r+5)a0(r)=0 (mod p).
+
+The factor (r+3)^5 is met only at the digit boundary r=p-3 and is precisely the
+allowed five-order digit loss. Thus each block reduces to ordinary propagation
+plus at most four gates, represented explicitly by MID and CUB (with the finite
+exceptional-prime modifications above). This is the requested
+per-(n,p)-witness + small-uniform-identity shape.
+
+1.5 Division-free last-row certificate and implication to (D).
+
+Write n=ap+r, 0<=r<p. Since Q_r is an integer, the witness inequality
+
+  v_p(p^5 P_n-P_a Q_r) >= v_p(P_a)                         (FROB-P_weak)
+
+implies immediately
+
+  v_p(P_n) >= v_p(P_a)-5,                                  (D)
+
+by the ultrametric inequality. When P_a is nonzero, (D) conversely makes
+(p^5P_n-P_aQ_r)/P_a p-integral, so FROB-P_weak is the natural saturated,
+division-free certificate form of the last row. The stronger clean diagonal
+form asks for one additional p:
+
+  p^5P_n = P_a(Q_r+pE_{n,p}), E_{n,p} in Z_p.              (FROB-P_clean)
+
+The exceptional data below show why the weak saturated form, not the clean
+diagonal form, must be the theorem used for all primes.
+
+
+2. EXACT FINITE EVIDENCE — NOT PROOF
+------------------------------------
+
+All checks used Fraction/integer arithmetic. Current exact cache: n<=75.
+
+2.1 Full recurrence regularity, every singular factor row through m=72.
+
+For every p>=5 dividing (2m+5)a0(m), the checker tested
+
+  v_p(c0P_m+c1P_{m+1}+c2P_{m+2})
+    >= min_i v_p(P_{m+i}) + v_p((2m+5)a0(m)).
+
+There were 261 (m,p) rows: P had 0 violations; Q had 0; Phat had 33. This
+includes 21 rows where the total singular multiplicity exceeded one.
+
+2.2 Small rows.
+
+MID: 72 rows, P and Q 0 violations; Phat 31 violations.
+CUB (excluding remainder-denominator primes): 179 rows, P and Q 0 violations;
+Phat 1 violation.
+
+2.3 Frobenius last row.
+
+FROB-P_weak: 737 rows (all primes 5<=p<=73 and p<=n<=75), 0 violations;
+minimum relative slack 0.
+
+For the filtered clean diagonal rows
+
+  p^wY_{ap+r}=Y_a Q_r (mod p Y_a),
+  (Y,w)=(P,5),(Phat,3),
+
+Phat passed 737/737. P passed 736/737. The sole defect was
+
+  (n,p,a,r)=(19,7,2,5),
+
+where the quotient error is a 7-adic unit (residue 4). FROB-P_weak still holds
+with equality. This defect is injected after crossing the cubic singular gate
+r=2 modulo 7. It is evidence that the saturated regular lattice survives while
+its reduction need not be a globally diagonal line.
+
+2.4 Naive regular-plane quotient was falsified.
+
+After independently primitive-scaling the three-value Q and P vectors at the
+261 singular rows (the rank test was first run on the n<=60 subgrid), their
+reductions are frequently proportional: already 62/202 rows at n<=60 had rank
+one, not two. Therefore the regular rank-two lattice can have rank-one mod-p
+reduction. Any quotient proof must retain saturation/higher p-adic jets.
+
+2.5 a=1 head window below the old band.
+
+worthiness/sol_hw_allr.py tested both untilded and tilded head-window expressions
+for every residue 0<=r<p, p in {5,7,11,13,17,19,23,29}: 248 scalar rows, zero
+violations of valuation >=4; for every p>=11 the minimum was 5. This extends the
+old upper-band evidence to the midpoint residues below the reflection centre.
+It is evidence only. The symbolic chamber/interval cancellation remains open.
+
+
+3. HONEST FRONTIER
+------------------
+
+No general MID or CUB divisibility certificate for P was proved. Those two
+small rows are the surviving arithmetic content. Equivalently, no proof of
+FROB-P_weak or (D) was obtained.
+
+The q-row Lucas theorem and recurrence periodicity explain ordinary residues,
+but they do not choose the saturated regular lift at a true singular gate. The
+Casoratian identifies a singular direction and Phat witnesses it, but the naive
+mod-p regular plane collapses at many primes and cannot select P without higher
+jets. The full head-window order-five identity, even if proved, would still
+need the regular residual, tilded determinant, exceptional-prime saturation,
+and general-a transport. None of those has been silently assumed.
+
+
+4. NEXT SESSION: DO THIS FIRST
+------------------------------
+
+Attack the a=1 MIDPOINT GATE only, in saturated determinant form.
+
+For p outside the finite exceptional set, put r=(p-5)/2 and n=p+r. Extend the
+existing Phi/Bell assembly to output, simultaneously, the untilded and tilded
+regular residuals and form the determinant combination for
+
+  11907 P_n - 334374 P_{n+1} - 19292 P_{n+2}.
+
+Do not first prove the full all-r head-window theorem. Reduce this one fixed
+row chamber-by-chamber, retaining the two residuals until the determinant is
+formed. The target certificate is the explicit p-adic witness
+
+  Z_{p} = p^{-e-1}
+    (11907 P_n-334374 P_{n+1}-19292 P_{n+2}) in Z_p,
+
+with e=min_i v_p(P_{n+i}). Verify every symbolic reduction against
+sol_local_regular.py and sol_hw_allr.py. Once the generic simple midpoint is
+closed, lift the same exact row to p^t, then do the quadratic CUB row. Handle
+{7,29,43,107,557,673,701} only after the generic calculation is stable.
+
+
+FILES WRITTEN THIS SESSION
+--------------------------
+
+  worthiness/SOL_WORKLOG.md              append-only durable log
+  worthiness/sol_local_regular.py        exact local/Frobenius checker
+  worthiness/sol_hw_allr.py              exact all-residue a=1 HW checker
+  worthiness/PHASE2_FROM_SOL_2.txt       this signed handoff
+
+
+Signed,
+
+Sol
+20 July 2026

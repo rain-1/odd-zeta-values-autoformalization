@@ -552,3 +552,38 @@
   unavailable.  Also proved the scope observation that midpoint depth greater
   than one cannot occur in an `a=1` block for `p>=5`; that problem necessarily
   belongs to later-digit transport.
+
+## 2026-07-20 -- session 9: adjugate first jet computed; route walls
+
+- Derived the exact companion-adjugate recurrence
+
+      c3(n) adj(Y_(n+1)) = adj(Y_n)
+        [[c1,c2,c3],[-c0,0,0],[0,-c0,0]].
+
+  At an `a0` root it reduces to the rank-two regular plane cut out by the CUB
+  row.  Expanded `Y adj(Y)=det(Y)I` to first order after primitive column
+  saturation and gated the complete first-jet identity at every requested
+  small root.
+- The rank-one adjugate does not select the named `P` column.  Its row span is
+  the CUB left annihilator; its column span is a mixed relation among the
+  `(Q,P,Phat)` columns.  Every simple internal oracle direction is mixed; at
+  `(43,19)` it is `(30,9,30)`, not the pure `Phat` axis.
+- Proved the basis-invariance obstruction: the constant `SL3` change
+  `(Q,P,Phat)->(Q,P+Phat,Phat)` preserves both the scalar recurrence and its
+  Casoratian but changes named-column regularity.  Therefore recurrence plus
+  Casoratian cannot prove that P, rather than P plus a singular solution, is
+  ordinary.
+- Isolated the exact missing input as the P column of the one-digit Frobenius
+  connection matrix: for `N=p+r`, one must independently prove that the
+  normalized lifted P vector belongs to the CUB plane.  This is equivalently
+  the desired CUB-row divisibility and cannot be obtained by recycling the
+  adjugate identity.
+- Handled the upper-root chamber explicitly in the oracle.  The internal upper
+  roots `(11,6),(13,7),(23,17)` have central-binomial carry vector `(1,1,1)`;
+  their P floor, CUB gain, and LEAD digits all pass exactly.  This confirms the
+  missing theorem must include a carry-sensitive factorial connection term.
+  `(29,27)` is additionally a multiple root modulo 29 and lies at the digit
+  boundary.
+- Stopped at the requested wall.  The cubic gate and complete `a=1` descent
+  remain open; the Session-7 midpoint theorem is retained as the standalone
+  proved result.

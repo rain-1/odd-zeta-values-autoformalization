@@ -1,0 +1,78 @@
+PHASE 2 FROM SOL -- SESSION 9 HANDOFF
+====================================
+
+Date: 20 July 2026
+Scope executed: adjugate/connection first-jet route at the a=1 cubic gates.
+
+
+VERDICT
+-------
+
+The adjugate route, restricted as requested to the recurrence and Casoratian,
+WALLS.  It does not close the cubic gate, so no complete a=1 descent is claimed.
+
+The exact adjugate recurrence is
+
+  c3(n) adj(Y_(n+1)) = adj(Y_n)
+    [[c1,c2,c3],[-c0,0,0],[0,-c0,0]].
+
+At a simple a0-root the saturated adjugate is rank one.  Its row direction is
+the CUB left annihilator and its column direction is a relation among the
+three solution columns.  The full first jet of Y adj(Y)=det(Y)I passes at all
+requested small roots.  But this jet identifies only the regular two-plane;
+it does not prove that the named lifted P digit lies in that plane.
+
+This is a structural impossibility for recurrence + Casoratian alone: the
+SL3 basis change
+
+  (Q,P,Phat) -> (Q,P+Phat,Phat)
+
+preserves the scalar recurrence and Casoratian while changing named-column
+regularity.  The oracle's saturated null direction is in fact mixed at every
+simple internal root, not the pure Phat axis.  For example it is `(30,9,30)`
+at `(p,r)=(43,19)`.
+
+
+MISSING INPUT
+-------------
+
+For N=p+r and ell_r the CUB row, the missing statement is exactly
+
+  ell_r (p^5 P_N,p^5 P_(N+1),p^5 P_(N+2)) = 0 mod p.
+
+Equivalently one needs the P column of the named one-digit Frobenius connection
+matrix.  The recurrence/adjugate supplies ell_r but not that column.  A proof
+must evaluate it from the hypergeometric/period determinant (or an equivalent
+Dwork theorem).  This is the structural arithmetic input that can distinguish
+P from P+Phat and expose Phat's transverse singular coefficient.
+
+
+UPPER CHAMBER
+-------------
+
+The internal upper roots are `(11,6),(13,7),(23,17)`.  At all three offsets
+their central-binomial Kummer carry vector is `(1,1,1)`, the extra factorial
+block absent from the midpoint proof.  Exact ladders give P-floor `-5`, the
+CUB gain, and the observed LEAD identity at each root.  These are finite oracle
+gates only; proving their carry-sensitive connection coefficient is precisely
+the missing input.
+
+`(11,9)` and `(29,27)` are digit-boundary diagnostics; the latter is also a
+multiple, not simple, root modulo 29.  The combined `(43,19)` depth-two gate
+still needs a separate theorem, and the lifted `(701,348)` row remains outside
+the cache.
+
+
+FILES
+-----
+
+  worthiness/sol_adjugate_gate.py
+  worthiness/PHASE2_ADJUGATE_GATE_STATUS.md
+  worthiness/SOL_WORKLOG.md (append only)
+  worthiness/PHASE2_FROM_SOL_9.txt
+
+
+Signed,
+
+Sol
+20 July 2026

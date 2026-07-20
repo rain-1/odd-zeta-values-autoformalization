@@ -435,3 +435,58 @@
 - The prime-independent Phi/Bell proof of the local `p^4` floor and the
   summation certificate for `sum C_4=0` are not yet written.  Therefore `(H)`,
   `(U)`, and the complete a=1 midpoint theorem remain open and are not claimed.
+
+## 2026-07-20 — session 6: weight-five reflection jet and H closed
+
+- Resumed from `fc2a8d7` with the exact Session-5 frontier.  Rewrote the local
+  head term using `A_i=p^(6-i)a_i` as the single Bell functional
+
+      pT=A_1-A_2-(59/42)A_3-A_4-(15/14)A_5-A_6.
+
+  This fixed row was asserted exactly in `sol_h5.py` before extracting digits.
+- Expanded the fixed-block `Phi` products through weight five in the harmonic
+  alphabet, retained the full-block quotients through pair collection, and
+  obtained the prime-independent reflection jet
+
+      T(b)+T(r-b) = -(p^4/84)
+          (a^[r]_(1,b)+a^[r]_(1,r-b)) mod p^5,
+
+  with the same formula for the companion.  Hence the five local coefficients
+  are `(0,0,0,0,-a^[r]_1/84)` after pairing.
+- Kept `{0,r}` explicit.  At `b=r/2`, used the uncancelled `p/2` factor and the
+  direct central Taylor row; the same coefficient table holds with singleton
+  convention.
+- Summing the surviving coefficient gives `-E_1(a^[r])/84`.  The exact
+  infinity relations `sum_b a^[r]_(1,b)=0` and
+  `sum_b at^[r]_(1,b)=0` therefore prove `(H-NF)`.  Together with Session 5's
+  exact reflected decomposition and proved middle `p^5` floor, this proves
+  `E,Et in p^5 Z_p`, i.e. `(H)`.
+- Strengthened the required gate.  At `p=11,13,17`, all offsets, pairs, and both
+  arrays, `sol_h5.py` now asserts the full congruence against the small-index
+  `a_1` row modulo `p^5`.  Its arrays are independently imported from
+  `sol_j12.exact_arrays`, so both named Session-5 oracles are crossed.  Endpoint
+  and central digits print separately.  Diagnostic primes `19` through `43`
+  also passed; these remain regression evidence.
+- Wrote `PHASE2_H5_CERTIFICATE.md` with the Bell row, five-coefficient table,
+  endpoint/central branches, and the `E_1` finite-field certificate.
+
+## 2026-07-20 — session 6: LEAD proved; primitive-Q audit
+
+- With `(H)`, `(RT)`, and `(RM)` now theorems, the exact level determinant
+  identity reduces modulo `p` to
+
+      p^5 P_(p+t) = (29/28) Q_(p+t) mod p.
+
+  The head determinant is in `p^3`, the reflected head+tail regular determinant
+  is in `p`, and the middle determinant is in `p^4`; the binomial normalizer is
+  a unit.  Thus `(LEAD)` is proved levelwise for the three offsets.
+- Audited the requested primitive-Q-triple step rather than importing it as a
+  theorem.  The exact double-binomial formula has no all-zero midpoint triple
+  for any of the 48 primes `11<=p<240`; required digits are
+  `[0,5,1]`, `[8,5,11]`, `[14,10,16]`.  This is exact finite evidence.
+- A uniform proof was not found in the repository.  Back-propagating three
+  zeros through the order-three recurrence stops at roots of the cubic leading
+  factor `a0`; crossing those roots requires precisely a saturated Q-gate
+  lemma, so treating “primitive-Q-triple” as automatic would hide a real
+  obligation.  Consequently `(U)` and the complete midpoint assembly remain
+  conditional on that one explicit lemma and are not promoted from samples.

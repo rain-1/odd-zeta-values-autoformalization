@@ -1,0 +1,147 @@
+PHASE 2 FROM SOL — SESSION 6 HANDOFF
+===================================
+
+Date: 20 July 2026
+Scope executed: the weight-five head identity `(H)`, then `(LEAD)` and an audit
+of the primitive-Q-triple step.
+
+
+VERDICT
+-------
+
+`(H-NF)` and `(H)` are proved.  The five local coefficients are
+
+  (C_0,C_1,C_2,C_3,C_4)
+    =(0,0,0,0,-(a^[r]_(1,b)+a^[r]_(1,r-b))/84),
+
+with singleton convention at the centre, and the same formula for the
+companion.  Summation is exactly the first infinity relation `E_1=0` at the
+small index `r`.  Since `(RM)` and `(RT)` were already proved, `(LEAD)` now
+follows levelwise.
+
+The complete midpoint theorem is not yet claimed.  Its remaining input is the
+uniform primitive-Q-triple lemma.  The lemma passes a 48-prime exact audit, but
+no uniform proof was found; recurrence back-propagation encounters the cubic
+singular gates and cannot simply be called “standard”.  Thus `(U)` and final
+assembly remain conditional on one explicit, isolated statement.
+
+
+1. THE WEIGHT-FIVE LOCAL ROW
+----------------------------
+
+For `A_i=p^(6-i)a_i`, the Session-5 local term satisfies
+
+  pT=A_1-A_2-(59/42)A_3-A_4-(15/14)A_5-A_6.
+
+Substituting `A_(6-j)=a_6 Y_j(delta)/j!`, `delta_t=p^tD_t`, makes this the fixed
+Bell row
+
+  Y_5/5!-Y_4/4!-(59/42)Y_3/3!-Y_2/2!-(15/14)Y_1-1.
+
+The fixed-block Phi expansion through `p^5`, followed by `b <-> r-b`, gives
+
+  T(b)+T(c)=-(p^4/84)(beta_(1,b)+beta_(1,c)) mod p^5,   (RJ5)
+
+where `beta` is the coefficient array at the small index `r`.  The companion
+identity gives the same formula with `beta` tilded.  Thus `C_0=...=C_3=0`
+locally and the displayed `C_4` is exact.
+
+The harmonic-alphabet collection, including the named full-block quotients,
+is written in `PHASE2_H5_CERTIFICATE.md`.  It is a denominator-cleared finite
+Bell calculation, not interpolation.
+
+
+2. ENDPOINT AND CENTRE
+----------------------
+
+The endpoint pair `{0,r}` is retained in (RJ5), with `H_0=0` and `r` a p-unit.
+At `b=c`, no central factor is cancelled: `m/2-b=p/2` is retained and the
+direct Taylor row gives
+
+  (C_0,...,C_4)=(0,0,0,0,-beta_(1,b)/84).
+
+The same holds for the companion singleton.
+
+
+3. H-NF IS E_1
+---------------
+
+Summing (RJ5) over the explicit endpoint pair, interior pairs, and possible
+central singleton gives
+
+  sum C_4=-(1/84)sum_(b=0)^r beta_(1,b).
+
+Since `R_r(k)=O(k^(-4r-5))`, its `k^(-1)` coefficient at infinity is zero:
+
+  E_1(beta)=sum beta_(1,b)=0.
+
+Likewise `-k(k+r)R_r=O(k^(-4r-3))`, so `E_1(betat)=0`.  This is the requested
+finite-field summation certificate.  As `p>=11`, 84 is a unit.  Session 5's
+proved middle `p^5` floor and exact reflected decomposition now give
+
+  E,Et in p^5 Z_p.
+
+Hence `(H)` is PROVED.
+
+
+4. REQUIRED GATES
+-----------------
+
+At `p=11,13,17`, every offset and local pair, both arrays, `sol_h5.py` asserts
+
+  v_p(T_pair+(p^4/84)beta_1_pair)>=5.
+
+It imports and exactly compares the arrays from `sol_j12.exact_arrays`, thereby
+gating the claimed five coefficients against both requested Session-5 oracles.
+Endpoint and central digits are printed explicitly.  Every `C_4` list sums to
+zero and every exact `E,Et` has valuation at least five.  PASS.
+
+
+5. LEAD
+-------
+
+In the exact level determinant, `(H)` puts the head-error determinant in
+`p^3 Z_p`; `(RT)` puts the reflected regular head+tail determinant in `p Z_p`;
+and `(RM)` puts the middle determinant in `p^4 Z_p`.  The midpoint binomial
+normalizer is a unit.  Therefore, levelwise,
+
+  p^5 P_(p+t)=(29/28)Q_(p+t) mod p.                    (LEAD)
+
+Thus `(LEAD)` is PROVED.
+
+
+6. THE ONE REMAINING MIDPOINT INPUT
+-----------------------------------
+
+To infer `e_p=-5` from `(LEAD)` one needs
+
+  not (Q_r=Q_(r+1)=Q_(r+2)=0 mod p),
+  r=(p-5)/2.                                           (Q3)
+
+The manifest double-binomial formula checks (Q3) exactly for all 48 primes
+`11<=p<240`, with zero failures; at the required oracle primes the triples are
+
+  p=11: [0,5,1],  p=13: [8,5,11],  p=17: [14,10,16].
+
+This is finite evidence, not a proof.  A naive backward-recurrence proof of
+(Q3) fails at residue roots of the cubic factor `a0`; passing such a root is a
+saturated Q-gate statement.  No existing file supplies that uniform lemma.
+Accordingly `(U)` and the complete a=1 midpoint theorem remain CONDITIONAL on
+(Q3).  Once (Q3) is proved, `(LEAD)` gives `e_p=-5`, and the already proved
+Q/Lucas row in `DET-MID`, `(H)`, `(RT)`, and `(RM)` give the full midpoint gate
+immediately.
+
+
+FILES WRITTEN OR UPDATED
+------------------------
+
+  worthiness/sol_h5.py
+  worthiness/PHASE2_H5_CERTIFICATE.md
+  worthiness/SOL_WORKLOG.md (append only)
+  worthiness/PHASE2_FROM_SOL_6.txt
+
+
+Signed,
+
+Sol
+20 July 2026

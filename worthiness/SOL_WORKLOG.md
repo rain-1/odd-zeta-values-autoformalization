@@ -490,3 +490,35 @@
   lemma, so treating “primitive-Q-triple” as automatic would hide a real
   obligation.  Consequently `(U)` and the complete midpoint assembly remain
   conditional on that one explicit lemma and are not promoted from samples.
+
+## 2026-07-20 -- session 7: Q3 and the a=1 midpoint closed
+
+- Replaced the failed recurrence back-propagation with the fundamental
+  Casoratian of `(Q,P,Phat)`.  From the exact base determinant and the
+  companion-matrix quotient, proved uniformly
+
+      C_n=(-1)^(n-1)a0(n)/
+          [16(n+1)^4(n+2)^5(2n+1)(2n+3)C(2n,n)].
+
+- At `r=(p-5)/2`, all determinant denominator factors are p-units.  Lemma C
+  makes the P/Phat defining minors p-integral, and `C(2m,m)` is a p-unit for
+  the three rows; this does not use the global denominator law.  Thus a zero
+  Q-triple forces `p|a0(r)`.  The exact
+  specialization
+
+      8a0(r)=41218p^3-220572p^2+397530p-241144,
+      241144=8*43*701
+
+  reduces the uniform statement to two primes.
+- Evaluated the manifest double-binomial directly at the exceptional rows:
+  `p=43 -> [33,0,26]`, `p=701 -> [472,350,182]`.  The required gates are
+  `p=11 [0,5,1]`, `13 [8,5,11]`, `17 [14,10,16]`, `19 [15,2,0]`, and
+  `23 [6,22,13]`.  Hence `(Q3)` is proved for every `p>=11`.
+- Audited MOS 1705.05586 and Zudilin math/0206178.  MOS's half-period modular
+  coefficient is not uniformly nonzero (`p=19` is already zero); Zudilin's
+  recurrence is useful through its Casoratian instead.
+- Combined `(Q3)` with the proved Lucas row and `(LEAD)` to obtain `(U)` and
+  `e_p=-5`.  In `(DET-MID)`, the Q row, `(H)`, `(RT)`, and `(RM)` then give
+  `p^5M_p in pZ_p`, or `v_p(M_p)>=-4=e_p+1`.
+- Issued the complete certificate-shaped theorem for the **a=1 midpoint band
+  only**.  General `a`, prime-power midpoint depth, and cubic gates remain open.
